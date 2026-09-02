@@ -5,10 +5,13 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { canEditPerson, requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
+import { personFieldDiff, recordAudit } from "@/lib/audit";
 import {
   deletePerson,
+  getPerson,
   getProfile,
+  getSnapshot,
   saveContact,
   savePartnership,
   savePerson,
@@ -16,7 +19,7 @@ import {
   setParents,
   upsertProfile,
 } from "@/lib/store";
-import type { Contact, Partnership, Person, Residence } from "@/lib/types";
+import { displayName, type Contact, type Partnership, type Person, type Residence } from "@/lib/types";
 
 function slugId(name: string) {
   const base = name
@@ -43,6 +46,35 @@ export async function savePersonAction(formData: FormData) {
   const surname = String(formData.get("surname") ?? "").trim();
   if (!givenName) throw new Error("A given name is required.");
 
+  const snapshot = await getSnapshot();
+  const before = existingId
+    ? snapshot.people.find((row) => row.id === existingId) ?? null
+    : null;
+  const beforeParents = existingId
+    ? snapshot.parentChildren
+        .filter((link) => link.childId === existingId)
+        .map((link) => link.parentId)
+        .sort()
+        .join(",")
+    : "";
+  const beforePartner =
+    existingId
+      ? snapshot.partnerships.find(
+          (union) => union.personAId === existingId || union.personBId === existingId,
+        )
+      : undefined;
+  const beforePartnerId = beforePartner
+    ? beforePartner.personAId === existingId
+      ? beforePartner.personBId
+      : beforePartner.personAId
+    : "";
+  const beforeResidences = existingId
+    ? snapshot.residences
+        .filter((row) => row.personId === existingId)
+        .map((row) => `${row.year ?? ""}:${row.place}`)
+        .join("|")
+    : "";
+
   const person: Person = {
     id: existingId ?? slugId(`${givenName} ${surname}`),
     givenName,
@@ -55,6 +87,7 @@ export async function savePersonAction(formData: FormData) {
     deathDate: str(formData, "deathDate"),
     isDeceased: bool(formData, "isDeceased"),
     headstoneLocation: str(formData, "headstoneLocation"),
+    headstonePhotoUrl: str(formData, "headstonePhotoUrl"),
     familysearchId: str(formData, "familysearchId"),
     notes: str(formData, "notes"),
   };
@@ -90,8 +123,24 @@ export async function savePersonAction(formData: FormData) {
     .filter((row) => row.place);
   await saveResidences(person.id, rows);
 
+  const extras: string[] = [];
+  if (beforeParents !== [...parentIds].sort().join(",")) extras.push("Parents");
+  if (beforePartnerId !== (partnerId ?? "")) extras.push("Spouse");
+  const afterResidences = rows.map((row) => `${row.year ?? ""}:${row.place}`).join("|");
+  if (beforeResidences !== afterResidences) extras.push("Residences");
+
+  await recordAudit(
+    user,
+    before ? "person.update" : "person.create",
+    displayName(person),
+    personFieldDiff(before, person, extras),
+    person.id,
+  );
+
+  revalidatePath("/");
   revalidatePath("/tree");
   revalidatePath("/admin");
+  revalidatePath("/admin/activity");
   revalidatePath(`/admin/people/${person.id}`);
   return { id: person.id, savedBy: user.id };
 }
@@ -102,19 +151,32 @@ export async function savePersonAndRedirect(formData: FormData): Promise<void> {
 }
 
 export async function deletePersonAction(formData: FormData) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const id = String(formData.get("id") ?? "");
+  const person = await getPerson(id);
   await deletePerson(id);
+  await recordAudit(
+    user,
+    "person.delete",
+    person ? displayName(person) : id,
+    "Removed from the tree",
+    id,
+  );
+  revalidatePath("/");
   revalidatePath("/tree");
   revalidatePath("/admin");
+  revalidatePath("/admin/activity");
 }
 
 export async function saveContactAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireAdmin();
   const personId = String(formData.get("personId") ?? "");
-  if (!canEditPerson(user, personId)) {
-    throw new Error("You can only update your own contact details.");
+  if (!personId) {
+    throw new Error("A person is required.");
   }
+  const snapshot = await getSnapshot();
+  const person = snapshot.people.find((row) => row.id === personId) ?? null;
+  const before = snapshot.contacts.find((row) => row.personId === personId);
   const contact: Contact = {
     personId,
     address: str(formData, "address"),
@@ -125,8 +187,20 @@ export async function saveContactAction(formData: FormData) {
     shareEmail: bool(formData, "shareEmail"),
   };
   await saveContact(contact);
+  const fields = ["address", "phone", "email", "shareAddress", "sharePhone", "shareEmail"] as const;
+  const changed = fields.filter((key) => (before?.[key] ?? null) !== contact[key]);
+  await recordAudit(
+    user,
+    "contact.update",
+    person ? displayName(person) : personId,
+    changed.length ? changed.join(", ") : "Updated contact",
+    personId,
+  );
+  revalidatePath("/");
   revalidatePath("/tree");
   revalidatePath("/profile");
+  revalidatePath("/admin");
+  revalidatePath("/admin/activity");
   revalidatePath(`/admin/people/${personId}`);
 }
 
@@ -134,24 +208,27 @@ export async function linkProfileAction(formData: FormData) {
   await requireAdmin();
   const userId = String(formData.get("userId") ?? "").trim();
   const personId = str(formData, "personId");
-  const role = String(formData.get("role") ?? "member") === "admin" ? "admin" : "member";
   if (!userId) throw new Error("A user id is required.");
   const current = await getProfile(userId);
   await upsertProfile({
     userId,
     personId,
-    role,
+    role: current?.role ?? "member",
     email: current?.email ?? null,
   });
   revalidatePath("/admin");
   revalidatePath("/profile");
 }
 
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+
 export async function uploadPhotoAction(formData: FormData) {
-  await requireUser();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("Choose a photo to upload.");
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new Error("Please choose a photo under 8 MB.");
   }
 
   if (process.env.BLOB_READ_WRITE_TOKEN) {

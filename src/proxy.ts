@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { LOCAL_AUTH_COOKIE, isNeonAuthConfigured } from "@/lib/auth-constants";
 import { getNeonAuth } from "@/lib/neon-auth";
 
-const PROTECTED = [/^\/tree(?:\/|$)/, /^\/admin(?:\/|$)/, /^\/profile(?:\/|$)/];
+const PROTECTED = [/^\/admin(?:\/|$)/, /^\/profile(?:\/|$)/];
 
 function isProtected(pathname: string) {
   return PROTECTED.some((pattern) => pattern.test(pathname));
@@ -29,12 +29,5 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/tree",
-    "/tree/:path*",
-    "/admin",
-    "/admin/:path*",
-    "/profile",
-    "/profile/:path*",
-  ],
+  matcher: ["/admin", "/admin/:path*", "/profile", "/profile/:path*"],
 };

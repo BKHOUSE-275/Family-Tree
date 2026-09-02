@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Descendants of Felix Mitchell &amp; Adaline Kiah</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Great+Vibes&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --page: #f3e6d0;
+        --ink: #2a1810;
+        --script: #3d4f28;
+        --leaf: #4f5d2a;
+        --leaf-deep: #3a461c;
+        --leaf-soft: #e4d3b0;
+        --bark: #5c3a21;
+        --ember: #c45c26;
+        --gold: #c9a227;
+        --canopy: #6b7c38;
+
+        --line: rgba(92, 58, 33, 0.55);
+        --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+        --engrave: "Cinzel", "Cormorant Garamond", Georgia, serif;
+        --hand: "Great Vibes", "Cormorant Garamond", cursive, serif;
+        --meta: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+
+        /* x-position of the node on a rail / drop; overridable per column */
+        --nx: 50%;
+        --card-face: linear-gradient(178deg, #fbf3e2 0%, #f4e7cd 62%, #eddfc1 100%);
+      }
+
+      @page {
+        size: A2 landscape;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 2245px;
+        height: 1587px;
+        overflow: hidden;
+        background: var(--page);
+        color: var(--ink);
+        font-family: var(--serif);
+        text-rendering: geometricPrecision;
+      }
+
+      /* ---------------- parchment sheet ---------------- */
+      .sheet {
+        position: relative;
+        width: 2245px;
+        height: 1587px;
+        padding: 46px;
+        background-color: var(--page);
+        /*
+         * Parchment is a single fully opaque gradient (light near the top-left,
+         * warming and darkening toward the outer edges) plus a grey noise tile.
+         * Partially transparent gradient stops are avoided on purpose: Chrome's
+         * PDF backend serialises them as soft-masked images that some viewers
+         * composite with a colour shift.
+         */
+        background-image:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+          radial-gradient(
+            ellipse 116% 132% at 31% 16%,
+            #fdf7e9 0%,
+            #f6ead6 34%,
+            #f2e4cb 62%,
+            #ead9bb 86%,
+            #e0cdac 100%
+          );
+      }
+
+      .frame {
+        position: absolute;
+        inset: 46px;
+        border: 2px solid rgba(92, 58, 33, 0.5);
+        pointer-events: none;
+      }
+      .frame::after {
+        content: "";
+        position: absolute;
+        inset: 7px;
+        border: 1px solid rgba(201, 162, 39, 0.6);
+      }
+      .frame-corner {
+        position: absolute;
+        width: 54px;
+        height: 54px;
+        color: rgba(92, 58, 33, 0.45);
+      }
+      .fc-tl { top: 60px; left: 60px; }
+      .fc-tr { top: 60px; right: 60px; transform: scaleX(-1); }
+      .fc-bl { bottom: 60px; left: 60px; transform: scaleY(-1); }
+      .fc-br { bottom: 60px; right: 60px; transform: scale(-1, -1); }
+
+      /* engraved medallion, set in the open ground of the chart */
+      .medallion {
+        position: absolute;
+        left: 706px;
+        top: 966px;
+        width: 236px;
+        height: 236px;
+        color: rgba(61, 79, 40, 0.42);
+        pointer-events: none;
+      }
+      .medallion text {
+        font-family: var(--engrave);
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.34em;
+        fill: rgba(92, 58, 33, 0.55);
+      }
+
+      .inner {
+        position: relative;
+        height: 100%;
+        padding: 32px 56px 24px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ---------------- masthead ---------------- */
+      header.masthead {
+        text-align: center;
+        flex: 0 0 auto;
+      }
+      .eyebrow {
+        font-family: var(--hand);
+        font-size: 57px;
+        line-height: 1;
+        color: var(--script);
+      }
+      h1 {
+        margin: 10px 0 0;
+        font-family: var(--engrave);
+        font-weight: 600;
+        font-size: 72px;
+        line-height: 1.06;
+        letter-spacing: 0.035em;
+        color: var(--ink);
+      }
+      h1 .amp {
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 500;
+        font-size: 78px;
+        color: var(--ember);
+        letter-spacing: 0;
+        padding: 0 10px;
+      }
+      .rule {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        margin: 20px auto 0;
+        width: 760px;
+        color: var(--leaf-deep);
+      }
+      .rule i {
+        display: block;
+        height: 0;
+        flex: 1;
+        border-top: 1px solid rgba(92, 58, 33, 0.45);
+      }
+      .rule i::after {
+        content: "";
+        display: block;
+        margin-top: 3px;
+        border-top: 1px solid rgba(201, 162, 39, 0.75);
+      }
+      .subtitle {
+        margin-top: 15px;
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 29px;
+        color: var(--bark);
+        letter-spacing: 0.015em;
+      }
+      .subtitle b {
+        font-weight: 600;
+        font-style: normal;
+        color: #46281a;
+      }
+
+      /* ---------------- generation band markers (left margin) ---------------- */
+      .band {
+        position: absolute;
+        left: -38px;
+        width: 26px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .band .txt {
+        font-family: var(--meta);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(61, 79, 40, 0.95);
+        white-space: nowrap;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+      }
+      .band .stem {
+        flex: 1;
+        width: 0;
+        min-height: 14px;
+        margin-top: 10px;
+        border-left: 1px solid rgba(92, 58, 33, 0.4);
+      }
+      .band .cap,
+      .band .foot {
+        width: 11px;
+        height: 0;
+        border-top: 1px solid rgba(92, 58, 33, 0.4);
+      }
+      .band .cap { margin-bottom: 9px; }
+      .band .foot { margin-top: 0; }
+
+      /* ---------------- person cards ---------------- */
+      .card {
+        position: relative;
+        border: 1px solid rgba(92, 58, 33, 0.42);
+        border-radius: 9px;
+        background-image: var(--card-face);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+        padding: 13px 14px 12px;
+        text-align: center;
+      }
+      .card .name {
+        font-family: var(--serif);
+        font-weight: 600;
+        color: var(--ink);
+        line-height: 1.1;
+        letter-spacing: 0.012em;
+      }
+      .card .goldrule {
+        width: 48px;
+        height: 0;
+        margin: 8px auto 7px;
+        border-top: 1px solid rgba(201, 162, 39, 0.9);
+      }
+      .card .years {
+        font-family: var(--serif);
+        font-size: 16.5px;
+        color: rgba(42, 24, 16, 0.84);
+        line-height: 1.22;
+      }
+      .card .fs {
+        font-family: var(--meta);
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.6);
+        margin-top: 7px;
+        line-height: 1.3;
+      }
+      .card .note {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 13.5px;
+        line-height: 1.26;
+        color: var(--script);
+        margin-top: 7px;
+      }
+      .card.kin {
+        border-color: rgba(201, 162, 39, 0.85);
+        box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.13), 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+      }
+      .crown {
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-image: linear-gradient(180deg, #f3e6d0 50%, #fbf3e2 50%);
+        padding: 0 9px;
+        font-family: var(--meta);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.19em;
+        text-transform: uppercase;
+        color: rgba(196, 92, 38, 0.98);
+        white-space: nowrap;
+      }
+
+      /* ---------------- generation I : the root couple ---------------- */
+      .g1row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .g1side {
+        width: 384px;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: flex-start;
+      }
+      .aside {
+        width: 262px;
+        margin-top: 30px;
+        border: 1px dashed rgba(92, 58, 33, 0.48);
+        border-radius: 8px;
+        background: rgba(228, 211, 176, 0.4);
+        padding: 12px 14px 13px;
+        text-align: center;
+      }
+      .aside .tag {
+        font-family: var(--meta);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.72);
+      }
+      .aside .name {
+        font-family: var(--serif);
+        font-size: 24px;
+        font-weight: 600;
+        line-height: 1.15;
+        margin-top: 4px;
+      }
+      .aside .years {
+        font-family: var(--serif);
+        font-size: 15.5px;
+        color: rgba(42, 24, 16, 0.82);
+        margin-top: 2px;
+      }
+      .aside .fs {
+        font-family: var(--meta);
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.6);
+        margin-top: 5px;
+      }
+      .aside .note {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 13.5px;
+        line-height: 1.25;
+        color: var(--script);
+        margin-top: 6px;
+      }
+      .siblink {
+        flex: 1;
+        margin-top: 92px;
+        text-align: center;
+      }
+      .siblink .l {
+        border-top: 1px dashed rgba(92, 58, 33, 0.6);
+      }
+      .siblink .t {
+        font-family: var(--meta);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.65);
+        padding-top: 5px;
+      }
+
+      .couple {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+      .couple .card {
+        width: 352px;
+        padding: 18px 20px 16px;
+      }
+      .couple .card .name {
+        font-size: 33px;
+      }
+      .couple .card .years {
+        font-size: 18px;
+      }
+      .couple .card .note {
+        font-size: 14px;
+        margin-top: 9px;
+      }
+      .marriage {
+        width: 226px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 8px 0;
+        text-align: center;
+      }
+      .marriage .m {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 18px;
+        color: var(--bark);
+        line-height: 1.3;
+        padding-bottom: 11px;
+      }
+      .marriage .m b {
+        font-style: normal;
+        font-weight: 600;
+        font-size: 19px;
+        color: var(--ink);
+      }
+      .marriage .m .sm {
+        display: block;
+        font-family: var(--meta);
+        font-style: normal;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(61, 79, 40, 0.92);
+        padding-bottom: 5px;
+      }
+      .marriage .bar {
+        width: 100%;
+        border-top: 1.6px solid var(--line);
+        border-bottom: 1.6px solid var(--line);
+        height: 6px;
+      }
+      /* carries the line from the marriage bar down to the children's rail */
+      .marriage .mstem {
+        width: 0;
+        height: 42px;
+        border-left: 1.4px solid var(--line);
+      }
+
+      /* ---------------- connectors ---------------- */
+      .drop {
+        height: 44px;
+        position: relative;
+      }
+      .drop::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--nx);
+        border-left: 1.4px solid var(--line);
+      }
+      .drop.long { height: 74px; }
+      .rail {
+        position: relative;
+        height: 46px;
+      }
+      .rail::before,
+      .rail::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        border-top: 1.4px solid var(--line);
+      }
+      .rail::before {
+        left: 0;
+        right: calc(100% - var(--nx));
+      }
+      .rail::after {
+        left: var(--nx);
+        right: 0;
+      }
+      .rail > i {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--nx);
+        border-left: 1.4px solid var(--line);
+      }
+      .railhost > *:first-child > .rail::before,
+      .railhost > *:last-child > .rail::after {
+        display: none;
+      }
+      .node {
+        position: absolute;
+        top: -3.5px;
+        left: var(--nx);
+        margin-left: -3.5px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #f1dfc0;
+        border: 1.4px solid var(--line);
+      }
+
+      /* ---------------- generation II ---------------- */
+      .g2grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: 480px 152px 152px 152px 152px 202px 258px 480px;
+        gap: 8px;
+        justify-content: center;
+        align-items: start;
+      }
+      .g2col .card {
+        height: 196px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .g2col .card .name { font-size: 22px; }
+      .g2col.wide .card {
+        width: 252px;
+        margin: 0 auto;
+      }
+      .g2col.wide .card .name { font-size: 25px; }
+      .ord {
+        position: absolute;
+        top: 7px;
+        left: 10px;
+        font-family: var(--meta);
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: rgba(92, 58, 33, 0.38);
+      }
+
+      /* spouse pairing */
+      .pair {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+      .pair .mlink {
+        width: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .pair .mlink .bar {
+        width: 100%;
+        border-top: 1.3px solid var(--line);
+        border-bottom: 1.3px solid var(--line);
+        height: 4px;
+      }
+      .pair .mlink .t {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 14px;
+        color: var(--bark);
+        padding-bottom: 4px;
+      }
+      .card.spouse {
+        border-style: dashed;
+        border-color: rgba(92, 58, 33, 0.45);
+        background-image: linear-gradient(178deg, #f6ecd9 0%, #ecdfc4 100%);
+      }
+      .card.spouse .name { font-weight: 500; }
+      .spouse-tag {
+        font-family: var(--meta);
+        font-size: 8.5px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.62);
+        margin-bottom: 3px;
+      }
+
+      /* ---------------- generation III ---------------- */
+      .triad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+      }
+      .tcol { --nx: 11px; }
+      .fan {
+        position: relative;
+        padding-left: 22px;
+      }
+      .fan::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 38px;
+        left: 11px;
+        border-left: 1.4px solid var(--line);
+      }
+      .leafcard {
+        position: relative;
+        height: 76px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(92, 58, 33, 0.38);
+        border-left: 3px solid rgba(107, 124, 56, 0.8);
+        border-radius: 7px;
+        background-image: linear-gradient(178deg, #fbf3e2 0%, #f1e3c7 100%);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 9px;
+      }
+      .leafcard:last-child { margin-bottom: 0; }
+      .fan > .leafcard::before {
+        content: "";
+        position: absolute;
+        left: -11px;
+        top: 37px;
+        width: 11px;
+        border-top: 1.4px solid var(--line);
+      }
+      .leafcard .name {
+        font-family: var(--serif);
+        font-size: 18.5px;
+        font-weight: 600;
+        line-height: 1.12;
+        text-align: center;
+        color: var(--ink);
+        letter-spacing: 0.008em;
+      }
+      .leafcard .name q {
+        font-style: italic;
+        font-weight: 500;
+        quotes: "\201C" "\201D";
+      }
+
+      .sprig {
+        display: block;
+        margin: 9px auto 0;
+        color: rgba(107, 124, 56, 0.42);
+      }
+
+      .endnote {
+        margin-top: 16px;
+        text-align: center;
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 14.5px;
+        line-height: 1.3;
+        color: rgba(92, 58, 33, 0.62);
+      }
+      .endnote::before {
+        content: "";
+        display: block;
+        width: 28px;
+        height: 0;
+        margin: 0 auto 8px;
+        border-top: 1px solid rgba(92, 58, 33, 0.32);
+      }
+
+      .solo .card { width: 100%; }
+      .solo .card .name { font-size: 20px; }
+
+      /* ---------------- footer ---------------- */
+      footer {
+        margin-top: auto;
+        flex: 0 0 auto;
+      }
+      .ornament {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin: 0 auto 32px;
+        width: 1000px;
+        color: rgba(61, 79, 40, 0.55);
+      }
+      .ornament i {
+        flex: 1;
+        height: 0;
+        border-top: 1px solid rgba(92, 58, 33, 0.26);
+      }
+      .unplaced {
+        border-top: 1px solid rgba(92, 58, 33, 0.3);
+        padding-top: 16px;
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+      }
+      .unplaced .head {
+        width: 320px;
+        flex: 0 0 auto;
+      }
+      .unplaced .head h3 {
+        margin: 0;
+        font-family: var(--meta);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: rgba(61, 79, 40, 0.95);
+      }
+      .unplaced .head p {
+        margin: 7px 0 0;
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 15px;
+        line-height: 1.35;
+        color: rgba(92, 58, 33, 0.78);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        align-content: flex-start;
+      }
+      .chip {
+        border: 1px solid rgba(92, 58, 33, 0.32);
+        border-radius: 999px;
+        background: rgba(228, 211, 176, 0.42);
+        padding: 6px 16px 7px;
+        font-family: var(--serif);
+        font-size: 17px;
+        color: rgba(42, 24, 16, 0.88);
+        line-height: 1.15;
+      }
+      .chip q {
+        font-style: italic;
+        quotes: "\201C" "\201D";
+      }
+
+      .colophon {
+        margin-top: 20px;
+        padding-top: 13px;
+        border-top: 1px solid rgba(92, 58, 33, 0.22);
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 34px;
+      }
+      .colophon .fnote {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 15px;
+        color: rgba(92, 58, 33, 0.82);
+        max-width: 1060px;
+        line-height: 1.35;
+      }
+      .colophon .fnote b {
+        font-style: normal;
+        font-weight: 600;
+      }
+      .colophon .sig {
+        font-family: var(--meta);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.62);
+        white-space: nowrap;
+      }
+      .legend {
+        display: flex;
+        gap: 22px;
+        align-items: center;
+        font-family: var(--meta);
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(92, 58, 33, 0.62);
+        white-space: nowrap;
+      }
+      .legend s {
+        display: inline-block;
+        width: 22px;
+        height: 0;
+        text-decoration: none;
+        vertical-align: middle;
+        margin-right: 8px;
+      }
+      .legend .k1 s { border-top: 3px solid rgba(201, 162, 39, 0.9); }
+      .legend .k2 s { border-top: 3px dashed rgba(92, 58, 33, 0.5); }
+      .legend .k3 s {
+        border-left: 3px solid rgba(107, 124, 56, 0.85);
+        width: 0;
+        height: 13px;
+        margin-right: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="frame"></div>
+
+      <svg class="frame-corner fc-tl" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M2 2v20M2 2h20" />
+        <path d="M9 9c10 0 18 8 18 18" opacity=".85" />
+        <path d="M27 27c0-6 4-11 9-12" opacity=".55" />
+        <circle cx="27" cy="27" r="1.8" fill="currentColor" stroke="none" />
+      </svg>
+      <svg class="frame-corner fc-tr" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M2 2v20M2 2h20" />
+        <path d="M9 9c10 0 18 8 18 18" opacity=".85" />
+        <path d="M27 27c0-6 4-11 9-12" opacity=".55" />
+        <circle cx="27" cy="27" r="1.8" fill="currentColor" stroke="none" />
+      </svg>
+      <svg class="frame-corner fc-bl" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M2 2v20M2 2h20" />
+        <path d="M9 9c10 0 18 8 18 18" opacity=".85" />
+        <path d="M27 27c0-6 4-11 9-12" opacity=".55" />
+        <circle cx="27" cy="27" r="1.8" fill="currentColor" stroke="none" />
+      </svg>
+      <svg class="frame-corner fc-br" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M2 2v20M2 2h20" />
+        <path d="M9 9c10 0 18 8 18 18" opacity=".85" />
+        <path d="M27 27c0-6 4-11 9-12" opacity=".55" />
+        <circle cx="27" cy="27" r="1.8" fill="currentColor" stroke="none" />
+      </svg>
+
+      <svg class="medallion" viewBox="0 0 236 236">
+        <defs>
+          <path id="arcTop" d="M34 118a84 84 0 0 1 168 0" />
+          <path id="arcBottom" d="M40 118a78 78 0 0 0 156 0" />
+        </defs>
+        <circle cx="118" cy="118" r="104" fill="none" stroke="rgba(92,58,33,0.34)" stroke-width="1.2" />
+        <circle cx="118" cy="118" r="97" fill="none" stroke="rgba(201,162,39,0.5)" stroke-width="1" />
+        <text text-anchor="middle">
+          <textPath href="#arcTop" startOffset="50%">MITCHELL</textPath>
+        </text>
+        <text text-anchor="middle" font-size="13">
+          <textPath href="#arcBottom" startOffset="50%">1873</textPath>
+        </text>
+        <g transform="translate(118 124) scale(3.5) translate(-17 -11)">
+          <path d="M17 1c-4.6 3.4-8 8-8 12.2A8 8 0 0 0 25 13.2C25 9 21.6 4.4 17 1z" fill="currentColor" opacity=".5" />
+          <path d="M17 4.4V20" stroke="#f3e6d0" stroke-width="1" opacity=".85" />
+          <path d="M17 9.4 12.9 7.1M17 11.8l4.1-2.3M17 13.6 12.7 11.4M17 16l4.3-2.4" stroke="#f3e6d0" stroke-width=".65" opacity=".65" />
+        </g>
+        <g fill="rgba(92,58,33,0.4)">
+          <circle cx="88" cy="176" r="1.7" />
+          <circle cx="118" cy="180" r="2" />
+          <circle cx="148" cy="176" r="1.7" />
+        </g>
+      </svg>
+
+      <div class="inner">
+        <header class="masthead">
+          <div class="eyebrow">The Descendants of</div>
+          <h1>Felix Mitchell <span class="amp">&amp;</span> Adaline Kiah</h1>
+          <div class="rule">
+            <i></i>
+            <svg width="34" height="22" viewBox="0 0 34 22" fill="currentColor" aria-hidden="true">
+              <path d="M17 1c-4.6 3.4-8 8-8 12.2A8 8 0 0 0 25 13.2C25 9 21.6 4.4 17 1z" opacity=".9" />
+              <path d="M17 4.5V20" stroke="#f3e6d0" stroke-width="1.1" />
+            </svg>
+            <i></i>
+          </div>
+          <div class="subtitle">
+            married <b>3 September 1873</b> &middot; Hamilton, Florida, United States
+          </div>
+        </header>
+
+        <!-- ==================== GENERATION I ==================== -->
+        <section style="position: relative; margin-top: 46px">
+          <div class="band" style="top: 10px; height: 196px">
+            <div class="cap"></div>
+            <div class="txt">Generation I</div>
+            <div class="stem"></div>
+            <div class="foot"></div>
+          </div>
+
+          <div class="g1row">
+            <div class="g1side">
+              <div class="aside">
+                <div class="tag">Felix&rsquo;s brother</div>
+                <div class="name">Bill Mitchell</div>
+                <div class="years">b. 1835 &middot; deceased</div>
+                <div class="fs">FamilySearch LYRX-VWG</div>
+                <div class="note">Not in the descendant line</div>
+              </div>
+              <div class="siblink">
+                <div class="l"></div>
+                <div class="t">brother</div>
+              </div>
+            </div>
+
+            <div class="couple">
+              <div class="card kin">
+                <div class="crown">Great-great-grandfather</div>
+                <div class="name">Felix Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">b. December 1839, Georgia</div>
+                <div class="years">d. 20 May 1918</div>
+                <div class="note">
+                  Residences &mdash; 1870 Georgia &middot; 1900 Precinct 7,
+                  Octahatchee, Hamilton, Florida &middot; 1910 Octahatchee,
+                  Hamilton, Florida
+                </div>
+              </div>
+
+              <div class="marriage">
+                <div class="m">
+                  <span class="sm">Married</span>
+                  <b>3 Sep 1873</b><br />
+                  Hamilton, Florida
+                </div>
+                <div class="bar"></div>
+                <div class="mstem"></div>
+              </div>
+
+              <div class="card kin">
+                <div class="crown">Great-great-grandmother</div>
+                <div class="name">Adaline Kiah</div>
+                <div class="goldrule"></div>
+                <div class="years">b. 1850</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch KCGK-SJL</div>
+              </div>
+            </div>
+
+            <div class="g1side" aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <!-- drop from the marriage bar to the children's rail -->
+        <div class="drop long"></div>
+
+        <!-- ==================== GENERATIONS II & III ==================== -->
+        <section>
+          <div class="g2grid railhost">
+            <div class="band" style="top: 46px; height: 196px">
+              <div class="cap"></div>
+              <div class="txt">Generation II</div>
+              <div class="stem"></div>
+              <div class="foot"></div>
+            </div>
+            <div class="band" style="top: 286px; height: 322px">
+              <div class="cap"></div>
+              <div class="txt">Generation III</div>
+              <div class="stem"></div>
+              <div class="foot"></div>
+            </div>
+
+            <!-- 1 . Philip Mitchell Sr -->
+            <div class="g2col wide">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">1</div>
+                <div class="name">Philip Mitchell Sr</div>
+                <div class="goldrule"></div>
+                <div class="years">b. 1874 &middot; deceased</div>
+                <div class="fs">FamilySearch LYLG-B73</div>
+                <div class="note">also listed as Phillip Mitchell Sr</div>
+              </div>
+              <div class="drop"></div>
+              <div class="triad railhost">
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Beatrice Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Mattie Lee Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Rosco Mitchell</div></div>
+                  </div>
+                </div>
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Phillip Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Mary Edith Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Roylo Mitchell</div></div>
+                  </div>
+                </div>
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Carrie Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Robert Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Vera Mitchell</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2 . Hilliard -->
+            <div class="g2col">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">2</div>
+                <div class="name">Hilliard Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">b. 1876</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch LYL1-DWQ</div>
+                <svg class="sprig" width="44" height="14" viewBox="0 0 44 14" fill="none" stroke="currentColor" stroke-width="1.1">
+                  <path d="M2 12c10 0 18-3 24-9" />
+                  <path d="M13 9c0-4 3-6 7-6-1 4-3 6-7 6zM22 6c2-3 5-4 9-3-2 3-5 4-9 3z" fill="currentColor" stroke="none" opacity=".85" />
+                </svg>
+              </div>
+              <div class="endnote">no recorded children</div>
+            </div>
+
+            <!-- 3 . Claborn -->
+            <div class="g2col">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">3</div>
+                <div class="name">Claborn Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">b. 1878</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch LYLG-Y36</div>
+                <svg class="sprig" width="44" height="14" viewBox="0 0 44 14" fill="none" stroke="currentColor" stroke-width="1.1">
+                  <path d="M2 12c10 0 18-3 24-9" />
+                  <path d="M13 9c0-4 3-6 7-6-1 4-3 6-7 6zM22 6c2-3 5-4 9-3-2 3-5 4-9 3z" fill="currentColor" stroke="none" opacity=".85" />
+                </svg>
+              </div>
+              <div class="endnote">no recorded children</div>
+            </div>
+
+            <!-- 4 . David -->
+            <div class="g2col">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">4</div>
+                <div class="name">David Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">b. 1880</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch LYLP-M2V</div>
+                <svg class="sprig" width="44" height="14" viewBox="0 0 44 14" fill="none" stroke="currentColor" stroke-width="1.1">
+                  <path d="M2 12c10 0 18-3 24-9" />
+                  <path d="M13 9c0-4 3-6 7-6-1 4-3 6-7 6zM22 6c2-3 5-4 9-3-2 3-5 4-9 3z" fill="currentColor" stroke="none" opacity=".85" />
+                </svg>
+              </div>
+              <div class="endnote">no recorded children</div>
+            </div>
+
+            <!-- 5 . James -->
+            <div class="g2col">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">5</div>
+                <div class="name">James Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">1881 &ndash; 1950</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch LYLP-SSZ</div>
+                <svg class="sprig" width="44" height="14" viewBox="0 0 44 14" fill="none" stroke="currentColor" stroke-width="1.1">
+                  <path d="M2 12c10 0 18-3 24-9" />
+                  <path d="M13 9c0-4 3-6 7-6-1 4-3 6-7 6zM22 6c2-3 5-4 9-3-2 3-5 4-9 3z" fill="currentColor" stroke="none" opacity=".85" />
+                </svg>
+              </div>
+              <div class="endnote">no recorded children</div>
+            </div>
+
+            <!-- 6 . Mittie Ann -->
+            <div class="g2col">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card kin">
+                <div class="ord">6</div>
+                <div class="crown">Great-grandmother</div>
+                <div class="name">Mittie Ann Mitchell</div>
+                <div class="goldrule"></div>
+                <div class="years">1883 &ndash; 1916</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch KCQH-H8</div>
+              </div>
+              <div class="drop"></div>
+              <div class="solo">
+                <div class="card kin">
+                  <div class="crown">Grandmother</div>
+                  <div class="name">Ida Ola Lee Humphrey</div>
+                  <div class="goldrule"></div>
+                  <div class="note">Daughter of Mittie Ann</div>
+                  <div class="note">
+                    Later married E.&thinsp;D. Baisden, after Georgia&rsquo;s
+                    death&nbsp;<b>*</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7 . Georgia + spouse (tick drops onto Georgia, not onto the pair) -->
+            <div class="g2col" style="--nx: 65px">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="pair">
+                <div class="card" style="width: 130px">
+                  <div class="ord">7</div>
+                  <div class="name">Georgia Mitchell</div>
+                  <div class="goldrule"></div>
+                  <div class="years">1884 &ndash; 1919</div>
+                  <div class="years">deceased</div>
+                  <div class="fs">FamilySearch K8KR-62M</div>
+                </div>
+                <div class="mlink">
+                  <div class="t">m.</div>
+                  <div class="bar"></div>
+                </div>
+                <div class="card spouse" style="width: 96px; padding: 12px 8px">
+                  <div class="spouse-tag">Spouse</div>
+                  <div class="name" style="font-size: 19px">E.&thinsp;D. Baisden</div>
+                  <div class="goldrule" style="width: 28px"></div>
+                  <div class="note" style="font-size: 12.5px; margin-top: 4px">
+                    his first marriage&nbsp;<b>*</b>
+                  </div>
+                </div>
+              </div>
+              <div class="endnote">no recorded children</div>
+            </div>
+
+            <!-- 8 . Autmon Mitchell Sr -->
+            <div class="g2col wide">
+              <div class="rail"><i></i><span class="node"></span></div>
+              <div class="card">
+                <div class="ord">8</div>
+                <div class="name">Autmon Mitchell Sr</div>
+                <div class="goldrule"></div>
+                <div class="years">1885 &ndash; 1951</div>
+                <div class="years">deceased</div>
+                <div class="fs">FamilySearch LYLP-S9R</div>
+              </div>
+              <div class="drop"></div>
+              <div class="triad railhost">
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Autmon Mitchell Jr</div></div>
+                    <div class="leafcard"><div class="name">Willie Frank Mitchell Sr</div></div>
+                    <div class="leafcard"><div class="name">James <q>Fangalang</q> Mitchell</div></div>
+                  </div>
+                </div>
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Daniel Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Erosker Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Kendrick Mitchell</div></div>
+                  </div>
+                </div>
+                <div class="tcol">
+                  <div class="rail"><i></i></div>
+                  <div class="fan">
+                    <div class="leafcard"><div class="name">Frederick Lee Mitchell</div></div>
+                    <div class="leafcard"><div class="name">Emma Mitchell Payne</div></div>
+                    <div class="leafcard"><div class="name">Lewis Mitchell</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer>
+          <div class="ornament">
+            <i></i>
+            <svg width="120" height="16" viewBox="0 0 120 16" fill="none" stroke="currentColor" stroke-width="1.1">
+              <path d="M4 8h34M82 8h34" />
+              <path d="M60 2c-7 2-11 4-11 6s4 4 11 6c7-2 11-4 11-6s-4-4-11-6z" />
+              <path d="M60 2v12" stroke-width=".9" opacity=".7" />
+              <circle cx="43" cy="8" r="1.6" fill="currentColor" stroke="none" />
+              <circle cx="77" cy="8" r="1.6" fill="currentColor" stroke="none" />
+            </svg>
+            <i></i>
+          </div>
+
+          <div class="unplaced">
+            <div class="head">
+              <h3>Not yet placed on the tree</h3>
+              <p>
+                Recorded in the family archive, but their place in the line is not
+                yet documented.
+              </p>
+            </div>
+            <div class="chips">
+              <span class="chip">James <q>Jim</q> Mitchell</span>
+              <span class="chip">James <q>Jimbo</q> Mitchell</span>
+              <span class="chip">Taylor Mitchell Sr</span>
+              <span class="chip">Morgan <q>Zang</q> Mitchell</span>
+              <span class="chip">Governor Mitchell</span>
+              <span class="chip">Pasomore <q>Feechie</q> Mitchell</span>
+              <span class="chip">Tolby Mitchell</span>
+              <span class="chip">Mozella Mitchell</span>
+              <span class="chip">Selphy <q>Annie</q> Mitchell</span>
+              <span class="chip">Ernest Mitchell</span>
+              <span class="chip">F P Mitchell</span>
+              <span class="chip">Mannie C Mitchell</span>
+              <span class="chip">L E Mitchell</span>
+              <span class="chip">Joseph Mitchell</span>
+            </div>
+          </div>
+
+          <div class="colophon">
+            <div class="legend">
+              <span class="k1"><s></s>Direct line</span>
+              <span class="k2"><s></s>Spouse &middot; collateral kin</span>
+              <span class="k3"><s></s>Generation III</span>
+            </div>
+            <div class="fnote">
+              <b>*</b> E.&thinsp;D. Baisden married Georgia Mitchell first; after
+              her death he married Ida Ola Lee Humphrey. He appears here only as a
+              spouse, never as a descendant of Felix and Adaline.
+            </div>
+            <div class="sig">generated from the family tree project &middot; 2026</div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

@@ -18,6 +18,7 @@ export const people = pgTable("people", {
   deathDate: text("death_date"),
   isDeceased: boolean("is_deceased").notNull().default(false),
   headstoneLocation: text("headstone_location"),
+  headstonePhotoUrl: text("headstone_photo_url"),
   familysearchId: text("familysearch_id"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -89,6 +90,56 @@ export const profiles = pgTable("profiles", {
   personId: text("person_id").references(() => people.id, {
     onDelete: "set null",
   }),
-  role: text("role").$type<"member" | "admin">().notNull().default("member"),
+  role: text("role").$type<"member" | "admin" | "super_admin">().notNull().default("member"),
   email: text("email"),
+});
+
+export const changeRequests = pgTable("change_requests", {
+  id: text("id").primaryKey(),
+  submitterUserId: text("submitter_user_id").notNull(),
+  submitterEmail: text("submitter_email"),
+  personId: text("person_id").references(() => people.id, {
+    onDelete: "set null",
+  }),
+  message: text("message").notNull(),
+  photoUrl: text("photo_url"),
+  headstonePhotoUrl: text("headstone_photo_url"),
+  status: text("status")
+    .$type<"pending" | "approved" | "rejected">()
+    .notNull()
+    .default("pending"),
+  adminNote: text("admin_note"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: text("reviewed_by"),
+});
+
+export const auditEvents = pgTable("audit_events", {
+  id: text("id").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  actorUserId: text("actor_user_id").notNull(),
+  actorEmail: text("actor_email"),
+  action: text("action")
+    .$type<
+      | "person.create"
+      | "person.update"
+      | "person.delete"
+      | "contact.update"
+      | "request.approve"
+      | "request.reject"
+      | "role.change"
+    >()
+    .notNull(),
+  entityId: text("entity_id"),
+  entityLabel: text("entity_label").notNull(),
+  summary: text("summary").notNull(),
+});
+
+export const committeeInvites = pgTable("committee_invites", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  invitedByUserId: text("invited_by_user_id").notNull(),
+  invitedByEmail: text("invited_by_email"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
 });

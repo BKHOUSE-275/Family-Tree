@@ -1,13 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --page: #fbf7f0;
-  --ink: #1b1b1b;
-  --script: #1e4d5d;
-  --leaf: #d63d7a;
-  --leaf-deep: #b31d5c;
-  --leaf-soft: #f4b6d0;
-  --bark: #111111;
+  --page: #f3e6d0;
+  --ink: #2a1810;
+  --script: #3d4f28;
+  --leaf: #4f5d2a;
+  --leaf-deep: #3a461c;
+  --leaf-soft: #e4d3b0;
+  --bark: #5c3a21;
+  --ember: #c45c26;
+  --gold: #c9a227;
+  --canopy: #6b7c38;
+  --sky: #7ea0c4;
 }
 
 @theme inline {
@@ -18,6 +22,10 @@
   --color-leaf-deep: var(--leaf-deep);
   --color-leaf-soft: var(--leaf-soft);
   --color-bark: var(--bark);
+  --color-ember: var(--ember);
+  --color-gold: var(--gold);
+  --color-canopy: var(--canopy);
+  --color-sky: var(--sky);
   --font-sans: var(--font-body);
   --font-script: var(--font-script);
   --font-display: var(--font-display);
@@ -34,17 +42,17 @@ body {
 }
 
 ::selection {
-  background: var(--leaf-soft);
+  background: var(--gold);
   color: var(--ink);
 }
 
 @keyframes sway {
   0%,
   100% {
-    transform: rotate(-1.4deg);
+    transform: rotate(-0.6deg);
   }
   50% {
-    transform: rotate(1.6deg);
+    transform: rotate(0.7deg);
   }
 }
 
@@ -54,7 +62,7 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-7px);
+    transform: translateY(-3px);
   }
 }
 
@@ -69,9 +77,45 @@ body {
   }
 }
 
+@keyframes hang-sway {
+  0%,
+  100% {
+    transform: rotate(var(--leaf-tilt, 0deg));
+  }
+  50% {
+    transform: rotate(calc(var(--leaf-tilt, 0deg) + 2.8deg));
+  }
+}
+
+@keyframes fall-leaf {
+  0% {
+    transform: translateY(-12px) rotate(0deg);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(460px) rotate(210deg);
+    opacity: 0;
+  }
+}
+
+@keyframes canopy-breathe {
+  0%,
+  100% {
+    transform: rotate(-0.5deg);
+  }
+  50% {
+    transform: rotate(0.6deg);
+  }
+}
+
 .sway {
   animation: sway 6s ease-in-out infinite;
-  transform-origin: bottom center;
+  transform-origin: 50% 70%;
+}
+
+.canopy-sway {
+  animation: canopy-breathe 8s ease-in-out infinite;
+  transform-origin: 50% 40%;
 }
 
 .floaty {
@@ -83,19 +127,9 @@ body {
   animation: grow-up 1.4s ease-out both;
 }
 
-.leaf-dot {
-  fill: var(--leaf-soft);
-  opacity: 0.55;
-}
-
-@keyframes hang-sway {
-  0%,
-  100% {
-    transform: rotate(var(--leaf-tilt, 0deg));
-  }
-  50% {
-    transform: rotate(calc(var(--leaf-tilt, 0deg) + 2.8deg));
-  }
+.falling-leaf {
+  animation: fall-leaf 9s linear infinite;
+  transform-origin: center;
 }
 
 .hanging-leaf {
@@ -111,6 +145,60 @@ body {
 
 .hang-stem {
   fill: none;
-  stroke: #111;
+  stroke: var(--bark);
   stroke-linecap: round;
+}
+
+.autumn-sky {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, #f4c56a 0%, transparent 55%),
+    linear-gradient(180deg, #6f93bd 0%, #b7c98a 32%, #e8c07a 58%, #c56a32 82%, #6b3a1c 100%);
+}
+
+.ui-select {
+  appearance: none;
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid color-mix(in srgb, var(--bark) 28%, transparent);
+  background-color: var(--leaf-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%235c3a21' d='M4 6l4 5 4-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 0.9rem;
+  color: var(--ink);
+  padding: 0.55rem 2.4rem 0.55rem 0.85rem;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.ui-select:hover {
+  border-color: var(--bark);
+}
+
+.ui-select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+.ui-file-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  background: var(--ember);
+  color: white;
+  padding: 0.5rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ui-file-button:hover {
+  background: var(--gold);
+  color: var(--bark);
 }

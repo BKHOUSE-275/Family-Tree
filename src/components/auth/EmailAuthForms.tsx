@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { signInWithEmail, signUpWithEmail } from "@/app/actions/auth";
 
 const fieldClass =
-  "mt-1 w-full rounded-xl border border-black/10 px-3 py-2";
+  "mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base";
 
 export function SignInForm({
   redirectUrl,
@@ -27,18 +27,18 @@ export function SignInForm({
         <input name="password" type="password" required className={fieldClass} />
       </label>
       {state?.error ? (
-        <p className="mt-3 text-sm text-leaf-deep">{state.error}</p>
+        <p className="mt-3 text-sm text-ember">{state.error}</p>
       ) : null}
       <button
         disabled={pending}
-        className="mt-4 w-full rounded-full bg-script py-2 text-white disabled:opacity-60"
+        className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>
       <p className="mt-3 text-center text-sm text-black/60">
-        New to the tree?{" "}
+        Invited to the committee?{" "}
         <a href="/sign-up" className="text-script underline">
-          Create an account
+          Create a login
         </a>
         {inviteRequired ? " with the family invite code." : "."}
       </p>
@@ -68,16 +68,16 @@ export function SignUpForm({ inviteRequired }: { inviteRequired: boolean }) {
         <input
           name="inviteCode"
           required={inviteRequired}
-          placeholder={inviteRequired ? "Ask a family admin" : "Leave blank for developers"}
+          placeholder={inviteRequired ? "Ask a super admin" : "Leave blank for developers"}
           className={fieldClass}
         />
       </label>
       {state?.error ? (
-        <p className="mt-3 text-sm text-leaf-deep">{state.error}</p>
+        <p className="mt-3 text-sm text-ember">{state.error}</p>
       ) : null}
       <button
         disabled={pending}
-        className="mt-4 w-full rounded-full bg-script py-2 text-white disabled:opacity-60"
+        className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white disabled:opacity-60"
       >
         {pending ? "Creating account…" : "Create account"}
       </button>

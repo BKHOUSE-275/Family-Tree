@@ -1,4 +1,15 @@
-export type Role = "member" | "admin";
+export type Role = "member" | "admin" | "super_admin";
+
+export type ChangeRequestStatus = "pending" | "approved" | "rejected";
+
+export type AuditAction =
+  | "person.create"
+  | "person.update"
+  | "person.delete"
+  | "contact.update"
+  | "request.approve"
+  | "request.reject"
+  | "role.change";
 
 export type Person = {
   id: string;
@@ -12,6 +23,7 @@ export type Person = {
   deathDate: string | null;
   isDeceased: boolean;
   headstoneLocation: string | null;
+  headstonePhotoUrl: string | null;
   familysearchId: string | null;
   notes: string | null;
 };
@@ -59,6 +71,41 @@ export type Profile = {
   email: string | null;
 };
 
+export type ChangeRequest = {
+  id: string;
+  submitterUserId: string;
+  submitterEmail: string | null;
+  personId: string | null;
+  message: string;
+  photoUrl: string | null;
+  headstonePhotoUrl: string | null;
+  status: ChangeRequestStatus;
+  adminNote: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+};
+
+export type AuditEvent = {
+  id: string;
+  createdAt: string;
+  actorUserId: string;
+  actorEmail: string | null;
+  action: AuditAction;
+  entityId: string | null;
+  entityLabel: string;
+  summary: string;
+};
+
+export type CommitteeInvite = {
+  id: string;
+  email: string;
+  invitedByUserId: string;
+  invitedByEmail: string | null;
+  createdAt: string;
+  usedAt: string | null;
+};
+
 export type FamilySnapshot = {
   people: Person[];
   contacts: Contact[];
@@ -67,10 +114,16 @@ export type FamilySnapshot = {
   residences: Residence[];
   siblings: Sibling[];
   profiles: Profile[];
+  changeRequests: ChangeRequest[];
+  auditEvents: AuditEvent[];
+  committeeInvites: CommitteeInvite[];
 };
 
 export const ROOT_FATHER_ID = "felix-mitchell";
 export const ROOT_MOTHER_ID = "adaline-kiah";
+
+export const LEAF_FILLS = ["#4a5c28", "#6a7a32", "#c45c26", "#a3441c"] as const;
+export const LEAF_SELECTED_FILL = "#c9a227";
 
 export function displayName(person: Person): string {
   const nick = person.nickname ? ` “${person.nickname}”` : "";
@@ -86,4 +139,38 @@ export function yearRange(person: Person): string {
     return start ? `${start}–${end}` : end;
   }
   return start ? `b. ${start}` : "";
+}
+
+export function birthYear(person: Person): number | null {
+  const match = person.birthDate?.match(/\d{4}/);
+  return match ? Number(match[0]) : null;
+}
+
+export function sortByBirth<T extends Person>(people: T[]): T[] {
+  return [...people].sort((a, b) => {
+    const yearA = birthYear(a);
+    const yearB = birthYear(b);
+    if (yearA == null && yearB == null) return 0;
+    if (yearA == null) return 1;
+    if (yearB == null) return -1;
+    if (yearA !== yearB) return yearA - yearB;
+    return displayName(a).localeCompare(displayName(b));
+  });
+}
+
+export function leafFillFor(id: string, selected = false): string {
+  if (selected) return LEAF_SELECTED_FILL;
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return LEAF_FILLS[hash % LEAF_FILLS.length];
+}
+
+export function isRootPerson(id: string) {
+  return id === ROOT_FATHER_ID || id === ROOT_MOTHER_ID;
+}
+
+export function isCommittee(role: Role) {
+  return role === "admin" || role === "super_admin";
 }

@@ -59,14 +59,22 @@ export function PersonForm({
         />
         <Field name="familysearchId" label="FamilySearch ID" defaultValue={person?.familysearchId} />
       </div>
-      <PhotoField defaultUrl={person?.photoUrl} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <PhotoField defaultUrl={person?.photoUrl} name="photoUrl" label="Profile photo" />
+        <PhotoField
+          defaultUrl={person?.headstonePhotoUrl}
+          name="headstonePhotoUrl"
+          label="Headstone photo"
+          preview="rect"
+        />
+      </div>
       <label className="block text-sm font-semibold text-script">
         Notes
         <textarea
           name="notes"
           defaultValue={person?.notes ?? ""}
           rows={4}
-          className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
+          className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
         />
       </label>
 
@@ -98,20 +106,20 @@ export function PersonForm({
                 name="residenceYear"
                 defaultValue={"year" in row ? row.year ?? "" : ""}
                 placeholder="Year"
-                className="rounded-xl border border-black/10 px-3 py-2"
+                className="min-h-11 rounded-xl border border-black/10 px-3 py-2 text-base"
               />
               <input
                 name="residencePlace"
                 defaultValue={"place" in row ? row.place : ""}
                 placeholder="Place"
-                className="sm:col-span-2 rounded-xl border border-black/10 px-3 py-2"
+                className="min-h-11 rounded-xl border border-black/10 px-3 py-2 text-base sm:col-span-2"
               />
             </div>
           ),
         )}
       </fieldset>
 
-      <button className="rounded-full bg-script px-6 py-2 text-white">Save person</button>
+      <button className="min-h-11 rounded-full bg-script px-6 py-2 text-white">Save person</button>
     </form>
   );
 }
@@ -137,7 +145,7 @@ function Field({
         required={required}
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
-        className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
+        className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
       />
     </label>
   );
@@ -160,7 +168,7 @@ function Select({
       <select
         name={name}
         defaultValue={defaultValue ?? ""}
-        className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2"
+        className="ui-select mt-1"
       >
         <option value="">None</option>
         {options.map((person) => (

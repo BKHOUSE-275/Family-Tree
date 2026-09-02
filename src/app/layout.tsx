@@ -1,7 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Great_Vibes, Source_Sans_3 } from "next/font/google";
-import { SiteHeader } from "@/components/layout/SiteHeader";
-import { getAppUser } from "@/lib/auth";
 import "./globals.css";
 
 const script = Great_Vibes({
@@ -27,16 +25,19 @@ export const metadata: Metadata = {
   description: "A private family tree — our roots run deep.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const user = await getAppUser();
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
+export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${script.variable} ${display.variable} ${body.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-page text-ink">
-        <SiteHeader user={user} />
+      <body className="flex min-h-full flex-col overflow-x-hidden bg-page pb-[env(safe-area-inset-bottom)] text-ink">
         <div className="flex flex-1 flex-col">{children}</div>
       </body>
     </html>

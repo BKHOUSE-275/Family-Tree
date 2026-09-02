@@ -3,7 +3,7 @@ import { savePersonAndRedirect } from "@/app/actions/family";
 import { PersonForm } from "@/components/admin/PersonForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { displayName } from "@/lib/types";
+import { displayName, isCommittee } from "@/lib/types";
 
 export default async function EditPersonPage({
   params,
@@ -12,7 +12,7 @@ export default async function EditPersonPage({
 }) {
   const user = await getAppUser();
   if (!user) redirect("/sign-in?redirect_url=/admin");
-  if (user.role !== "admin") redirect("/tree");
+  if (!isCommittee(user.role)) redirect("/");
 
   const { id } = await params;
   const snapshot = await getSnapshot();
@@ -21,7 +21,7 @@ export default async function EditPersonPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <h1 className="font-[family-name:var(--font-script)] text-5xl text-script">
+      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
         {displayName(person)}
       </h1>
       <div className="mt-8">

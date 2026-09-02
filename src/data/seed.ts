@@ -18,6 +18,7 @@ function person(
     deathDate: extra.deathDate ?? null,
     isDeceased: extra.isDeceased ?? false,
     headstoneLocation: extra.headstoneLocation ?? null,
+    headstonePhotoUrl: extra.headstonePhotoUrl ?? null,
     familysearchId: extra.familysearchId ?? null,
     notes: extra.notes ?? null,
   };
@@ -232,6 +233,9 @@ export const seedSnapshot: FamilySnapshot = {
   ],
   siblings: [{ personAId: "felix-mitchell", personBId: "bill-mitchell" }],
   profiles: [],
+  changeRequests: [],
+  auditEvents: [],
+  committeeInvites: [],
 };
 
 export const UNPLACED_IDS = [

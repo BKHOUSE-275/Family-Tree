@@ -1,27 +1,46 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PersonPanel } from "@/components/person/PersonPanel";
 import { HangingTree } from "@/components/tree/HangingTree";
 import {
   ROOT_FATHER_ID,
   ROOT_MOTHER_ID,
   displayName,
+  isRootPerson,
+  sortByBirth,
   yearRange,
   type Contact,
   type FamilySnapshot,
   type Person,
 } from "@/lib/types";
 
-export function FamilyTree({ snapshot }: { snapshot: FamilySnapshot }) {
+export function FamilyTree({
+  snapshot,
+  onSuggest,
+}: {
+  snapshot: FamilySnapshot;
+  onSuggest?: (personId: string) => void;
+}) {
   const byId = useMemo(() => {
     return new Map(snapshot.people.map((person) => [person.id, person]));
   }, [snapshot.people]);
 
   const [focusId, setFocusId] = useState(ROOT_FATHER_ID);
   const [query, setQuery] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
+  const skipPanelScroll = useRef(true);
+
+  useEffect(() => {
+    if (skipPanelScroll.current) {
+      skipPanelScroll.current = false;
+      return;
+    }
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focusId]);
 
   const focus = byId.get(focusId) ?? byId.get(ROOT_FATHER_ID)!;
+  const isTopLevel = isRootPerson(focusId);
   const children = childPeople(snapshot, focusId);
   const parents = parentPeople(snapshot, focusId);
   const siblings = siblingPeople(snapshot, focusId, byId);
@@ -32,23 +51,15 @@ export function FamilyTree({ snapshot }: { snapshot: FamilySnapshot }) {
 
   const father = byId.get(ROOT_FATHER_ID)!;
   const mother = byId.get(ROOT_MOTHER_ID)!;
-  const firstGeneration = uniquePeople([
-    ...childPeople(snapshot, ROOT_FATHER_ID),
-    ...childPeople(snapshot, ROOT_MOTHER_ID),
-  ]);
-  const firstGenIds = useMemo(
-    () => new Set(firstGeneration.map((person) => person.id)),
-    [firstGeneration],
+  const firstGeneration = sortByBirth(
+    uniquePeople([
+      ...childPeople(snapshot, ROOT_FATHER_ID),
+      ...childPeople(snapshot, ROOT_MOTHER_ID),
+    ]),
   );
 
-  const hangFromId = hangSourceId(snapshot, focusId, firstGenIds);
-  const hangingChildren = hangFromId ? childPeople(snapshot, hangFromId) : [];
-  const nestedChildren =
-    hangFromId && hangFromId !== focusId ? childPeople(snapshot, focusId) : [];
-  const showEmptyBranch =
-    focusId !== ROOT_FATHER_ID &&
-    focusId !== ROOT_MOTHER_ID &&
-    children.length === 0;
+  const hangingChildren = isTopLevel ? [] : children;
+  const showEmptyBranch = !isTopLevel && children.length === 0;
 
   const matches = snapshot.people.filter((person) =>
     displayName(person).toLowerCase().includes(query.trim().toLowerCase()),
@@ -56,25 +67,39 @@ export function FamilyTree({ snapshot }: { snapshot: FamilySnapshot }) {
 
   const trail = ancestryTrail(snapshot, focusId, byId);
 
+  function resetView() {
+    setFocusId(ROOT_FATHER_ID);
+    setQuery("");
+  }
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.9fr)]">
+    <div className="flex flex-col gap-10">
       <section>
-        <label className="block">
-          <span className="sr-only">Search the family</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search a name…"
-            className="w-full rounded-full border border-black/10 bg-white px-4 py-2 outline-none ring-leaf/30 focus:ring-2"
-          />
-        </label>
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-3">
+          <label className="min-w-0 flex-1 basis-48">
+            <span className="sr-only">Search the family</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search a name…"
+              className="min-h-11 w-full rounded-full border border-black/10 bg-white/90 px-4 py-2 text-base outline-none ring-ember/30 focus:ring-2"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={resetView}
+            className="min-h-11 rounded-full border border-bark/20 bg-white/90 px-4 py-2 text-sm text-bark hover:bg-gold/40"
+          >
+            Reset
+          </button>
+        </div>
         {query.trim() ? (
-          <ul className="mt-3 max-h-40 overflow-auto rounded-2xl bg-white/80 p-2 text-sm shadow">
+          <ul className="mx-auto mt-3 max-h-40 max-w-3xl overflow-auto rounded-2xl bg-white/80 p-2 text-sm shadow">
             {matches.length ? (
               matches.map((person) => (
                 <li key={person.id}>
                   <button
-                    className="w-full rounded-xl px-3 py-2 text-left hover:bg-leaf-soft"
+                    className="min-h-11 w-full rounded-xl px-3 py-2 text-left hover:bg-leaf-soft"
                     onClick={() => {
                       setFocusId(person.id);
                       setQuery("");
@@ -91,79 +116,65 @@ export function FamilyTree({ snapshot }: { snapshot: FamilySnapshot }) {
           </ul>
         ) : null}
 
-        <nav className="mt-4 flex flex-wrap gap-2 text-sm text-script">
+        <nav className="mx-auto mt-4 flex max-w-3xl flex-wrap justify-center gap-2 text-sm text-script">
           {trail.map((person, index) => (
             <span key={person.id} className="flex items-center gap-2">
               {index ? <span aria-hidden>›</span> : null}
-              <button className="hover:underline" onClick={() => setFocusId(person.id)}>
+              <button
+                className="inline-flex min-h-11 items-center hover:underline"
+                onClick={() => setFocusId(person.id)}
+              >
                 {displayName(person)}
               </button>
             </span>
           ))}
         </nav>
 
-        <div className="relative mt-6 overflow-hidden rounded-[2.5rem] border border-black/8 bg-[linear-gradient(180deg,#fff 0%,#f7ebe3 55%,#efe2d4 100%)] p-3 sm:p-5">
+        <div className="relative mt-2 w-full">
           <HangingTree
             father={father}
             mother={mother}
-            firstGeneration={firstGeneration}
-            focusId={focusId}
-            hangFromId={hangFromId}
+            isTopLevel={isTopLevel}
+            subject={isTopLevel ? null : focus}
+            canopyPeople={firstGeneration}
             hangingChildren={hangingChildren}
-            nestedChildren={nestedChildren}
+            focusId={focusId}
             onSelect={setFocusId}
           />
         </div>
 
         {showEmptyBranch ? (
-          <p className="mt-4 text-black/60">
-            No children hang from {displayName(focus)} yet. An admin can add them
-            from the Admin page.
+          <p className="mx-auto mt-4 max-w-3xl text-center text-black/60">
+            No children hang from {displayName(focus)} yet. Share a note below
+            if you know more of this branch.
           </p>
         ) : null}
       </section>
 
-      <PersonPanel
-        person={focus}
-        parents={parents}
-        partners={partners}
-        children={children}
-        siblings={siblings}
-        residences={residences}
-        contact={contact}
-        onSelect={setFocusId}
-      />
+      <div ref={panelRef} className="mx-auto w-full max-w-3xl scroll-mt-6">
+        <PersonPanel
+          person={focus}
+          parents={parents}
+          partners={partners}
+          childPeople={children}
+          siblings={siblings}
+          residences={residences}
+          contact={contact}
+          onSelect={setFocusId}
+          onSuggest={onSuggest}
+        />
+      </div>
     </div>
   );
-}
-
-function hangSourceId(
-  snapshot: FamilySnapshot,
-  focusId: string,
-  firstGenIds: Set<string>,
-) {
-  if (focusId === ROOT_FATHER_ID || focusId === ROOT_MOTHER_ID) return null;
-  if (firstGenIds.has(focusId)) return focusId;
-
-  const seen = new Set<string>();
-  let current = focusId;
-  while (!seen.has(current)) {
-    seen.add(current);
-    const parents = parentPeople(snapshot, current);
-    const gen1 = parents.find((parent) => firstGenIds.has(parent.id));
-    if (gen1) return gen1.id;
-    if (!parents[0]) break;
-    current = parents[0].id;
-    if (current === ROOT_FATHER_ID || current === ROOT_MOTHER_ID) break;
-  }
-  return null;
 }
 
 function childPeople(snapshot: FamilySnapshot, parentId: string) {
   const ids = snapshot.parentChildren
     .filter((link) => link.parentId === parentId)
     .map((link) => link.childId);
-  return uniquePeople(snapshot.people.filter((person) => ids.includes(person.id)));
+  return sortByBirth(
+    uniquePeople(snapshot.people.filter((person) => ids.includes(person.id))),
+  );
 }
 
 function parentPeople(snapshot: FamilySnapshot, childId: string) {
@@ -178,6 +189,7 @@ function siblingPeople(
   personId: string,
   byId: Map<string, Person>,
 ) {
+  const self = byId.get(personId);
   const fromParents = parentPeople(snapshot, personId).flatMap((parent) =>
     childPeople(snapshot, parent.id),
   );
@@ -186,9 +198,13 @@ function siblingPeople(
     if (link.personBId === personId) return [byId.get(link.personAId)];
     return [];
   });
-  return uniquePeople(
-    [...fromParents, ...fromLinks].filter((person): person is Person => Boolean(person)),
-  ).filter((person) => person.id !== personId);
+  return sortByBirth(
+    uniquePeople(
+      [self, ...fromParents, ...fromLinks].filter((person): person is Person =>
+        Boolean(person),
+      ),
+    ),
+  );
 }
 
 function partnerPeople(
@@ -230,7 +246,7 @@ function ancestryTrail(
   while (current && !seen.has(current.id)) {
     trail.unshift(current);
     seen.add(current.id);
-    if (current.id === ROOT_FATHER_ID || current.id === ROOT_MOTHER_ID) break;
+    if (isRootPerson(current.id)) break;
     const parents = parentPeople(snapshot, current.id);
     current = parents[0];
   }

@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
-import { getProfile, getSnapshot, upsertProfile } from "@/lib/store";
-import type { Role } from "@/lib/types";
+import { findPendingInvite, getProfile, saveCommitteeInvite, upsertProfile } from "@/lib/store";
+import { isCommittee, type Role } from "@/lib/types";
 import {
   LOCAL_AUTH_COOKIE,
   LOCAL_USER_ID,
+  committeeAllowlist,
   isNeonAuthConfigured,
 } from "@/lib/auth-constants";
 import { getNeonAuth } from "@/lib/neon-auth";
@@ -19,11 +20,8 @@ export type AppUser = {
   isLocal: boolean;
 };
 
-function adminEmails() {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
+function isAllowlisted(email: string | null) {
+  return Boolean(email && committeeAllowlist().includes(email.toLowerCase()));
 }
 
 export async function getAppUser(): Promise<AppUser | null> {
@@ -33,17 +31,26 @@ export async function getAppUser(): Promise<AppUser | null> {
     if (!user) return null;
     const email = user.email ?? null;
     let profile = await getProfile(user.id);
-    const existingProfiles = (await getSnapshot()).profiles;
-    const firstLogin = !profile && existingProfiles.length === 0;
-    const shouldBeAdmin =
-      firstLogin ||
-      Boolean(email && adminEmails().includes(email.toLowerCase())) ||
-      profile?.role === "admin";
+    let role: Role = profile?.role ?? "member";
+
+    if (isAllowlisted(email)) {
+      role = "super_admin";
+    } else if (email && role === "member") {
+      const invite = await findPendingInvite(email);
+      if (invite) {
+        role = "admin";
+        await saveCommitteeInvite({
+          ...invite,
+          usedAt: new Date().toISOString(),
+        });
+      }
+    }
+
     if (!profile) {
       profile = {
         userId: user.id,
         personId: null,
-        role: shouldBeAdmin ? "admin" : "member",
+        role,
         email,
       };
       try {
@@ -55,7 +62,7 @@ export async function getAppUser(): Promise<AppUser | null> {
       const next = {
         ...profile,
         email: email ?? profile.email,
-        role: shouldBeAdmin ? ("admin" as const) : profile.role,
+        role,
       };
       if (next.email !== profile.email || next.role !== profile.role) {
         await upsertProfile(next);
@@ -79,7 +86,7 @@ export async function getAppUser(): Promise<AppUser | null> {
     id: LOCAL_USER_ID,
     email: profile?.email ?? null,
     name: "Family editor",
-    role: profile?.role ?? "admin",
+    role: profile?.role ?? "super_admin",
     personId: profile?.personId ?? null,
     isLocal: true,
   };
@@ -95,12 +102,20 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  if (user.role !== "admin") {
+  if (!isCommittee(user.role)) {
     throw new Error("Only family admins can do that.");
   }
   return user;
 }
 
-export function canEditPerson(user: AppUser, personId: string) {
-  return user.role === "admin" || user.personId === personId;
+export async function requireSuperAdmin() {
+  const user = await requireAdmin();
+  if (user.role !== "super_admin") {
+    throw new Error("Only a super admin can manage committee permissions.");
+  }
+  return user;
+}
+
+export function canEditPerson(user: AppUser) {
+  return isCommittee(user.role);
 }

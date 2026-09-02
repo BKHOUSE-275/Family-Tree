@@ -11,8 +11,8 @@ import { getNeonAuth } from "@/lib/neon-auth";
 import { upsertProfile } from "@/lib/store";
 
 function safeRedirect(value: FormDataEntryValue | null) {
-  const next = String(value ?? "/tree");
-  return next.startsWith("/") ? next : "/tree";
+  const next = String(value ?? "/admin");
+  return next.startsWith("/") ? next : "/admin";
 }
 
 export async function signInWithEmail(
@@ -65,7 +65,7 @@ export async function signUpWithEmail(
   if (error) {
     return { error: error.message || "Could not create the account." };
   }
-  redirect("/tree");
+  redirect("/admin");
 }
 
 export async function signInLocal(formData: FormData) {
@@ -89,7 +89,7 @@ export async function signInLocal(formData: FormData) {
   await upsertProfile({
     userId: LOCAL_USER_ID,
     personId: null,
-    role: "admin",
+    role: "super_admin",
     email: null,
   });
 
