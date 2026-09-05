@@ -1,39 +1,35 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FallTrunk, LeafShape, makeFoliage } from "@/components/tree/FallFoliage";
 import { PersonLeaf } from "@/components/tree/PersonLeaf";
 import { displayName, type Person } from "@/lib/types";
 
-const VIEW = { w: 800, h: 760 };
+const VIEW = { w: 461, h: 612 };
+const TREE_SRC = "/tree.png";
 
 type Slot = {
   x: number;
   y: number;
   rotate: number;
-  stemFrom: { x: number; y: number };
 };
 
 type Point = { x: number; y: number; rotate: number };
 
 const CANOPY_EIGHT: Slot[] = [
-  { x: 88, y: 188, rotate: -16, stemFrom: { x: 168, y: 158 } },
-  { x: 198, y: 86, rotate: -9, stemFrom: { x: 258, y: 72 } },
-  { x: 322, y: 40, rotate: -3, stemFrom: { x: 360, y: 36 } },
-  { x: 478, y: 40, rotate: 3, stemFrom: { x: 440, y: 36 } },
-  { x: 602, y: 86, rotate: 9, stemFrom: { x: 542, y: 72 } },
-  { x: 712, y: 188, rotate: 16, stemFrom: { x: 632, y: 158 } },
-  { x: 248, y: 246, rotate: -7, stemFrom: { x: 318, y: 206 } },
-  { x: 552, y: 246, rotate: 7, stemFrom: { x: 482, y: 206 } },
+  { x: 78, y: 248, rotate: -16 },
+  { x: 128, y: 148, rotate: -10 },
+  { x: 186, y: 88, rotate: -4 },
+  { x: 274, y: 88, rotate: 4 },
+  { x: 332, y: 148, rotate: 10 },
+  { x: 382, y: 248, rotate: 16 },
+  { x: 156, y: 318, rotate: -7 },
+  { x: 304, y: 318, rotate: 7 },
 ];
 
 const SUBJECT_SLOT: Slot = {
-  x: 400,
-  y: 132,
+  x: 230,
+  y: 150,
   rotate: 0,
-  stemFrom: { x: 400, y: 96 },
 };
-
-const foliage = makeFoliage(400, 168, 310, 150, 120, 19);
 
 export function HangingTree({
   father,
@@ -63,64 +59,22 @@ export function HangingTree({
 
   return (
     <div
-      className="relative mx-auto w-full"
+      className="relative mx-auto w-full max-w-xl"
       style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
     >
       <p className="sr-only">
         Family tree with Felix and Adaline at the roots. Select a leaf to open
         that person and see only their children.
       </p>
-        <svg
-          viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
-          className="absolute inset-0 h-full w-full"
-          aria-hidden
-        >
-          <FallTrunk originX={400} groundY={710} height={430} />
-          <g className="canopy-sway">
-            {foliage.map((leaf, i) => (
-              <LeafShape key={i} {...leaf} />
-            ))}
-          </g>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={TREE_SRC}
+        alt=""
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain object-bottom"
+      />
 
-          <g>
-            {slots.map((slot, i) => (
-              <path
-                key={`stem-${i}`}
-                className="hang-stem"
-                d={stemPath(slot.stemFrom, { x: slot.x, y: slot.y })}
-                strokeWidth="2.2"
-              />
-            ))}
-            {subjectSlot ? (
-              <path
-                className="hang-stem"
-                d={stemPath(subjectSlot.stemFrom, { x: subjectSlot.x, y: subjectSlot.y })}
-                strokeWidth="2.6"
-              />
-            ) : null}
-          </g>
-
-          <AnimatePresence>
-            {childOrigin && childPoints.length ? (
-              <motion.g
-                key={`twig-${focusId}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {childPoints.map((point, i) => (
-                  <path
-                    key={`child-stem-${i}`}
-                    className="hang-stem"
-                    d={stemPath({ x: childOrigin.x, y: childOrigin.y + 10 }, point)}
-                    strokeWidth="1.6"
-                  />
-                ))}
-              </motion.g>
-            ) : null}
-          </AnimatePresence>
-        </svg>
-
+      <div className="absolute inset-0">
         {isTopLevel
           ? canopyPeople.map((person, index) => {
               const slot = slots[index];
@@ -184,41 +138,38 @@ export function HangingTree({
           })}
         </AnimatePresence>
 
-        {isTopLevel ? (
-          <>
-            <RootPlaque
-              person={father}
-              active={focusId === father.id}
-              x={268}
-              y={648}
-              onClick={() => onSelect(father.id)}
-            />
-            <p
-              className="pointer-events-none absolute font-[family-name:var(--font-script)] text-2xl text-script sm:text-3xl"
-              style={{
-                left: "50%",
-                top: `${(652 / VIEW.h) * 100}%`,
-                transform: "translate(-50%, 0)",
-              }}
-            >
-              &
-            </p>
-            <RootPlaque
-              person={mother}
-              active={focusId === mother.id}
-              x={532}
-              y={648}
-              onClick={() => onSelect(mother.id)}
-            />
-            <p
-              className="pointer-events-none absolute w-full text-center text-[0.65rem] uppercase tracking-[0.28em] text-script"
-              style={{ top: `${(708 / VIEW.h) * 100}%` }}
-            >
-              Great-great-grandparents
-            </p>
-          </>
-        ) : null}
+        <RootPlaque
+          person={father}
+          active={focusId === father.id}
+          x={132}
+          y={518}
+          onClick={() => onSelect(father.id)}
+        />
+        <p
+          className="pointer-events-none absolute font-[family-name:var(--font-script)] text-2xl text-script sm:text-3xl"
+          style={{
+            left: "50%",
+            top: `${(522 / VIEW.h) * 100}%`,
+            transform: "translate(-50%, 0)",
+          }}
+        >
+          &
+        </p>
+        <RootPlaque
+          person={mother}
+          active={focusId === mother.id}
+          x={328}
+          y={518}
+          onClick={() => onSelect(mother.id)}
+        />
+        <p
+          className="pointer-events-none absolute w-full text-center text-[0.65rem] uppercase tracking-[0.28em] text-script"
+          style={{ top: `${(572 / VIEW.h) * 100}%` }}
+        >
+          Great-great-grandparents
+        </p>
       </div>
+    </div>
   );
 }
 
@@ -283,33 +234,30 @@ function RootPlaque({
 function canopySlots(count: number): Slot[] {
   if (count === 8) return CANOPY_EIGHT;
   if (count === 0) return [];
+  const cx = VIEW.w / 2;
+  const cy = VIEW.h * 0.34;
+  const rx = VIEW.w * 0.38;
+  const ry = VIEW.h * 0.22;
   return Array.from({ length: count }, (_, i) => {
     const t = count === 1 ? 0.5 : i / (count - 1);
     const angle = Math.PI * (0.92 - t * 0.84);
-    const rx = 330;
-    const ry = 175;
-    const x = 400 + Math.cos(angle) * rx;
-    const y = 210 - Math.sin(angle) * ry;
     return {
-      x,
-      y,
+      x: cx + Math.cos(angle) * rx,
+      y: cy - Math.sin(angle) * ry,
       rotate: (t - 0.5) * 28,
-      stemFrom: {
-        x: 400 + Math.cos(angle) * (rx * 0.52),
-        y: 250 - Math.sin(angle) * (ry * 0.42),
-      },
     };
   });
 }
 
 function childCluster(origin: Point, count: number, scale = 1): Point[] {
   if (count === 0) return [];
-  const childW = 92 * scale;
-  const gap = 8;
-  const hang = 72 * scale;
-  const rowDy = 76 * scale;
+  const childW = 52 * scale;
+  const gap = 5;
+  const hang = 58 * scale;
+  const rowDy = 62 * scale;
   const rows = count <= 5 ? [count] : [Math.ceil(count / 2), Math.floor(count / 2)];
-  const prefer = origin.x < 280 ? "right" : origin.x > 520 ? "left" : "center";
+  const prefer =
+    origin.x < VIEW.w * 0.35 ? "right" : origin.x > VIEW.w * 0.65 ? "left" : "center";
   const points: Point[] = [];
 
   rows.forEach((n, row) => {
@@ -317,7 +265,7 @@ function childCluster(origin: Point, count: number, scale = 1): Point[] {
     let start = origin.x - width / 2 + childW / 2;
     if (prefer === "right") start = origin.x + 8;
     if (prefer === "left") start = origin.x - width - 8 + childW;
-    start = Math.max(56, Math.min(start, VIEW.w - 56 - (width - childW)));
+    start = Math.max(36, Math.min(start, VIEW.w - 36 - (width - childW)));
     const y = origin.y + hang + row * rowDy;
     for (let c = 0; c < n; c += 1) {
       const t = n === 1 ? 0.5 : c / (n - 1);
@@ -330,9 +278,4 @@ function childCluster(origin: Point, count: number, scale = 1): Point[] {
   });
 
   return points;
-}
-
-function stemPath(from: { x: number; y: number }, to: { x: number; y: number }) {
-  const midY = from.y + (to.y - from.y) * 0.45;
-  return `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${to.y - 22}, ${to.x} ${to.y}`;
 }
