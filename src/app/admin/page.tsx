@@ -92,7 +92,9 @@ export default async function AdminPage() {
                 <Link href={`/admin/people/${person.id}`} className="font-semibold hover:text-leaf-deep">
                   {displayName(person)}
                 </Link>
-                <p className="text-sm text-black/55">{yearRange(person)}</p>
+                {yearRange(person) ? (
+                  <p className="text-sm text-black/55">{yearRange(person)}</p>
+                ) : null}
               </div>
               <form action={deletePersonAction}>
                 <input type="hidden" name="id" value={person.id} />

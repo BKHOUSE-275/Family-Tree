@@ -28,15 +28,25 @@ export function PersonPanel({
   onSelect: (id: string) => void;
   onSuggest?: (personId: string) => void;
 }) {
+  const years = yearRange(person);
+  const showHeadstone =
+    person.isDeceased &&
+    Boolean(person.headstoneLocation || person.deathDate || person.headstonePhotoUrl);
+  const hasDetails =
+    Boolean(person.birthPlace || person.birthDate) ||
+    showHeadstone ||
+    Boolean(contact?.address || contact?.phone || contact?.email) ||
+    Boolean(person.notes);
+
   return (
     <AnimatePresence mode="wait">
       <motion.aside
         key={person.id}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 12 }}
         transition={{ duration: 0.35 }}
-        className="h-fit rounded-3xl border border-bark/10 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)]"
+        className="h-fit rounded-3xl border border-bark/10 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-8 lg:p-10"
       >
         <div className="flex items-start gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-leaf-soft text-leaf-deep ring-2 ring-gold/70 sm:h-24 sm:w-24">
@@ -56,47 +66,42 @@ export function PersonPanel({
             <h2 className="font-[family-name:var(--font-display)] text-2xl leading-tight break-words sm:text-3xl">
               {displayName(person)}
             </h2>
-            <p className="text-sm text-black/60">{yearRange(person)}</p>
+            {years ? <p className="text-sm text-black/60">{years}</p> : null}
           </div>
         </div>
 
-        <dl className="mt-6 space-y-4 text-sm">
-          <Field label="1. Name" value={displayName(person)} />
-          <Field label="1A. Place of birth" value={person.birthPlace} extra={person.birthDate} />
-          {person.isDeceased ? (
-            <div>
-              <dt className="font-semibold text-script">1B. Headstone</dt>
-              <dd className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-                <div className="min-w-0 flex-1">
-                  {person.headstoneLocation ?? "Location not recorded yet"}
-                  {person.deathDate ? (
-                    <span className="block text-black/55">Died {person.deathDate}</span>
-                  ) : (
-                    <span className="block text-black/55">Deceased</span>
-                  )}
-                </div>
-                {person.headstonePhotoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={person.headstonePhotoUrl}
-                    alt={`Headstone for ${displayName(person)}`}
-                    className="h-28 w-36 shrink-0 rounded-xl object-cover ring-1 ring-bark/15"
-                  />
-                ) : (
-                  <div className="flex h-28 w-36 shrink-0 items-center justify-center rounded-xl bg-leaf-soft text-center text-xs text-bark/70">
-                    Headstone photo
-                  </div>
-                )}
-              </dd>
-            </div>
-          ) : (
-            <Field label="1B. Headstone" value="Living" />
-          )}
-          <Field label="2. Address" value={contact?.address} empty="Shared only if this person chooses to" />
-          <Field label="3. Telephone" value={contact?.phone} empty="Shared only if this person chooses to" />
-          <Field label="4. Email" value={contact?.email} empty="Shared only if this person chooses to" />
-          {person.notes ? <Field label="Notes" value={person.notes} /> : null}
-        </dl>
+        {hasDetails ? (
+          <dl className="mt-6 space-y-4 text-sm">
+            <Field label="1A. Place of birth" value={person.birthPlace} extra={person.birthDate} />
+            {showHeadstone ? (
+              <div>
+                <dt className="font-semibold text-script">1B. Headstone</dt>
+                <dd className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+                  {person.headstoneLocation || person.deathDate ? (
+                    <div className="min-w-0 flex-1">
+                      {person.headstoneLocation}
+                      {person.deathDate ? (
+                        <span className="block text-black/55">Died {person.deathDate}</span>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {person.headstonePhotoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={person.headstonePhotoUrl}
+                      alt={`Headstone for ${displayName(person)}`}
+                      className="h-28 w-36 shrink-0 rounded-xl object-cover ring-1 ring-bark/15"
+                    />
+                  ) : null}
+                </dd>
+              </div>
+            ) : null}
+            <Field label="2. Address" value={contact?.address} />
+            <Field label="3. Telephone" value={contact?.phone} />
+            <Field label="4. Email" value={contact?.email} />
+            <Field label="Notes" value={person.notes} />
+          </dl>
+        ) : null}
 
         {residences.length ? (
           <section className="mt-6">
@@ -155,18 +160,17 @@ function Field({
   label,
   value,
   extra,
-  empty = "Not recorded yet",
 }: {
   label: string;
   value?: string | null;
   extra?: string | null;
-  empty?: string;
 }) {
+  if (!value && !extra) return null;
   return (
     <div>
       <dt className="font-semibold text-script">{label}</dt>
       <dd>
-        {value || empty}
+        {value}
         {extra ? <span className="block text-black/55">{extra}</span> : null}
       </dd>
     </div>

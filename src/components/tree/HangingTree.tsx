@@ -1,35 +1,20 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { OakTree } from "@/components/tree/OakTree";
 import { PersonLeaf } from "@/components/tree/PersonLeaf";
+import {
+  ROOT_FATHER_POS,
+  ROOT_MOTHER_POS,
+  SUBJECT_SLOT,
+  VIEW,
+  canopySlots,
+  childCluster,
+  childForkPaths,
+  limbTipForSlot,
+  petiolePath,
+  type Slot,
+} from "@/components/tree/treeGeometry";
 import { displayName, type Person } from "@/lib/types";
-
-const VIEW = { w: 461, h: 612 };
-const TREE_SRC = "/tree.png";
-
-type Slot = {
-  x: number;
-  y: number;
-  rotate: number;
-};
-
-type Point = { x: number; y: number; rotate: number };
-
-const CANOPY_EIGHT: Slot[] = [
-  { x: 78, y: 248, rotate: -16 },
-  { x: 128, y: 148, rotate: -10 },
-  { x: 186, y: 88, rotate: -4 },
-  { x: 274, y: 88, rotate: 4 },
-  { x: 332, y: 148, rotate: 10 },
-  { x: 382, y: 248, rotate: 16 },
-  { x: 156, y: 318, rotate: -7 },
-  { x: 304, y: 318, rotate: 7 },
-];
-
-const SUBJECT_SLOT: Slot = {
-  x: 230,
-  y: 150,
-  rotate: 0,
-};
 
 export function HangingTree({
   father,
@@ -52,26 +37,81 @@ export function HangingTree({
 }) {
   const slots = isTopLevel ? canopySlots(canopyPeople.length) : [];
   const subjectSlot = !isTopLevel && subject ? SUBJECT_SLOT : null;
-  const childOrigin = isTopLevel ? null : subjectSlot;
-  const childPoints = childOrigin
-    ? childCluster(childOrigin, hangingChildren.length)
+  const childPoints = subjectSlot ? childCluster(subjectSlot, hangingChildren.length) : [];
+  const petioles = isTopLevel
+    ? slots.map((slot, index) => petiolePath(limbTipForSlot(slot, index, slots.length), slot))
+    : [];
+  const forks = subjectSlot
+    ? childForkPaths(
+        subjectSlot,
+        childPoints,
+        hangingChildren.map((person) => person.id),
+      )
     : [];
 
   return (
     <div
-      className="relative mx-auto w-full max-w-xl"
+      className="relative mx-auto w-full max-w-3xl"
       style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
     >
       <p className="sr-only">
         Family tree with Felix and Adaline at the roots. Select a leaf to open
         that person and see only their children.
       </p>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={TREE_SRC}
-        alt=""
-        draggable={false}
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain object-bottom"
+      <OakTree
+        layer="back"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none"
+      />
+
+      <svg
+        viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
+        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+        aria-hidden
+        preserveAspectRatio="xMidYMax meet"
+      >
+        <defs>
+          <radialGradient
+            id="fork-bark"
+            cx={SUBJECT_SLOT.x}
+            cy={SUBJECT_SLOT.y + 116}
+            r="280"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0%" stopColor="#6b4423" stopOpacity="0.18" />
+            <stop offset="42%" stopColor="#5c3a21" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#4a2e16" stopOpacity="0.72" />
+          </radialGradient>
+        </defs>
+        {isTopLevel
+          ? petioles.map((d, index) => (
+              <path
+                key={`petiole-${canopyPeople[index]?.id ?? index}`}
+                d={d}
+                fill="#5c3a21"
+                opacity="0.5"
+                style={{ mixBlendMode: "multiply" }}
+              />
+            ))
+          : null}
+        <AnimatePresence>
+          {forks.map((fork) => (
+            <motion.path
+              key={fork.id}
+              d={fork.d}
+              fill="url(#fork-bark)"
+              style={{ mixBlendMode: "multiply", fill: "url(#fork-bark)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.55 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+            />
+          ))}
+        </AnimatePresence>
+      </svg>
+
+      <OakTree
+        layer="front"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none"
       />
 
       <div className="absolute inset-0">
@@ -141,15 +181,15 @@ export function HangingTree({
         <RootPlaque
           person={father}
           active={focusId === father.id}
-          x={132}
-          y={518}
+          x={ROOT_FATHER_POS.x}
+          y={ROOT_FATHER_POS.y}
           onClick={() => onSelect(father.id)}
         />
         <p
           className="pointer-events-none absolute font-[family-name:var(--font-script)] text-2xl text-script sm:text-3xl"
           style={{
             left: "50%",
-            top: `${(522 / VIEW.h) * 100}%`,
+            top: `${(812 / VIEW.h) * 100}%`,
             transform: "translate(-50%, 0)",
           }}
         >
@@ -158,13 +198,13 @@ export function HangingTree({
         <RootPlaque
           person={mother}
           active={focusId === mother.id}
-          x={328}
-          y={518}
+          x={ROOT_MOTHER_POS.x}
+          y={ROOT_MOTHER_POS.y}
           onClick={() => onSelect(mother.id)}
         />
         <p
           className="pointer-events-none absolute w-full text-center text-[0.65rem] uppercase tracking-[0.28em] text-script"
-          style={{ top: `${(572 / VIEW.h) * 100}%` }}
+          style={{ top: `${(872 / VIEW.h) * 100}%` }}
         >
           Great-great-grandparents
         </p>
@@ -179,7 +219,7 @@ function LeafAnchor({
   z = 10,
   children,
 }: {
-  point: Point;
+  point: Slot;
   size: "sm" | "md";
   z?: number;
   children: ReactNode;
@@ -188,8 +228,8 @@ function LeafAnchor({
     <div
       className={`absolute ${
         size === "md"
-          ? "w-[clamp(4.25rem,12%,8.6rem)]"
-          : "w-[clamp(3.6rem,10%,7.2rem)]"
+          ? "w-[clamp(5.4rem,15%,10.2rem)]"
+          : "w-[clamp(4.6rem,12.4%,8.4rem)]"
       }`}
       style={{
         left: `${(point.x / VIEW.w) * 100}%`,
@@ -229,53 +269,4 @@ function RootPlaque({
       {displayName(person)}
     </button>
   );
-}
-
-function canopySlots(count: number): Slot[] {
-  if (count === 8) return CANOPY_EIGHT;
-  if (count === 0) return [];
-  const cx = VIEW.w / 2;
-  const cy = VIEW.h * 0.34;
-  const rx = VIEW.w * 0.38;
-  const ry = VIEW.h * 0.22;
-  return Array.from({ length: count }, (_, i) => {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    const angle = Math.PI * (0.92 - t * 0.84);
-    return {
-      x: cx + Math.cos(angle) * rx,
-      y: cy - Math.sin(angle) * ry,
-      rotate: (t - 0.5) * 28,
-    };
-  });
-}
-
-function childCluster(origin: Point, count: number, scale = 1): Point[] {
-  if (count === 0) return [];
-  const childW = 52 * scale;
-  const gap = 5;
-  const hang = 58 * scale;
-  const rowDy = 62 * scale;
-  const rows = count <= 5 ? [count] : [Math.ceil(count / 2), Math.floor(count / 2)];
-  const prefer =
-    origin.x < VIEW.w * 0.35 ? "right" : origin.x > VIEW.w * 0.65 ? "left" : "center";
-  const points: Point[] = [];
-
-  rows.forEach((n, row) => {
-    const width = n * childW + (n - 1) * gap;
-    let start = origin.x - width / 2 + childW / 2;
-    if (prefer === "right") start = origin.x + 8;
-    if (prefer === "left") start = origin.x - width - 8 + childW;
-    start = Math.max(36, Math.min(start, VIEW.w - 36 - (width - childW)));
-    const y = origin.y + hang + row * rowDy;
-    for (let c = 0; c < n; c += 1) {
-      const t = n === 1 ? 0.5 : c / (n - 1);
-      points.push({
-        x: start + c * (childW + gap),
-        y,
-        rotate: (t - 0.5) * 12,
-      });
-    }
-  });
-
-  return points;
 }

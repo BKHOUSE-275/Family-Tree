@@ -36,6 +36,7 @@ export function FamilyTree({
       skipPanelScroll.current = false;
       return;
     }
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [focusId]);
 
@@ -105,8 +106,10 @@ export function FamilyTree({
                       setQuery("");
                     }}
                   >
-                    {displayName(person)}{" "}
-                    <span className="text-black/50">{yearRange(person)}</span>
+                    {displayName(person)}
+                    {yearRange(person) ? (
+                      <span className="text-black/50"> {yearRange(person)}</span>
+                    ) : null}
                   </button>
                 </li>
               ))
@@ -130,40 +133,41 @@ export function FamilyTree({
           ))}
         </nav>
 
-        <div className="relative mt-2 w-full">
-          <HangingTree
-            father={father}
-            mother={mother}
-            isTopLevel={isTopLevel}
-            subject={isTopLevel ? null : focus}
-            canopyPeople={firstGeneration}
-            hangingChildren={hangingChildren}
-            focusId={focusId}
-            onSelect={setFocusId}
-          />
+        <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
+          <div className="relative min-w-0 flex-1">
+            <HangingTree
+              father={father}
+              mother={mother}
+              isTopLevel={isTopLevel}
+              subject={isTopLevel ? null : focus}
+              canopyPeople={firstGeneration}
+              hangingChildren={hangingChildren}
+              focusId={focusId}
+              onSelect={setFocusId}
+            />
+            {showEmptyBranch ? (
+              <p className="mx-auto mt-4 max-w-3xl text-center text-black/60">
+                No children hang from {displayName(focus)} yet. Share a note below
+                if you know more of this branch.
+              </p>
+            ) : null}
+          </div>
+
+          <div ref={panelRef} className="w-full shrink-0 scroll-mt-6 lg:w-[32rem] xl:w-[38rem]">
+            <PersonPanel
+              person={focus}
+              parents={parents}
+              partners={partners}
+              childPeople={children}
+              siblings={siblings}
+              residences={residences}
+              contact={contact}
+              onSelect={setFocusId}
+              onSuggest={onSuggest}
+            />
+          </div>
         </div>
-
-        {showEmptyBranch ? (
-          <p className="mx-auto mt-4 max-w-3xl text-center text-black/60">
-            No children hang from {displayName(focus)} yet. Share a note below
-            if you know more of this branch.
-          </p>
-        ) : null}
       </section>
-
-      <div ref={panelRef} className="mx-auto w-full max-w-3xl scroll-mt-6">
-        <PersonPanel
-          person={focus}
-          parents={parents}
-          partners={partners}
-          childPeople={children}
-          siblings={siblings}
-          residences={residences}
-          contact={contact}
-          onSelect={setFocusId}
-          onSuggest={onSuggest}
-        />
-      </div>
     </div>
   );
 }

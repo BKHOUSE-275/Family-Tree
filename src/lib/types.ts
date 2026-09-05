@@ -122,7 +122,7 @@ export type FamilySnapshot = {
 export const ROOT_FATHER_ID = "felix-mitchell";
 export const ROOT_MOTHER_ID = "adaline-kiah";
 
-export const LEAF_FILLS = ["#4a5c28", "#6a7a32", "#c45c26", "#a3441c"] as const;
+export const LEAF_FILLS = ["#4f5d2a", "#c45c26", "#a3441c", "#6b7c38"] as const;
 export const LEAF_SELECTED_FILL = "#c9a227";
 
 export function displayName(person: Person): string {
@@ -134,11 +134,11 @@ export function displayName(person: Person): string {
 
 export function yearRange(person: Person): string {
   const start = person.birthDate?.match(/\d{4}/)?.[0] ?? "";
-  if (person.isDeceased) {
-    const end = person.deathDate?.match(/\d{4}/)?.[0] ?? "Deceased";
-    return start ? `${start}–${end}` : end;
-  }
-  return start ? `b. ${start}` : "";
+  const end = person.isDeceased ? (person.deathDate?.match(/\d{4}/)?.[0] ?? "") : "";
+  if (start && end) return `${start}–${end}`;
+  if (end) return `d. ${end}`;
+  if (start) return `b. ${start}`;
+  return "";
 }
 
 export function birthYear(person: Person): number | null {

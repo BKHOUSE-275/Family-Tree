@@ -149,6 +149,12 @@ body {
   stroke-linecap: round;
 }
 
+.tree-limb {
+  fill: #4a2e16;
+  stroke: #2a160c;
+  stroke-width: 1.2;
+}
+
 .autumn-sky {
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, #f4c56a 0%, transparent 55%),
