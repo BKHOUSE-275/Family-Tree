@@ -19,7 +19,7 @@ function person(
     isDeceased: extra.isDeceased ?? false,
     headstoneLocation: extra.headstoneLocation ?? null,
     headstonePhotoUrl: extra.headstonePhotoUrl ?? null,
-    familySearchId: extra.familySearchId ?? null,
+    familysearchId: extra.familysearchId ?? null,
     notes: extra.notes ?? null,
   };
 }
@@ -39,56 +39,56 @@ export const seedSnapshot: FamilySnapshot = {
     person("adaline-kiah", "Adaline", "Kiah", {
       ...deceased,
       birthDate: "1850",
-      familySearchId: "KCGK-SJL",
+      familysearchId: "KCGK-SJL",
     }),
     person("bill-mitchell", "Bill", "Mitchell", {
       ...deceased,
       birthDate: "1835",
-      familySearchId: "LYRX-VWG",
+      familysearchId: "LYRX-VWG",
       notes: "Brother of Felix Mitchell.",
     }),
     person("philip-mitchell", "Philip", "Mitchell", {
       ...deceased,
       suffix: "Sr",
       birthDate: "1874",
-      familySearchId: "LYLG-B73",
+      familysearchId: "LYLG-B73",
       notes: "Also listed in the family booklet as Phillip Mitchell Sr.",
     }),
     person("hilliard-mitchell", "Hilliard", "Mitchell", {
       ...deceased,
       birthDate: "1876",
-      familySearchId: "LYL1-DWQ",
+      familysearchId: "LYL1-DWQ",
     }),
     person("claborn-mitchell", "Claborn", "Mitchell", {
       ...deceased,
       birthDate: "1878",
-      familySearchId: "LYLG-Y36",
+      familysearchId: "LYLG-Y36",
     }),
     person("david-mitchell", "David", "Mitchell", {
       ...deceased,
       birthDate: "1880",
-      familySearchId: "LYLP-M2V",
+      familysearchId: "LYLP-M2V",
     }),
     person("james-mitchell", "James", "Mitchell", {
       ...deceased,
       nickname: "Jim",
       birthDate: "1881",
       deathDate: "1950",
-      familySearchId: "LYLP-SSZ",
+      familysearchId: "LYLP-SSZ",
       notes: "Also listed as James (Jim) Henry Mitchell.",
     }),
     person("mittie-ann-mitchell", "Mittie Ann", "Mitchell", {
       ...deceased,
       birthDate: "1883",
       deathDate: "1916",
-      familySearchId: "KCQH-H8",
+      familysearchId: "KCQH-H8",
       notes: "Great-grandmother.",
     }),
     person("georgia-mitchell", "Georgia", "Mitchell", {
       ...deceased,
       birthDate: "1884",
       deathDate: "1919",
-      familySearchId: "K8KR-62M",
+      familysearchId: "K8KR-62M",
       notes:
         "Wife of E.D. Baisden before he married Ida Ola Lee Humphrey (Mittie Ann’s daughter).",
     }),
@@ -97,7 +97,7 @@ export const seedSnapshot: FamilySnapshot = {
       suffix: "Sr",
       birthDate: "1885",
       deathDate: "1951",
-      familySearchId: "LYLP-S9R",
+      familysearchId: "LYLP-S9R",
     }),
     person("ed-baisden", "E.D.", "Baisden", {
       notes:

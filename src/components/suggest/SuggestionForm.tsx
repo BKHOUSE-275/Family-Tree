@@ -165,8 +165,6 @@ export function SuggestionForm({
 }) {
   const [requestType, setRequestType] = useState<RequestType | null>(null);
   const selected = personId ? lookupChangeContext(snapshot, personId) : null;
-  const selectedPerson = selected?.person ?? null;
-  const selectedContact = selected?.contact ?? null;
 
   useEffect(() => {
     if (!sent) return;
@@ -265,10 +263,10 @@ export function SuggestionForm({
               </select>
             </label>
 
-            {selectedPerson ? (
-              <div key={selectedPerson.id} className="space-y-4 border-t border-bark/10 pt-4">
+            {selected?.person ? (
+              <div key={selected.person.id} className="space-y-4 border-t border-bark/10 pt-4">
                 <p className="font-[family-name:var(--font-display)] text-xl text-script">
-                  Current info for {displayName(selectedPerson)}
+                  Current info for {displayName(selected.person)}
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -277,7 +275,7 @@ export function SuggestionForm({
                     <input
                       name="givenName"
                       required
-                      defaultValue={selectedPerson.givenName}
+                      defaultValue={selected.person.givenName}
                       className={fieldClass}
                     />
                   </label>
@@ -285,7 +283,7 @@ export function SuggestionForm({
                     Surname
                     <input
                       name="surname"
-                      defaultValue={selectedPerson.surname}
+                      defaultValue={selected.person.surname}
                       className={fieldClass}
                     />
                   </label>
@@ -293,7 +291,7 @@ export function SuggestionForm({
                     Nickname
                     <input
                       name="nickname"
-                      defaultValue={selectedPerson.nickname ?? ""}
+                      defaultValue={selected.person.nickname ?? ""}
                       className={fieldClass}
                     />
                   </label>
@@ -301,7 +299,7 @@ export function SuggestionForm({
                     Suffix
                     <input
                       name="suffix"
-                      defaultValue={selectedPerson.suffix ?? ""}
+                      defaultValue={selected.person.suffix ?? ""}
                       className={fieldClass}
                       placeholder="Sr, Jr"
                     />
@@ -315,7 +313,7 @@ export function SuggestionForm({
                     type="tel"
                     inputMode="tel"
                     required
-                    defaultValue={selectedContact?.phone ?? ""}
+                    defaultValue={selected.contact?.phone ?? ""}
                     className={fieldClass}
                   />
                 </label>
@@ -324,7 +322,7 @@ export function SuggestionForm({
                   <input
                     name="personEmail"
                     type="email"
-                    defaultValue={selectedContact?.email ?? ""}
+                    defaultValue={selected.contact?.email ?? ""}
                     className={fieldClass}
                   />
                 </label>
@@ -333,7 +331,7 @@ export function SuggestionForm({
                   <textarea
                     name="address"
                     rows={3}
-                    defaultValue={selectedContact?.address ?? ""}
+                    defaultValue={selected.contact?.address ?? ""}
                     className={`${fieldClass} min-h-[4.5rem]`}
                   />
                 </label>
@@ -343,7 +341,7 @@ export function SuggestionForm({
                     Birth date
                     <input
                       name="birthDate"
-                      defaultValue={selectedPerson.birthDate ?? ""}
+                      defaultValue={selected.person.birthDate ?? ""}
                       className={fieldClass}
                       placeholder="December 1839"
                     />
@@ -352,7 +350,7 @@ export function SuggestionForm({
                     Place of birth
                     <input
                       name="birthPlace"
-                      defaultValue={selectedPerson.birthPlace ?? ""}
+                      defaultValue={selected.person.birthPlace ?? ""}
                       className={fieldClass}
                     />
                   </label>
@@ -363,7 +361,7 @@ export function SuggestionForm({
                     type="checkbox"
                     name="isDeceased"
                     value="true"
-                    defaultChecked={selectedPerson.isDeceased}
+                    defaultChecked={selected.person.isDeceased}
                     className="size-4"
                   />
                   This person is deceased
@@ -373,7 +371,7 @@ export function SuggestionForm({
                     Death date
                     <input
                       name="deathDate"
-                      defaultValue={selectedPerson.deathDate ?? ""}
+                      defaultValue={selected.person.deathDate ?? ""}
                       className={fieldClass}
                     />
                   </label>
@@ -381,7 +379,7 @@ export function SuggestionForm({
                     Headstone location
                     <input
                       name="headstoneLocation"
-                      defaultValue={selectedPerson.headstoneLocation ?? ""}
+                      defaultValue={selected.person.headstoneLocation ?? ""}
                       className={fieldClass}
                     />
                   </label>
@@ -448,13 +446,13 @@ export function SuggestionForm({
                 <PhotoField
                   name="photoUrl"
                   label="Profile photo (optional)"
-                  defaultUrl={selectedPerson.photoUrl}
+                  defaultUrl={selected.person.photoUrl}
                 />
                 <PhotoField
                   name="headstonePhotoUrl"
                   label="Headstone photo (optional)"
                   preview="rect"
-                  defaultUrl={selectedPerson.headstonePhotoUrl}
+                  defaultUrl={selected.person.headstonePhotoUrl}
                 />
               </div>
             ) : (
@@ -465,7 +463,7 @@ export function SuggestionForm({
 
             <button
               className="min-h-11 w-full rounded-full bg-ember px-6 py-2 text-white sm:w-auto"
-              disabled={!selectedPerson}
+              disabled={!selected?.person}
             >
               Send to the committee
             </button>
