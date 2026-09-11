@@ -11,12 +11,14 @@ export function FamilyLanding({
   sent,
   defaultEmail,
   defaultName,
+  placeMode = false,
 }: {
   snapshot: FamilySnapshot;
   people: { id: string; label: string }[];
   sent: boolean;
   defaultEmail?: string;
   defaultName?: string;
+  placeMode?: boolean;
 }) {
   const [personId, setPersonId] = useState("");
 
@@ -39,9 +41,14 @@ export function FamilyLanding({
   return (
     <>
       <div className="mt-8">
-        <FamilyTree snapshot={snapshot} onSuggest={suggestAbout} />
+        <FamilyTree
+          snapshot={snapshot}
+          onSuggest={suggestAbout}
+          placeMode={placeMode}
+        />
       </div>
       <SuggestionForm
+        snapshot={snapshot}
         people={people}
         personId={personId}
         onPersonChange={setPersonId}

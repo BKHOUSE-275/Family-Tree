@@ -23,8 +23,8 @@ export default async function ProfilePage() {
         My profile
       </h1>
       <p className="mt-2 text-center text-black/65">
-        Family members send photos and story updates through the suggestion
-        form. The committee reviews them before they appear on the tree.
+        Family members suggest name, contact, and photo updates through the
+        form below the tree. The committee reviews them before they appear.
       </p>
 
       {person ? (

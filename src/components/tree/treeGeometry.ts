@@ -1,69 +1,6 @@
-export const VIEW = { w: 720, h: 920 };
+import { BRANCH_CHILDREN, BRANCH_SUBJECT, type PctSlot } from "@/components/tree/treeSlots";
 
 export type Point = { x: number; y: number };
-export type Slot = Point & { rotate: number };
-
-export const SUBJECT_SLOT: Slot = { x: 360, y: 122, rotate: 0 };
-
-export const ROOT_FATHER_POS = { x: 188, y: 808 };
-export const ROOT_MOTHER_POS = { x: 532, y: 808 };
-
-export const TRUNK_CROTCH: Point = { x: 360, y: 438 };
-
-export const CANOPY_EIGHT: Slot[] = [
-  { x: 88, y: 272, rotate: -16 },
-  { x: 164, y: 138, rotate: -10 },
-  { x: 266, y: 64, rotate: -4 },
-  { x: 454, y: 64, rotate: 4 },
-  { x: 556, y: 138, rotate: 10 },
-  { x: 632, y: 272, rotate: 16 },
-  { x: 214, y: 368, rotate: -7 },
-  { x: 506, y: 368, rotate: 7 },
-];
-
-export const CANOPY_LIMB_TIPS: Point[] = [
-  { x: 122, y: 308 },
-  { x: 194, y: 170 },
-  { x: 288, y: 98 },
-  { x: 432, y: 98 },
-  { x: 526, y: 170 },
-  { x: 598, y: 308 },
-  { x: 250, y: 396 },
-  { x: 470, y: 396 },
-];
-
-const SUBJECT_LEAF_H = 72;
-const CHILD_LEAF_W = 88;
-
-export function canopySlots(count: number): Slot[] {
-  if (count === 8) return CANOPY_EIGHT;
-  if (count === 0) return [];
-  const cx = VIEW.w / 2;
-  const cy = VIEW.h * 0.28;
-  const rx = VIEW.w * 0.4;
-  const ry = VIEW.h * 0.2;
-  return Array.from({ length: count }, (_, i) => {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    const angle = Math.PI * (0.92 - t * 0.84);
-    return {
-      x: cx + Math.cos(angle) * rx,
-      y: cy - Math.sin(angle) * ry,
-      rotate: (t - 0.5) * 28,
-    };
-  });
-}
-
-export function limbTipForSlot(slot: Slot, index: number, count: number): Point {
-  if (count === 8 && CANOPY_LIMB_TIPS[index]) return CANOPY_LIMB_TIPS[index];
-  return toward(slot, TRUNK_CROTCH, 36);
-}
-
-export function toward(from: Point, to: Point, dist: number): Point {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const mag = Math.hypot(dx, dy) || 1;
-  return { x: from.x + (dx / mag) * dist, y: from.y + (dy / mag) * dist };
-}
 
 export function taperLimb(
   from: Point,
@@ -98,72 +35,142 @@ export function taperLimb(
   return `M ${n(fl.x)} ${n(fl.y)} C ${n(cl1.x)} ${n(cl1.y)}, ${n(cl2.x)} ${n(cl2.y)}, ${n(tl.x)} ${n(tl.y)} L ${n(tr.x)} ${n(tr.y)} C ${n(cr1.x)} ${n(cr1.y)}, ${n(cr2.x)} ${n(cr2.y)}, ${n(fr.x)} ${n(fr.y)} Z`;
 }
 
-export function childCluster(origin: Point, count: number): Slot[] {
-  if (count === 0) return [];
-  const gap = 8;
-  const hang = 168;
-  const rowDy = 102;
-  const rows = count <= 5 ? [count] : [Math.ceil(count / 2), Math.floor(count / 2)];
-  const prefer =
-    origin.x < VIEW.w * 0.35 ? "right" : origin.x > VIEW.w * 0.65 ? "left" : "center";
-  const points: Slot[] = [];
+function n(value: number) {
+  return value.toFixed(1);
+}
 
-  rows.forEach((rowCount, row) => {
-    const width = rowCount * CHILD_LEAF_W + (rowCount - 1) * gap;
-    let start = origin.x - width / 2 + CHILD_LEAF_W / 2;
-    if (prefer === "right") start = origin.x + 12;
-    if (prefer === "left") start = origin.x - width - 12 + CHILD_LEAF_W;
-    start = Math.max(52, Math.min(start, VIEW.w - 52 - (width - CHILD_LEAF_W)));
-    const y = origin.y + hang + row * rowDy;
-    for (let c = 0; c < rowCount; c += 1) {
-      const t = rowCount === 1 ? 0.5 : c / (rowCount - 1);
-      points.push({
-        x: start + c * (CHILD_LEAF_W + gap),
-        y,
-        rotate: (t - 0.5) * 12,
+/** Pixel size of the heirloom tree art (`public/tree-art.png`). */
+export const ART = { w: 1536, h: 1024 };
+
+export type { PctSlot } from "@/components/tree/treeSlots";
+
+/** Crown of the painted canopy — parent sits here when drilling into a branch. */
+export const HERITAGE_SUBJECT: PctSlot = BRANCH_SUBJECT;
+
+export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] {
+  if (count === 0) return [];
+  return layoutCenteredChildren(origin.cx, count);
+}
+
+/**
+ * Lay out children in the branch pattern: first row up to 4, then rows of 6.
+ * Each row is evenly spaced and centered under the parent.
+ */
+function layoutCenteredChildren(centerCx: number, count: number): PctSlot[] {
+  const pattern = branchRowPattern(BRANCH_CHILDREN);
+  const rowCounts = splitChildRows(count, pattern.firstRowMax, pattern.perRow);
+  const slots: PctSlot[] = [];
+
+  rowCounts.forEach((rowCount, row) => {
+    const cy =
+      row === 0
+        ? pattern.firstCy
+        : Math.min(pattern.firstCy + row * pattern.rowGap, 88);
+    const start = centerCx - ((rowCount - 1) * pattern.pitch) / 2;
+    for (let col = 0; col < rowCount; col += 1) {
+      slots.push({
+        cx: round1(clamp(start + col * pattern.pitch, 8, 92)),
+        cy: round1(cy),
+        size: pattern.size,
       });
     }
   });
 
-  return points;
+  return slots;
 }
 
-export function childForkPaths(
-  origin: Slot,
-  children: Slot[],
+function splitChildRows(
+  count: number,
+  firstRowMax: number,
+  perRow: number,
+): number[] {
+  if (count <= firstRowMax) return [count];
+  const rows = [firstRowMax];
+  let remaining = count - firstRowMax;
+  while (remaining > 0) {
+    const take = Math.min(perRow, remaining);
+    rows.push(take);
+    remaining -= take;
+  }
+  return rows;
+}
+
+function branchRowPattern(placed: PctSlot[]) {
+  const size = placed[0]?.size ?? 7.4;
+  const firstCy = avgCy(placed.slice(0, 4)) || placed[0]?.cy || 32;
+  const firstRow = placed.filter((slot) => Math.abs(slot.cy - firstCy) < 2.5);
+  const rest = placed.slice(firstRow.length);
+  const secondCy = avgCy(rest) || firstCy + 14;
+  const secondRow = rest.filter((slot) => Math.abs(slot.cy - secondCy) < 2.5);
+  const pitchRow = secondRow.length >= 2 ? secondRow : firstRow;
+  const pitch =
+    pitchRow.length >= 2
+      ? (pitchRow[pitchRow.length - 1]!.cx - pitchRow[0]!.cx) /
+        (pitchRow.length - 1)
+      : 8.1;
+
+  return {
+    size,
+    firstCy,
+    firstRowMax: firstRow.length || 4,
+    perRow: Math.max(secondRow.length, firstRow.length, 6),
+    pitch,
+    rowGap: Math.max(secondCy - firstCy, 12),
+  };
+}
+
+function avgCy(slots: PctSlot[]) {
+  if (slots.length === 0) return 0;
+  return slots.reduce((sum, slot) => sum + slot.cy, 0) / slots.length;
+}
+
+function round1(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function pctToArt(slot: PctSlot) {
+  return {
+    x: (slot.cx / 100) * ART.w,
+    y: (slot.cy / 100) * ART.h,
+    d: (slot.size / 100) * ART.w,
+  };
+}
+
+export function heritageForkPaths(
+  origin: PctSlot,
+  children: PctSlot[],
   childIds: string[] = [],
 ): { id: string; d: string }[] {
   if (children.length === 0) return [];
-  const parentBottom: Point = { x: origin.x, y: origin.y + SUBJECT_LEAF_H };
-  const crotch: Point = { x: origin.x, y: parentBottom.y + 38 };
+  const o = pctToArt(origin);
+  const parentBottom: Point = { x: o.x, y: o.y + o.d / 2 - 4 };
+  const crotch: Point = { x: o.x, y: parentBottom.y + 36 };
   const paths: { id: string; d: string }[] = [
     {
       id: "parent-stem",
-      d: taperLimb(parentBottom, crotch, 10, 8, 0.02),
+      d: taperLimb(parentBottom, crotch, 22, 16, 0.04),
     },
   ];
 
   children.forEach((child, index) => {
-    const dx = child.x - crotch.x;
+    const c = pctToArt(child);
+    const childTop: Point = { x: c.x, y: c.y - c.d / 2 + 8 };
+    const dx = childTop.x - crotch.x;
     const start: Point = {
-      x: crotch.x + dx * 0.38,
-      y: crotch.y + 6 + Math.abs(dx) * 0.05 + (child.y - crotch.y) * 0.06,
+      x: crotch.x + dx * 0.22,
+      y: crotch.y + 6 + Math.abs(dx) * 0.03,
     };
-    const bulge = Math.max(-0.45, Math.min(0.45, (dx / VIEW.w) * 1.35));
-    const startW = children.length > 6 ? 6 : 7.5;
+    const bulge = Math.max(-0.6, Math.min(0.6, (dx / ART.w) * 1.8));
+    const startW = children.length > 6 ? 12 : 15;
     paths.push({
       id: childIds[index] ? `child-limb-${childIds[index]}` : `child-limb-${index}`,
-      d: taperLimb(start, { x: child.x, y: child.y + 6 }, startW, 3, bulge),
+      d: taperLimb(start, childTop, startW, 6, bulge),
     });
   });
 
   return paths;
-}
-
-export function petiolePath(tip: Point, leaf: Point): string {
-  return taperLimb(tip, { x: leaf.x, y: leaf.y + 4 }, 10, 4, 0.1);
-}
-
-function n(value: number) {
-  return value.toFixed(1);
 }

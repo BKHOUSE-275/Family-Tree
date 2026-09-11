@@ -19,7 +19,7 @@ function person(
     isDeceased: extra.isDeceased ?? false,
     headstoneLocation: extra.headstoneLocation ?? null,
     headstonePhotoUrl: extra.headstonePhotoUrl ?? null,
-    familysearchId: extra.familysearchId ?? null,
+    familySearchId: extra.familySearchId ?? null,
     notes: extra.notes ?? null,
   };
 }
@@ -39,54 +39,56 @@ export const seedSnapshot: FamilySnapshot = {
     person("adaline-kiah", "Adaline", "Kiah", {
       ...deceased,
       birthDate: "1850",
-      familysearchId: "KCGK-SJL",
+      familySearchId: "KCGK-SJL",
     }),
     person("bill-mitchell", "Bill", "Mitchell", {
       ...deceased,
       birthDate: "1835",
-      familysearchId: "LYRX-VWG",
+      familySearchId: "LYRX-VWG",
       notes: "Brother of Felix Mitchell.",
     }),
     person("philip-mitchell", "Philip", "Mitchell", {
       ...deceased,
       suffix: "Sr",
       birthDate: "1874",
-      familysearchId: "LYLG-B73",
+      familySearchId: "LYLG-B73",
       notes: "Also listed in the family booklet as Phillip Mitchell Sr.",
     }),
     person("hilliard-mitchell", "Hilliard", "Mitchell", {
       ...deceased,
       birthDate: "1876",
-      familysearchId: "LYL1-DWQ",
+      familySearchId: "LYL1-DWQ",
     }),
     person("claborn-mitchell", "Claborn", "Mitchell", {
       ...deceased,
       birthDate: "1878",
-      familysearchId: "LYLG-Y36",
+      familySearchId: "LYLG-Y36",
     }),
     person("david-mitchell", "David", "Mitchell", {
       ...deceased,
       birthDate: "1880",
-      familysearchId: "LYLP-M2V",
+      familySearchId: "LYLP-M2V",
     }),
     person("james-mitchell", "James", "Mitchell", {
       ...deceased,
+      nickname: "Jim",
       birthDate: "1881",
       deathDate: "1950",
-      familysearchId: "LYLP-SSZ",
+      familySearchId: "LYLP-SSZ",
+      notes: "Also listed as James (Jim) Henry Mitchell.",
     }),
     person("mittie-ann-mitchell", "Mittie Ann", "Mitchell", {
       ...deceased,
       birthDate: "1883",
       deathDate: "1916",
-      familysearchId: "KCQH-H8",
+      familySearchId: "KCQH-H8",
       notes: "Great-grandmother.",
     }),
     person("georgia-mitchell", "Georgia", "Mitchell", {
       ...deceased,
       birthDate: "1884",
       deathDate: "1919",
-      familysearchId: "K8KR-62M",
+      familySearchId: "K8KR-62M",
       notes:
         "Wife of E.D. Baisden before he married Ida Ola Lee Humphrey (Mittie Ann’s daughter).",
     }),
@@ -95,26 +97,29 @@ export const seedSnapshot: FamilySnapshot = {
       suffix: "Sr",
       birthDate: "1885",
       deathDate: "1951",
-      familysearchId: "LYLP-S9R",
+      familySearchId: "LYLP-S9R",
     }),
     person("ed-baisden", "E.D.", "Baisden", {
       notes:
         "Married Georgia Mitchell, and later married Ida Ola Lee Humphrey after Georgia’s death.",
     }),
     person("ida-ola-lee-humphrey", "Ida Ola Lee", "Humphrey", {
-      notes: "Daughter of Mittie Ann Mitchell. Grandmother.",
+      notes:
+        "Daughter of Mittie Ann Mitchell. Grandmother. Also listed as Ola Lee Humphrey Baisden.",
     }),
 
+    // Philip Sr children
     person("beatrice-mitchell", "Beatrice", "Mitchell"),
     person("mattie-lee-mitchell", "Mattie Lee", "Mitchell"),
     person("rosco-mitchell", "Rosco", "Mitchell"),
-    person("phillip-mitchell", "Phillip", "Mitchell"),
+    person("phillip-mitchell", "Phillip", "Mitchell", { nickname: "Dugg" }),
     person("mary-edith-mitchell", "Mary Edith", "Mitchell"),
     person("roylo-mitchell", "Roylo", "Mitchell"),
     person("carrie-mitchell", "Carrie", "Mitchell"),
     person("robert-mitchell", "Robert", "Mitchell"),
-    person("vera-mitchell", "Vera", "Mitchell"),
+    person("vera-mitchell", "Vera", "Mitchell", { nickname: "Suga" }),
 
+    // Autmon Sr children
     person("autmon-mitchell-jr", "Autmon", "Mitchell", { suffix: "Jr" }),
     person("willie-frank-mitchell-sr", "Willie Frank", "Mitchell", {
       suffix: "Sr",
@@ -126,10 +131,12 @@ export const seedSnapshot: FamilySnapshot = {
     person("erosker-mitchell", "Erosker", "Mitchell"),
     person("kendrick-mitchell", "Kendrick", "Mitchell"),
     person("frederick-lee-mitchell", "Frederick Lee", "Mitchell"),
-    person("emma-mitchell-payne", "Emma", "Mitchell Payne"),
+    person("emma-mitchell-payne", "Emma", "Mitchell", {
+      notes: "Also listed as Emma Mitchell Payne.",
+    }),
     person("lewis-mitchell", "Lewis", "Mitchell"),
 
-    person("james-jim-mitchell", "James", "Mitchell", { nickname: "Jim" }),
+    // James (Jim) Henry children
     person("james-jimbo-mitchell", "James", "Mitchell", { nickname: "Jimbo" }),
     person("taylor-mitchell-sr", "Taylor", "Mitchell", { suffix: "Sr" }),
     person("morgan-zang-mitchell", "Morgan", "Mitchell", { nickname: "Zang" }),
@@ -137,7 +144,7 @@ export const seedSnapshot: FamilySnapshot = {
     person("pasomore-feechie-mitchell", "Pasomore", "Mitchell", {
       nickname: "Feechie",
     }),
-    person("tolby-mitchell", "Tolby", "Mitchell"),
+    person("tolby-mitchell", "Toby", "Mitchell"),
     person("mozella-mitchell", "Mozella", "Mitchell"),
     person("selphy-annie-mitchell", "Selphy", "Mitchell", { nickname: "Annie" }),
     person("ernest-mitchell", "Ernest", "Mitchell"),
@@ -145,6 +152,164 @@ export const seedSnapshot: FamilySnapshot = {
     person("mannie-c-mitchell", "Mannie C", "Mitchell"),
     person("le-mitchell", "L E", "Mitchell"),
     person("joseph-mitchell", "Joseph", "Mitchell"),
+
+    // Mittie / Ola Lee line
+    person("herdie-eldred-baisden", "Herdie Eldred", "Baisden"),
+    person("eustis-baisden", "Eustis", "Baisden"),
+    person("herdie-eldred-lee-baisden", "Herdie Eldred Lee", "Baisden"),
+    person("carol-labonte", "Carol", "Labonte"),
+    person("carlton-baisden-sr", "Carlton", "Baisden", { suffix: "Sr" }),
+    person("brenda-elaine-baisden", "Brenda Elaine", "Baisden"),
+    person("edward-bernard-baisden-sr", "Edward Bernard", "Baisden", {
+      suffix: "Sr",
+    }),
+
+    // James (Jim) Henry grandchildren — Jimbo
+    person("damon-mitchell", "Damon", "Mitchell"),
+    person("ella-mae-mitchell", "Ella Mae", "Mitchell"),
+    person("son-mitchell", "Son", "Mitchell"),
+    person("verta-lee-mitchell", "Verta Lee", "Mitchell"),
+    person("maude-mitchell", "Maude", "Mitchell"),
+    person("lula-mae-mitchell", "Lula Mae", "Mitchell"),
+    person("lilly-mitchell", "Lilly", "Mitchell"),
+    person("reatha-mitchell", "Reatha", "Mitchell"),
+    person("mersener-mitchell", "Mersener", "Mitchell"),
+    person("cinderella-mitchell", "Cinderella", "Mitchell"),
+    person("elbert-mitchell", "Elbert", "Mitchell"),
+    person("pearline-mitchell", "Pearline", "Mitchell"),
+
+    // Taylor Sr grandchildren
+    person("taylor-mitchell-jr", "Taylor", "Mitchell", {
+      nickname: "TJ",
+      suffix: "Jr",
+    }),
+    person("ruth-mitchell", "Ruth", "Mitchell"),
+    person("eliza-mitchell", "Eliza", "Mitchell"),
+    person("andrew-mitchell", "Andrew", "Mitchell"),
+    person("bernard-mitchell", "Bernard", "Mitchell"),
+    person("gussie-mitchell", "Gussie", "Mitchell"),
+
+    // Governor grandchildren
+    person("sylvester-mitchell", "Sylvester", "Mitchell"),
+    person("thelma-mitchell", "Thelma", "Mitchell"),
+    person("queen-esther-mitchell", "Queen Esther", "Mitchell"),
+
+    // Pasomore grandchildren
+    person("frankie-mitchell", "Frankie", "Mitchell"),
+    person("sharon-mitchell", "Sharon", "Mitchell"),
+
+    // Toby grandchildren
+    person("buddy-mitchell", "Buddy", "Mitchell"),
+
+    // Mozella grandchildren
+    person("booker-t-mitchell", "Booker T.", "Mitchell"),
+    person("rozella-mitchell", "Rozella", "Mitchell"),
+
+    // Mannie C grandchildren
+    person("earnest-mannie-mitchell", "Earnest", "Mitchell"),
+    person("queen-mannie-mitchell", "Queen", "Mitchell"),
+    person("delores-mitchell", "Delores", "Mitchell"),
+    person("eloise-mitchell", "Eloise", "Mitchell"),
+    person("elvina-babydoll-mitchell", "Elvina", "Mitchell", {
+      nickname: "Babydoll",
+    }),
+    person("david-mannie-mitchell", "David", "Mitchell"),
+    person("minnie-mitchell", "Minnie", "Mitchell"),
+    person("jeanette-mitchell", "Jeanette", "Mitchell"),
+
+    // Philip Sr grandchildren — Vera (Suga)
+    person("earnest-jackson-ej", "Earnest Jackson", "Mitchell", {
+      nickname: "EJ",
+    }),
+    person("dale-vera-mitchell", "Dale", "Mitchell"),
+    person("james-vera-mitchell", "James", "Mitchell"),
+    person("mary-francis-mitchell", "Mary Francis", "Mitchell"),
+    person("harry-vera-mitchell", "Harry", "Mitchell"),
+    person("neaima-mitchell", "Neaima", "Mitchell"),
+    person("wadie-ruth-mitchell", "Wadie Ruth", "Mitchell"),
+
+    // Rosco grandchildren
+    person("ellis-mitchell", "Ellis", "Mitchell"),
+    person("elton-mitchell", "Elton", "Mitchell"),
+
+    // Mary Edith grandchildren
+    person("henry-jr-mitchell", "Henry", "Mitchell", { suffix: "Jr" }),
+    person("almeta-mitchell", "Almeta", "Mitchell"),
+    person("alzora-mitchell", "Alzora", "Mitchell"),
+    person("evelyn-mitchell", "Evelyn", "Mitchell"),
+    person("patricia-mitchell", "Patricia", "Mitchell"),
+    person("sarah-mitchell", "Sarah", "Mitchell"),
+
+    // Phillip (Dugg) grandchildren
+    person("junior-dugg-mitchell", "Junior", "Mitchell"),
+    person("mary-lee-dugg-mitchell", "Mary Lee", "Mitchell"),
+    person("isaiah-mitchell", "Isaiah", "Mitchell"),
+    person("earl-mitchell", "Earl", "Mitchell"),
+    person("gaye-mitchell", "Gaye", "Mitchell"),
+    person("robert-dugg-mitchell", "Robert", "Mitchell"),
+    person("tootsie-mitchell", "Tootsie", "Mitchell"),
+
+    // Carrie grandchildren
+    person("moses-poochie-mitchell", "Moses", "Mitchell", {
+      nickname: "Poochie",
+    }),
+
+    // Robert grandchildren
+    person("robert-mitchell-jr", "Robert", "Mitchell", {
+      nickname: "Billy Joe",
+      suffix: "Jr",
+    }),
+    person("laton-mitchell", "Laton", "Mitchell"),
+    person("vonda-mitchell", "Vonda", "Mitchell"),
+    person("priscilla-mitchell", "Priscilla", "Mitchell"),
+
+    // Autmon Jr grandchildren
+    person("pat-autmon-mitchell", "Pat", "Mitchell"),
+    person("bonita-mitchell", "Bonita", "Mitchell"),
+    person("wanda-mitchell", "Wanda", "Mitchell"),
+
+    // Willie Frank Sr grandchildren
+    person("willie-frank-mitchell-jr", "Willie Frank", "Mitchell", {
+      suffix: "Jr",
+    }),
+    person("julia-mitchell", "Julia", "Mitchell"),
+    person("vanessa-mitchell", "Vanessa", "Mitchell"),
+    person("robert-lee-mitchell", "Robert Lee", "Mitchell"),
+
+    // Kendrick grandchildren
+    person("albertha-mitchell", "Albertha", "Mitchell"),
+    person("james-kendrick-mitchell", "James", "Mitchell"),
+
+    // Daniel grandchildren
+    person("billy-daniel-mitchell", "Billy", "Mitchell"),
+    person("laquitia-mitchell", "Laquitia", "Mitchell"),
+    person("franklin-mitchell", "Franklin", "Mitchell"),
+    person("carolyn-mitchell", "Carolyn", "Mitchell"),
+    person("rosetta-mitchell", "Rosetta", "Mitchell"),
+    person("shelly-mitchell", "Shelly", "Mitchell"),
+    person("kirkland-mitchell", "Kirkland", "Mitchell"),
+    person("daniel-mitchell-jr", "Daniel", "Mitchell", { suffix: "Jr" }),
+
+    // Erosker grandchildren
+    person("mae-lillie-williams", "Mae Lillie", "Williams"),
+    person("quillan-davis-mitchell", "Quillan Davis", "Mitchell"),
+    person("ossie-mae-howell", "Ossie Mae", "Howell"),
+    person("aline-mitchell", "Aline", "Mitchell"),
+    person("ervine-cole", "Ervine", "Cole"),
+    person("leon-mitchell-sr", "Leon", "Mitchell", { suffix: "Sr" }),
+    person("alphonso-mitchell", "Alphonso", "Mitchell"),
+    person("margie-lee-mitchell-armstrong", "Margie Lee", "Mitchell-Armstrong"),
+
+    // Emma grandchildren
+    person("lawrence-emma-mitchell", "Lawrence", "Mitchell"),
+    person("idella-mitchell", "Idella", "Mitchell"),
+    person("rose-lee-mitchell", "Rose Lee", "Mitchell"),
+
+    // James (Fangalang) grandchildren
+    person("nina-mitchell", "Nina", "Mitchell"),
+    person("claudia-mitchell", "Claudia", "Mitchell"),
+    person("vernice-mitchell", "Vernice", "Mitchell"),
+    person("cathy-mitchell", "Cathy", "Mitchell"),
   ],
   contacts: [],
   parentChildren: [
@@ -161,17 +326,20 @@ export const seedSnapshot: FamilySnapshot = {
       { parentId: "felix-mitchell", childId },
       { parentId: "adaline-kiah", childId },
     ]),
+
+    // Philip Sr children (Roylo unlinked per booklet)
     ...[
       "beatrice-mitchell",
       "mattie-lee-mitchell",
       "rosco-mitchell",
       "phillip-mitchell",
       "mary-edith-mitchell",
-      "roylo-mitchell",
       "carrie-mitchell",
       "robert-mitchell",
       "vera-mitchell",
     ].map((childId) => ({ parentId: "philip-mitchell", childId })),
+
+    // Autmon Sr children
     ...[
       "autmon-mitchell-jr",
       "willie-frank-mitchell-sr",
@@ -183,7 +351,205 @@ export const seedSnapshot: FamilySnapshot = {
       "emma-mitchell-payne",
       "lewis-mitchell",
     ].map((childId) => ({ parentId: "autmon-mitchell", childId })),
+
+    // Mittie → Ida Ola Lee
     { parentId: "mittie-ann-mitchell", childId: "ida-ola-lee-humphrey" },
+
+    // Ola Lee → Herdie, Eustis
+    ...["herdie-eldred-baisden", "eustis-baisden"].map((childId) => ({
+      parentId: "ida-ola-lee-humphrey",
+      childId,
+    })),
+
+    // Herdie Eldred → five children
+    ...[
+      "herdie-eldred-lee-baisden",
+      "carol-labonte",
+      "carlton-baisden-sr",
+      "brenda-elaine-baisden",
+      "edward-bernard-baisden-sr",
+    ].map((childId) => ({ parentId: "herdie-eldred-baisden", childId })),
+
+    // James (Jim) Henry children
+    ...[
+      "james-jimbo-mitchell",
+      "taylor-mitchell-sr",
+      "governor-mitchell",
+      "pasomore-feechie-mitchell",
+      "tolby-mitchell",
+      "mozella-mitchell",
+      "mannie-c-mitchell",
+      "fp-mitchell",
+      "le-mitchell",
+      "joseph-mitchell",
+    ].map((childId) => ({ parentId: "james-mitchell", childId })),
+
+    // Jimbo grandchildren
+    ...[
+      "damon-mitchell",
+      "ella-mae-mitchell",
+      "son-mitchell",
+      "verta-lee-mitchell",
+      "maude-mitchell",
+      "lula-mae-mitchell",
+      "lilly-mitchell",
+      "reatha-mitchell",
+      "mersener-mitchell",
+      "cinderella-mitchell",
+      "elbert-mitchell",
+      "pearline-mitchell",
+    ].map((childId) => ({ parentId: "james-jimbo-mitchell", childId })),
+
+    // Taylor Sr grandchildren
+    ...[
+      "taylor-mitchell-jr",
+      "ruth-mitchell",
+      "eliza-mitchell",
+      "andrew-mitchell",
+      "bernard-mitchell",
+      "gussie-mitchell",
+    ].map((childId) => ({ parentId: "taylor-mitchell-sr", childId })),
+
+    // Governor grandchildren
+    ...[
+      "sylvester-mitchell",
+      "thelma-mitchell",
+      "queen-esther-mitchell",
+    ].map((childId) => ({ parentId: "governor-mitchell", childId })),
+
+    // Pasomore grandchildren
+    ...["frankie-mitchell", "sharon-mitchell"].map((childId) => ({
+      parentId: "pasomore-feechie-mitchell",
+      childId,
+    })),
+
+    // Toby grandchildren
+    { parentId: "tolby-mitchell", childId: "buddy-mitchell" },
+
+    // Mozella grandchildren
+    ...["booker-t-mitchell", "rozella-mitchell"].map((childId) => ({
+      parentId: "mozella-mitchell",
+      childId,
+    })),
+
+    // Mannie C grandchildren
+    ...[
+      "earnest-mannie-mitchell",
+      "queen-mannie-mitchell",
+      "delores-mitchell",
+      "eloise-mitchell",
+      "elvina-babydoll-mitchell",
+      "david-mannie-mitchell",
+      "minnie-mitchell",
+      "jeanette-mitchell",
+    ].map((childId) => ({ parentId: "mannie-c-mitchell", childId })),
+
+    // Vera (Suga) grandchildren
+    ...[
+      "earnest-jackson-ej",
+      "dale-vera-mitchell",
+      "james-vera-mitchell",
+      "mary-francis-mitchell",
+      "harry-vera-mitchell",
+      "neaima-mitchell",
+      "wadie-ruth-mitchell",
+    ].map((childId) => ({ parentId: "vera-mitchell", childId })),
+
+    // Rosco grandchildren
+    ...["ellis-mitchell", "elton-mitchell"].map((childId) => ({
+      parentId: "rosco-mitchell",
+      childId,
+    })),
+
+    // Mary Edith grandchildren
+    ...[
+      "henry-jr-mitchell",
+      "almeta-mitchell",
+      "alzora-mitchell",
+      "evelyn-mitchell",
+      "patricia-mitchell",
+      "sarah-mitchell",
+    ].map((childId) => ({ parentId: "mary-edith-mitchell", childId })),
+
+    // Phillip (Dugg) grandchildren
+    ...[
+      "junior-dugg-mitchell",
+      "mary-lee-dugg-mitchell",
+      "isaiah-mitchell",
+      "earl-mitchell",
+      "gaye-mitchell",
+      "robert-dugg-mitchell",
+      "tootsie-mitchell",
+    ].map((childId) => ({ parentId: "phillip-mitchell", childId })),
+
+    // Carrie grandchildren
+    { parentId: "carrie-mitchell", childId: "moses-poochie-mitchell" },
+
+    // Robert grandchildren
+    ...[
+      "robert-mitchell-jr",
+      "laton-mitchell",
+      "vonda-mitchell",
+      "priscilla-mitchell",
+    ].map((childId) => ({ parentId: "robert-mitchell", childId })),
+
+    // Autmon Jr grandchildren
+    ...["pat-autmon-mitchell", "bonita-mitchell", "wanda-mitchell"].map(
+      (childId) => ({ parentId: "autmon-mitchell-jr", childId }),
+    ),
+
+    // Willie Frank Sr grandchildren
+    ...[
+      "willie-frank-mitchell-jr",
+      "julia-mitchell",
+      "vanessa-mitchell",
+      "robert-lee-mitchell",
+    ].map((childId) => ({ parentId: "willie-frank-mitchell-sr", childId })),
+
+    // Kendrick grandchildren
+    ...["albertha-mitchell", "james-kendrick-mitchell"].map((childId) => ({
+      parentId: "kendrick-mitchell",
+      childId,
+    })),
+
+    // Daniel grandchildren
+    ...[
+      "billy-daniel-mitchell",
+      "laquitia-mitchell",
+      "franklin-mitchell",
+      "carolyn-mitchell",
+      "rosetta-mitchell",
+      "shelly-mitchell",
+      "kirkland-mitchell",
+      "daniel-mitchell-jr",
+    ].map((childId) => ({ parentId: "daniel-mitchell", childId })),
+
+    // Erosker grandchildren
+    ...[
+      "mae-lillie-williams",
+      "quillan-davis-mitchell",
+      "ossie-mae-howell",
+      "aline-mitchell",
+      "ervine-cole",
+      "leon-mitchell-sr",
+      "alphonso-mitchell",
+      "margie-lee-mitchell-armstrong",
+    ].map((childId) => ({ parentId: "erosker-mitchell", childId })),
+
+    // Emma grandchildren
+    ...[
+      "lawrence-emma-mitchell",
+      "idella-mitchell",
+      "rose-lee-mitchell",
+    ].map((childId) => ({ parentId: "emma-mitchell-payne", childId })),
+
+    // James (Fangalang) grandchildren
+    ...[
+      "nina-mitchell",
+      "claudia-mitchell",
+      "vernice-mitchell",
+      "cathy-mitchell",
+    ].map((childId) => ({ parentId: "james-fangalang-mitchell", childId })),
   ],
   partnerships: [
     {
@@ -239,19 +605,9 @@ export const seedSnapshot: FamilySnapshot = {
 };
 
 export const UNPLACED_IDS = [
-  "james-jim-mitchell",
-  "james-jimbo-mitchell",
-  "taylor-mitchell-sr",
+  "roylo-mitchell",
   "morgan-zang-mitchell",
-  "governor-mitchell",
-  "pasomore-feechie-mitchell",
-  "tolby-mitchell",
-  "mozella-mitchell",
   "selphy-annie-mitchell",
   "ernest-mitchell",
-  "fp-mitchell",
-  "mannie-c-mitchell",
-  "le-mitchell",
-  "joseph-mitchell",
   "ed-baisden",
 ] as const;

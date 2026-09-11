@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PersonPanel } from "@/components/person/PersonPanel";
-import { HangingTree } from "@/components/tree/HangingTree";
+import { HeritageTree } from "@/components/tree/HeritageTree";
 import {
   ROOT_FATHER_ID,
   ROOT_MOTHER_ID,
@@ -18,9 +18,11 @@ import {
 export function FamilyTree({
   snapshot,
   onSuggest,
+  placeMode = false,
 }: {
   snapshot: FamilySnapshot;
   onSuggest?: (personId: string) => void;
+  placeMode?: boolean;
 }) {
   const byId = useMemo(() => {
     return new Map(snapshot.people.map((person) => [person.id, person]));
@@ -36,7 +38,6 @@ export function FamilyTree({
       skipPanelScroll.current = false;
       return;
     }
-    if (window.matchMedia("(min-width: 1024px)").matches) return;
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [focusId]);
 
@@ -50,8 +51,6 @@ export function FamilyTree({
   const contactRow = snapshot.contacts.find((row) => row.personId === focusId);
   const contact = visibleContact(contactRow);
 
-  const father = byId.get(ROOT_FATHER_ID)!;
-  const mother = byId.get(ROOT_MOTHER_ID)!;
   const firstGeneration = sortByBirth(
     uniquePeople([
       ...childPeople(snapshot, ROOT_FATHER_ID),
@@ -133,39 +132,36 @@ export function FamilyTree({
           ))}
         </nav>
 
-        <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
-          <div className="relative min-w-0 flex-1">
-            <HangingTree
-              father={father}
-              mother={mother}
-              isTopLevel={isTopLevel}
-              subject={isTopLevel ? null : focus}
-              canopyPeople={firstGeneration}
-              hangingChildren={hangingChildren}
-              focusId={focusId}
-              onSelect={setFocusId}
-            />
-            {showEmptyBranch ? (
-              <p className="mx-auto mt-4 max-w-3xl text-center text-black/60">
-                No children hang from {displayName(focus)} yet. Share a note below
-                if you know more of this branch.
-              </p>
-            ) : null}
-          </div>
+        <div className="relative left-1/2 mt-4 w-screen -translate-x-1/2">
+          <HeritageTree
+            isTopLevel={isTopLevel}
+            canopyPeople={firstGeneration}
+            subject={isTopLevel ? null : focus}
+            hangingChildren={hangingChildren}
+            focusId={focusId}
+            onSelect={setFocusId}
+            placeMode={placeMode}
+          />
+          {showEmptyBranch ? (
+            <p className="mx-auto mt-4 max-w-3xl px-4 text-center text-black/60">
+              No children are recorded for {displayName(focus)} yet. Suggest an
+              update below if you know more of this branch.
+            </p>
+          ) : null}
+        </div>
 
-          <div ref={panelRef} className="w-full shrink-0 scroll-mt-6 lg:w-[32rem] xl:w-[38rem]">
-            <PersonPanel
-              person={focus}
-              parents={parents}
-              partners={partners}
-              childPeople={children}
-              siblings={siblings}
-              residences={residences}
-              contact={contact}
-              onSelect={setFocusId}
-              onSuggest={onSuggest}
-            />
-          </div>
+        <div ref={panelRef} className="mx-auto mt-8 w-full max-w-4xl scroll-mt-6">
+          <PersonPanel
+            person={focus}
+            parents={parents}
+            partners={partners}
+            childPeople={children}
+            siblings={siblings}
+            residences={residences}
+            contact={contact}
+            onSelect={setFocusId}
+            onSuggest={onSuggest}
+          />
         </div>
       </section>
     </div>

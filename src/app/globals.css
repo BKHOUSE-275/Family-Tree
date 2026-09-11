@@ -46,119 +46,18 @@ body {
   color: var(--ink);
 }
 
-@keyframes sway {
-  0%,
-  100% {
-    transform: rotate(-0.6deg);
-  }
-  50% {
-    transform: rotate(0.7deg);
-  }
-}
-
-@keyframes floaty {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-@keyframes grow-up {
-  from {
-    transform: scaleY(0.2);
-    opacity: 0;
-  }
-  to {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-@keyframes hang-sway {
-  0%,
-  100% {
-    transform: rotate(var(--leaf-tilt, 0deg));
-  }
-  50% {
-    transform: rotate(calc(var(--leaf-tilt, 0deg) + 2.8deg));
-  }
-}
-
-@keyframes fall-leaf {
-  0% {
-    transform: translateY(-12px) rotate(0deg);
-    opacity: 0.85;
-  }
-  100% {
-    transform: translateY(460px) rotate(210deg);
-    opacity: 0;
-  }
-}
-
-@keyframes canopy-breathe {
-  0%,
-  100% {
-    transform: rotate(-0.5deg);
-  }
-  50% {
-    transform: rotate(0.6deg);
-  }
-}
-
-.sway {
-  animation: sway 6s ease-in-out infinite;
-  transform-origin: 50% 70%;
-}
-
-.canopy-sway {
-  animation: canopy-breathe 8s ease-in-out infinite;
-  transform-origin: 50% 40%;
-}
-
-.floaty {
-  animation: floaty 4.5s ease-in-out infinite;
-}
-
-.grow-trunk {
-  transform-origin: 50% 100%;
-  animation: grow-up 1.4s ease-out both;
-}
-
-.falling-leaf {
-  animation: fall-leaf 9s linear infinite;
-  transform-origin: center;
-}
-
-.hanging-leaf {
-  display: block;
-  animation: hang-sway 5.2s ease-in-out infinite;
-  transform-origin: top center;
-}
-
-.hanging-leaf:hover,
-.hanging-leaf[aria-pressed="true"] {
-  animation-duration: 3.2s;
-}
-
-.hang-stem {
-  fill: none;
-  stroke: var(--bark);
-  stroke-linecap: round;
-}
-
-.tree-limb {
-  fill: #4a2e16;
-  stroke: #2a160c;
-  stroke-width: 1.2;
-}
-
-.autumn-sky {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, #f4c56a 0%, transparent 55%),
-    linear-gradient(180deg, #6f93bd 0%, #b7c98a 32%, #e8c07a 58%, #c56a32 82%, #6b3a1c 100%);
+.heritage-paper {
+  background-color: #f5e4c4;
+  background-image:
+    radial-gradient(circle at 18% 16%, rgba(255, 250, 229, 0.76), transparent 28%),
+    radial-gradient(circle at 82% 32%, rgba(226, 164, 65, 0.1), transparent 32%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(92, 58, 33, 0.025) 0,
+      rgba(92, 58, 33, 0.025) 1px,
+      transparent 1px,
+      transparent 4px
+    );
 }
 
 .ui-select {
