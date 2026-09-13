@@ -10,7 +10,7 @@ import {
 } from "@/components/tree/treeSlots";
 import type { PctSlot } from "@/components/tree/treeSlots";
 
-const TREE_ART = "/tree-art.png";
+const TREE_ART = "/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
 
 function branchSlots() {
   return [BRANCH_SUBJECT, ...BRANCH_CHILDREN];

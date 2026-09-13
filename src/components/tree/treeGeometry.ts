@@ -1,6 +1,6 @@
 import { BRANCH_CHILDREN, BRANCH_SUBJECT, type PctSlot } from "@/components/tree/treeSlots";
 
-/** Pixel size of the heirloom tree art (`public/tree-art.png`). */
+/** Pixel size of the heirloom tree art (`public/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png`). */
 export const ART = { w: 1536, h: 1024 };
 
 export type { PctSlot } from "@/components/tree/treeSlots";
