@@ -29,30 +29,29 @@ export const CANOPY_SLOTS: PctSlot[] = CANOPY_EVEN;
 export const BRANCH_SUBJECT: PctSlot = { cx: 51.0, cy: 35.2, size: 8.6 };
 
 /**
- * Paired child openings — used when the child count is even.
+ * Extra paired openings used only after the hero canopy seats are full.
+ */
+export const BRANCH_EVEN_EXTRA: PctSlot[] = [
+  { cx: 62.4, cy: 63.8, size: 8.6 },
+  { cx: 39.2, cy: 63.5, size: 8.6 },
+];
+
+/**
+ * Paired child openings for even counts.
+ * Starts with the hero canopy seats, then branch-only extras.
  */
 export const BRANCH_EVEN: PctSlot[] = [
-  { cx: 41.1, cy: 19.9, size: 7.4 },
-  { cx: 60.2, cy: 20.0, size: 7.4 },
-  { cx: 27.9, cy: 37.0, size: 7.4 },
-  { cx: 70.2, cy: 37.4, size: 7.4 },
-  { cx: 38.3, cy: 44.8, size: 7.4 },
-  { cx: 62.5, cy: 44.9, size: 7.4 },
-  { cx: 26.1, cy: 60.9, size: 7.4 },
-  { cx: 76.2, cy: 60.0, size: 7.4 },
-  { cx: 62.4, cy: 63.8, size: 7.4 },
-  { cx: 39.2, cy: 63.5, size: 7.4 },
+  ...CANOPY_EVEN.map((slot) => ({ ...slot })),
+  ...BRANCH_EVEN_EXTRA.map((slot) => ({ ...slot })),
 ];
 
 /**
  * Centerline master openings for odd counts (top → mid → lower).
- * Odd layouts use the first (n − 1) even slots plus one of these.
+ * Same centers as the hero canopy so odd layouts stay aligned.
  */
-export const BRANCH_CENTERS: PctSlot[] = [
-  { cx: 51.3, cy: 17.1, size: 7.4 },
-  { cx: 50.6, cy: 50.7, size: 7.4 },
-  { cx: 50.4, cy: 65.8, size: 7.4 },
-];
+export const BRANCH_CENTERS: PctSlot[] = CANOPY_CENTERS.map((slot) => ({
+  ...slot,
+}));
 
 /**
  * All authored branch child holes (paired + centers) for the placer.
