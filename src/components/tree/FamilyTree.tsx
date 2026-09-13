@@ -184,7 +184,6 @@ export function FamilyTree({
 
         <div className="mt-10 mb-8">
           <p className="text-center font-[family-name:var(--font-script)] text-2xl text-ember sm:text-3xl">
-            Our Roots Run Deep
           </p>
           <StoryTitle size="lg" className="mt-2" />
           <p className="mx-auto mt-4 max-w-2xl text-center text-bark/80">
