@@ -138,7 +138,7 @@ export function SlotPlacer({
         <button
           key={index}
           type="button"
-          aria-label={`Move circle ${labelFor(index)}`}
+          aria-label={`Move circle ${labelFor(index) || index + 1}`}
           aria-pressed={index === selected}
           onPointerDown={(event) => startDrag(index, event)}
           className={`absolute z-40 flex aspect-square items-center justify-center rounded-full border-2 font-bold text-white shadow-lg ${
@@ -163,7 +163,7 @@ export function SlotPlacer({
         <p className="mt-1 text-xs text-bark/70">{help}</p>
         {current ? (
           <label className="mt-3 block text-xs text-bark/80">
-            Circle {labelFor(selected)} size
+            Circle {labelFor(selected) || selected + 1} size
             <input
               type="range"
               min={5}
@@ -194,8 +194,8 @@ export function SlotPlacer({
                   index === selected ? "bg-gold/40" : "hover:bg-leaf-soft"
                 }`}
               >
-                {labelFor(index)}: {slot.cx.toFixed(1)}, {slot.cy.toFixed(1)},{" "}
-                {slot.size.toFixed(1)}
+                {labelFor(index) || index + 1}: {slot.cx.toFixed(1)},{" "}
+                {slot.cy.toFixed(1)}, {slot.size.toFixed(1)}
               </button>
             </li>
           ))}

@@ -561,16 +561,6 @@ export function SuggestionForm({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-semibold text-script">
-                How related <RequiredMark />
-                <select name="relationshipType" required className="ui-select mt-1">
-                  <option value="">Select relationship</option>
-                  <option value="child">Child of</option>
-                  <option value="parent">Parent of</option>
-                  <option value="spouse">Spouse of</option>
-                  <option value="sibling">Sibling of</option>
-                </select>
-              </label>
               <PersonOptionSelect
                 name="personId"
                 people={people}
@@ -582,6 +572,16 @@ export function SuggestionForm({
                 }
                 emptyLabel="Select a person"
               />
+              <label className="block text-sm font-semibold text-script">
+                How related <RequiredMark />
+                <select name="relationshipType" required className="ui-select mt-1">
+                  <option value="">Select relationship</option>
+                  <option value="child">Child of</option>
+                  <option value="parent">Parent of</option>
+                  <option value="spouse">Spouse of</option>
+                  <option value="sibling">Sibling of</option>
+                </select>
+              </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

@@ -19,8 +19,10 @@ export function HeritagePersonNode({
       aria-label={`Open ${person.givenName}${surname ? ` ${surname}` : ""}`}
       aria-pressed={active}
       onClick={() => onSelect(person.id)}
-      className={`relative aspect-square w-full min-w-11 overflow-hidden rounded-full border-[3px] bg-[#1a3d29] text-[#fff8e7] shadow-[0_8px_18px_rgba(68,32,13,0.28)] transition duration-200 hover:shadow-[0_0_22px_rgba(239,163,26,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#efa31a]/50 ${
-        active ? "border-[#f6b51b] ring-4 ring-[#c94313]/25" : "border-[#d95b16]"
+      className={`relative aspect-square w-full min-w-11 overflow-hidden rounded-full border-[3px] text-[#fff8e7] shadow-[0_8px_18px_rgba(68,32,13,0.28)] transition duration-200 hover:shadow-[0_0_22px_rgba(239,163,26,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#efa31a]/50 ${
+        active
+          ? "border-[#ff8a2a] bg-[#d95b16] ring-4 ring-[#ff8a2a]/55 shadow-[0_0_26px_rgba(217,91,22,0.55)]"
+          : "border-[#d95b16] bg-[#1a3d29]"
       }`}
     >
       <span className="absolute left-1/2 top-[3%] flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border border-[#efa31a] bg-[#f4dfbd] font-[family-name:var(--font-display)] font-bold text-[#1a3d29] h-[52%] w-[52%] text-[clamp(0.75rem,1.7vw,1.2rem)]">

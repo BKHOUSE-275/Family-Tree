@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PersonPanel } from "@/components/person/PersonPanel";
 import { StoryTitle } from "@/components/layout/StoryTitle";
 import { HeritageTree } from "@/components/tree/HeritageTree";
-import { CANOPY_SLOTS } from "@/components/tree/treeSlots";
+import { CANOPY_EVEN } from "@/components/tree/treeSlots";
 import {
   ROOT_FATHER_ID,
   ROOT_MOTHER_ID,
@@ -83,10 +83,10 @@ export function FamilyTree({
   const searchActive = Boolean(query.trim()) && matches.length > 0;
   const treeIsTopLevel = searchActive || isTopLevel;
   const canopyPeople = searchActive
-    ? matches.slice(0, CANOPY_SLOTS.length)
+    ? matches.slice(0, CANOPY_EVEN.length)
     : firstGeneration;
   const canopyOverflow = searchActive
-    ? matches.slice(CANOPY_SLOTS.length)
+    ? matches.slice(CANOPY_EVEN.length)
     : [];
 
   const trail = ancestryTrail(snapshot, focusId, byId);

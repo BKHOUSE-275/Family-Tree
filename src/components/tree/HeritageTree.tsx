@@ -7,13 +7,20 @@ import { SlotPlacer } from "@/components/tree/SlotPlacer";
 import {
   ART,
   HERITAGE_SUBJECT,
+  canopySlotsForCount,
   heritageChildCluster,
   type PctSlot,
 } from "@/components/tree/treeGeometry";
-import { CANOPY_SLOTS } from "@/components/tree/treeSlots";
+import {
+  CANOPY_CENTERS,
+  CANOPY_EVEN,
+  formatCanopySlots,
+} from "@/components/tree/treeSlots";
 import type { Person } from "@/lib/types";
 
 export const TREE_ART = "/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
+
+const CANOPY_PLACE_SLOTS = [...CANOPY_EVEN, ...CANOPY_CENTERS];
 
 export function HeritageTree({
   isTopLevel,
@@ -35,9 +42,10 @@ export function HeritageTree({
   placeMode?: boolean;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
-  const [draftSlots, setDraftSlots] = useState(CANOPY_SLOTS);
-  const slots = placeMode ? draftSlots : CANOPY_SLOTS;
+  const [draftSlots, setDraftSlots] = useState(CANOPY_PLACE_SLOTS);
   const showCanopy = placeMode || isTopLevel;
+  const canopyLayout =
+    showCanopy && !placeMode ? canopySlotsForCount(canopyPeople.length) : [];
   const childSlots =
     !showCanopy && subject
       ? heritageChildCluster(HERITAGE_SUBJECT, hangingChildren.length)
@@ -69,17 +77,16 @@ export function HeritageTree({
 
       {placeMode
         ? null
-        : slots.map((slot, index) => {
-            const person = showCanopy ? canopyPeople[index] : undefined;
+        : canopyLayout.map((slot, index) => {
+            const person = canopyPeople[index];
+            if (!person) return null;
             return (
-              <NodeAnchor key={index} slot={slot} z={10}>
-                {person ? (
-                  <HeritagePersonNode
-                    person={person}
-                    active={person.id === focusId}
-                    onSelect={onSelect}
-                  />
-                ) : null}
+              <NodeAnchor key={person.id} slot={slot} z={10}>
+                <HeritagePersonNode
+                  person={person}
+                  active={person.id === focusId}
+                  onSelect={onSelect}
+                />
               </NodeAnchor>
             );
           })}
@@ -89,6 +96,9 @@ export function HeritageTree({
           frameRef={frameRef}
           slots={draftSlots}
           onSlotsChange={setDraftSlots}
+          formatSlots={formatCanopySlots}
+          help="Drag a circle, or select one and click the tree. Arrow keys nudge. [ and ] change size. First 8 are pairs; last 3 are odd-count centers."
+          labelFor={() => ""}
         />
       ) : null}
 

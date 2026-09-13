@@ -1,4 +1,11 @@
-import { BRANCH_CHILDREN, BRANCH_SUBJECT, type PctSlot } from "@/components/tree/treeSlots";
+import {
+  BRANCH_CENTERS,
+  BRANCH_EVEN,
+  BRANCH_SUBJECT,
+  CANOPY_CENTERS,
+  CANOPY_EVEN,
+  type PctSlot,
+} from "@/components/tree/treeSlots";
 
 /** Pixel size of the heirloom tree art (`public/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png`). */
 export const ART = { w: 1536, h: 1024 };
@@ -8,17 +15,50 @@ export type { PctSlot } from "@/components/tree/treeSlots";
 /** Crown of the painted canopy — parent sits here when drilling into a branch. */
 export const HERITAGE_SUBJECT: PctSlot = BRANCH_SUBJECT;
 
-/** Place children on the authored branch slots; overflow continues below. */
+/**
+ * Even count → paired openings.
+ * Odd count → first (n − 1) pairs plus a centerline master seat,
+ * so the odd child sits in the middle instead of hanging off one side.
+ */
+export function balancedSlots(
+  evenSlots: PctSlot[],
+  centers: PctSlot[],
+  count: number,
+): PctSlot[] {
+  if (count <= 0) return [];
+
+  if (count <= evenSlots.length) {
+    if (count % 2 === 0) {
+      return evenSlots.slice(0, count).map((slot) => ({ ...slot }));
+    }
+    const pairs = evenSlots.slice(0, count - 1).map((slot) => ({ ...slot }));
+    return [...pairs, { ...pickCenter(centers, count) }];
+  }
+
+  // One past the last pair, only when odd: all pairs + a center master.
+  if (count === evenSlots.length + 1 && count % 2 === 1) {
+    return [
+      ...evenSlots.map((slot) => ({ ...slot })),
+      { ...pickCenter(centers, count) },
+    ];
+  }
+
+  return evenSlots.map((slot) => ({ ...slot }));
+}
+
+/** Place children with even/odd balancing; overflow continues below. */
 export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] {
   if (count === 0) return [];
 
-  const placed = BRANCH_CHILDREN.slice(0, count).map((slot) => ({ ...slot }));
-  if (count <= BRANCH_CHILDREN.length) return placed;
+  const maxWithCenter = BRANCH_EVEN.length + 1;
+  if (count <= BRANCH_EVEN.length || count === maxWithCenter) {
+    return balancedSlots(BRANCH_EVEN, BRANCH_CENTERS, count);
+  }
 
-  const pattern = branchRowPattern(BRANCH_CHILDREN);
-  const lastCy =
-    BRANCH_CHILDREN[BRANCH_CHILDREN.length - 1]?.cy ?? pattern.firstCy;
-  let remaining = count - BRANCH_CHILDREN.length;
+  const placed = BRANCH_EVEN.map((slot) => ({ ...slot }));
+  const pattern = branchRowPattern(BRANCH_EVEN);
+  const lastCy = BRANCH_EVEN[BRANCH_EVEN.length - 1]?.cy ?? pattern.firstCy;
+  let remaining = count - placed.length;
   let row = 1;
 
   while (remaining > 0) {
@@ -37,6 +77,35 @@ export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] 
   }
 
   return placed;
+}
+
+/** Hero canopy seats with the same even/odd balance rule. */
+export function canopySlotsForCount(count: number): PctSlot[] {
+  return balancedSlots(
+    CANOPY_EVEN,
+    CANOPY_CENTERS,
+    Math.min(count, CANOPY_EVEN.length + 1),
+  );
+}
+
+/**
+ * Map odd counts to a center tier: 1/3 → top, 5/7 → mid, 9+ → lower.
+ */
+function pickCenter(centers: PctSlot[], oddCount: number): PctSlot {
+  const fallback = centers[centers.length - 1] ?? {
+    cx: 50,
+    cy: 40,
+    size: 7.4,
+  };
+  if (centers.length === 0) return fallback;
+
+  const tier = (oddCount - 1) / 2; // 0,1,2,3,4… for counts 1,3,5,7,9…
+  let index = 0;
+  if (tier <= 1) index = 0;
+  else if (tier <= 3) index = Math.min(1, centers.length - 1);
+  else index = Math.min(2, centers.length - 1);
+
+  return centers[index] ?? fallback;
 }
 
 /**

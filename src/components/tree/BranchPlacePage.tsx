@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { SlotPlacer } from "@/components/tree/SlotPlacer";
 import {
-  BRANCH_CHILDREN,
+  BRANCH_CENTERS,
+  BRANCH_EVEN,
   BRANCH_SUBJECT,
   formatBranchSlots,
 } from "@/components/tree/treeSlots";
@@ -13,7 +14,7 @@ import type { PctSlot } from "@/components/tree/treeSlots";
 const TREE_ART = "/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
 
 function branchSlots() {
-  return [BRANCH_SUBJECT, ...BRANCH_CHILDREN];
+  return [BRANCH_SUBJECT, ...BRANCH_EVEN, ...BRANCH_CENTERS];
 }
 
 export function BranchPlacePage() {
@@ -51,9 +52,9 @@ export function BranchPlacePage() {
           Place the parent and children
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-center text-bark/80">
-          Circle P is the parent. Numbered circles are their children. Drag
-          them into the open spaces, then copy the locations and send them
-          back.
+          The first circle is the parent. The next ten are paired seats for even
+          counts; the last three are centerline seats for odd counts. Drag them
+          into place, then copy the locations.
         </p>
         <p className="mt-3 text-center">
           <Link
@@ -79,8 +80,8 @@ export function BranchPlacePage() {
               onSlotsChange={setSlots}
               formatSlots={formatBranchSlots}
               title="Place the next generation"
-              help="P is the parent. Numbers are children. Drag, click the tree, or use arrow keys. [ and ] change size."
-              labelFor={(index) => (index === 0 ? "P" : String(index))}
+              help="Parent is first. Then paired openings, then center masters for odd counts. Drag, click the tree, or use arrow keys. [ and ] change size."
+              labelFor={() => ""}
               onAdd={addChild}
               onRemove={removeLast}
             />
