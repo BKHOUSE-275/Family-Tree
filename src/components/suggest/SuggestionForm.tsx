@@ -207,7 +207,7 @@ export function SuggestionForm({
               }`}
             >
               <span className="block font-[family-name:var(--font-display)] text-xl text-script">
-                Change your information
+              Update a family member’s information
               </span>
               <span className="mt-2 block text-sm text-bark/70">
                 Update a selected person&apos;s details. Adding a picture is

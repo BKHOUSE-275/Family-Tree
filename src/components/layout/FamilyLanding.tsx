@@ -40,13 +40,11 @@ export function FamilyLanding({
 
   return (
     <>
-      <div className="mt-8">
-        <FamilyTree
-          snapshot={snapshot}
-          onSuggest={suggestAbout}
-          placeMode={placeMode}
-        />
-      </div>
+      <FamilyTree
+        snapshot={snapshot}
+        onSuggest={suggestAbout}
+        placeMode={placeMode}
+      />
       <SuggestionForm
         snapshot={snapshot}
         people={people}

@@ -13,24 +13,23 @@ export const CANOPY_SLOTS: PctSlot[] = [
 ];
 
 /** Parent portrait when a branch is open. */
-export const BRANCH_SUBJECT: PctSlot = { cx: 52.7, cy: 17.6, size: 8.6 };
+export const BRANCH_SUBJECT: PctSlot = { cx: 52.1, cy: 41.6, size: 8.6 };
 
 /**
- * Child portraits hanging from the parent.
- * Rows of up to 4 then 6, evenly spaced and centered under the parent.
- * Extra children continue the same pitch on new rows below.
+ * Child portraits on the authored branch openings.
+ * Extra children continue below the last defined row.
  */
 export const BRANCH_CHILDREN: PctSlot[] = [
-  { cx: 40.6, cy: 32.1, size: 7.4 },
-  { cx: 48.7, cy: 32.1, size: 7.4 },
-  { cx: 56.7, cy: 32.1, size: 7.4 },
-  { cx: 64.8, cy: 32.1, size: 7.4 },
-  { cx: 32.5, cy: 45.9, size: 7.4 },
-  { cx: 40.6, cy: 45.9, size: 7.4 },
-  { cx: 48.7, cy: 45.9, size: 7.4 },
-  { cx: 56.7, cy: 45.9, size: 7.4 },
-  { cx: 64.8, cy: 45.9, size: 7.4 },
-  { cx: 72.9, cy: 45.9, size: 7.4 },
+  { cx: 42.6, cy: 20.8, size: 7.4 },
+  { cx: 61.9, cy: 20.3, size: 7.4 },
+  { cx: 30.1, cy: 33.6, size: 7.4 },
+  { cx: 42.1, cy: 34.2, size: 7.4 },
+  { cx: 62.3, cy: 33.0, size: 7.4 },
+  { cx: 74.1, cy: 32.7, size: 7.4 },
+  { cx: 41.4, cy: 47.3, size: 7.4 },
+  { cx: 62.6, cy: 48.1, size: 7.4 },
+  { cx: 39.2, cy: 59.5, size: 7.4 },
+  { cx: 68.0, cy: 60.3, size: 7.4 },
 ];
 
 export function formatSlotLine(slot: PctSlot) {

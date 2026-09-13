@@ -22,7 +22,7 @@ export function StoryTitle({
         The story of
       </span>
       <span
-        className={`mt-1 block font-[family-name:var(--font-display)] font-semibold text-bark ${names}`}
+        className={`mt-1 block font-[family-name:var(--font-script)] text-ember ${names}`}
       >
         Felix and Adaline Mitchell
       </span>

@@ -8,7 +8,6 @@ import {
   ART,
   HERITAGE_SUBJECT,
   heritageChildCluster,
-  heritageForkPaths,
   type PctSlot,
 } from "@/components/tree/treeGeometry";
 import { CANOPY_SLOTS } from "@/components/tree/treeSlots";
@@ -19,6 +18,7 @@ export const TREE_ART = "/tree-art.png";
 export function HeritageTree({
   isTopLevel,
   canopyPeople,
+  canopyOverflow = [],
   subject,
   hangingChildren,
   focusId,
@@ -27,6 +27,7 @@ export function HeritageTree({
 }: {
   isTopLevel: boolean;
   canopyPeople: Person[];
+  canopyOverflow?: Person[];
   subject: Person | null;
   hangingChildren: Person[];
   focusId: string;
@@ -41,13 +42,9 @@ export function HeritageTree({
     !showCanopy && subject
       ? heritageChildCluster(HERITAGE_SUBJECT, hangingChildren.length)
       : [];
-  const forks =
-    !showCanopy && subject
-      ? heritageForkPaths(
-          HERITAGE_SUBJECT,
-          childSlots,
-          hangingChildren.map((person) => person.id),
-        )
+  const overflowSlots =
+    showCanopy && canopyOverflow.length
+      ? heritageChildCluster(HERITAGE_SUBJECT, canopyOverflow.length)
       : [];
 
   return (
@@ -63,7 +60,9 @@ export function HeritageTree({
         <img
           src={TREE_ART}
           alt=""
-          className="pointer-events-none block h-auto w-full select-none"
+          width={ART.w}
+          height={ART.h}
+          className="pointer-events-none block aspect-[1536/1024] h-auto w-full select-none"
           draggable={false}
         />
       </div>
@@ -93,38 +92,6 @@ export function HeritageTree({
         />
       ) : null}
 
-      {!showCanopy ? (
-        <svg
-          viewBox={`0 0 ${ART.w} ${ART.h}`}
-          className="pointer-events-none absolute inset-0 z-[18] h-full w-full overflow-visible"
-          aria-hidden
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="heritage-fork" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f6b51b" />
-              <stop offset="45%" stopColor="#d95b16" />
-              <stop offset="100%" stopColor="#8f3a12" />
-            </linearGradient>
-          </defs>
-          <AnimatePresence>
-            {forks.map((fork) => (
-              <motion.path
-                key={fork.id}
-                d={fork.d}
-                fill="url(#heritage-fork)"
-                stroke="#4a2a12"
-                strokeWidth={3}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.95 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35 }}
-              />
-            ))}
-          </AnimatePresence>
-        </svg>
-      ) : null}
-
       {!showCanopy && subject ? (
         <NodeAnchor slot={HERITAGE_SUBJECT} z={30}>
           <HeritagePersonNode
@@ -136,9 +103,9 @@ export function HeritageTree({
       ) : null}
 
       <AnimatePresence>
-        {!showCanopy
-          ? hangingChildren.map((person, index) => {
-              const slot = childSlots[index];
+        {showCanopy
+          ? canopyOverflow.map((person, index) => {
+              const slot = overflowSlots[index];
               if (!slot) return null;
               return (
                 <NodeAnchor key={person.id} slot={slot} z={20}>
@@ -158,7 +125,27 @@ export function HeritageTree({
                 </NodeAnchor>
               );
             })
-          : null}
+          : hangingChildren.map((person, index) => {
+              const slot = childSlots[index];
+              if (!slot) return null;
+              return (
+                <NodeAnchor key={person.id} slot={slot} z={20}>
+                  <motion.div
+                    initial={{ opacity: 0, y: -14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ delay: index * 0.04, duration: 0.35 }}
+                  >
+                    <HeritagePersonNode
+                      person={person}
+                      active={person.id === focusId}
+                      compact
+                      onSelect={onSelect}
+                    />
+                  </motion.div>
+                </NodeAnchor>
+              );
+            })}
       </AnimatePresence>
     </div>
   );

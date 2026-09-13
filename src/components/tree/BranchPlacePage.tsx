@@ -4,10 +4,6 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { SlotPlacer } from "@/components/tree/SlotPlacer";
 import {
-  ART,
-  heritageForkPaths,
-} from "@/components/tree/treeGeometry";
-import {
   BRANCH_CHILDREN,
   BRANCH_SUBJECT,
   formatBranchSlots,
@@ -23,15 +19,6 @@ function branchSlots() {
 export function BranchPlacePage() {
   const frameRef = useRef<HTMLDivElement>(null);
   const [slots, setSlots] = useState<PctSlot[]>(branchSlots);
-  const subject = slots[0];
-  const children = slots.slice(1);
-  const forks = subject
-    ? heritageForkPaths(
-        subject,
-        children,
-        children.map((_, index) => `place-child-${index}`),
-      )
-    : [];
 
   function addChild() {
     const last = slots[slots.length - 1] ?? {
@@ -86,30 +73,6 @@ export function BranchPlacePage() {
               className="pointer-events-none block h-auto w-full select-none"
               draggable={false}
             />
-            <svg
-              viewBox={`0 0 ${ART.w} ${ART.h}`}
-              className="pointer-events-none absolute inset-0 z-[18] h-full w-full overflow-visible"
-              aria-hidden
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="place-fork" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f6b51b" />
-                  <stop offset="45%" stopColor="#d95b16" />
-                  <stop offset="100%" stopColor="#8f3a12" />
-                </linearGradient>
-              </defs>
-              {forks.map((fork) => (
-                <path
-                  key={fork.id}
-                  d={fork.d}
-                  fill="url(#place-fork)"
-                  stroke="#4a2a12"
-                  strokeWidth={3}
-                  opacity={0.95}
-                />
-              ))}
-            </svg>
             <SlotPlacer
               frameRef={frameRef}
               slots={slots}

@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PersonPanel } from "@/components/person/PersonPanel";
+import { StoryTitle } from "@/components/layout/StoryTitle";
 import { HeritageTree } from "@/components/tree/HeritageTree";
+import { CANOPY_SLOTS } from "@/components/tree/treeSlots";
 import {
   ROOT_FATHER_ID,
   ROOT_MOTHER_ID,
@@ -31,15 +33,27 @@ export function FamilyTree({
   const [focusId, setFocusId] = useState(ROOT_FATHER_ID);
   const [query, setQuery] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
-  const skipPanelScroll = useRef(true);
+  const treeRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToPanel = useRef(false);
+
+  function selectPerson(id: string) {
+    shouldScrollToPanel.current = true;
+    setFocusId(id);
+  }
 
   useEffect(() => {
-    if (skipPanelScroll.current) {
-      skipPanelScroll.current = false;
-      return;
-    }
+    if (!shouldScrollToPanel.current) return;
+    shouldScrollToPanel.current = false;
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [focusId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    treeRef.current?.scrollIntoView({ block: "start" });
+  }, []);
 
   const focus = byId.get(focusId) ?? byId.get(ROOT_FATHER_ID)!;
   const isTopLevel = isRootPerson(focusId);
@@ -61,27 +75,57 @@ export function FamilyTree({
   const hangingChildren = isTopLevel ? [] : children;
   const showEmptyBranch = !isTopLevel && children.length === 0;
 
-  const matches = snapshot.people.filter((person) =>
-    displayName(person).toLowerCase().includes(query.trim().toLowerCase()),
+  const matches = sortByBirth(
+    snapshot.people.filter((person) =>
+      personMatchesQuery(person, snapshot, query),
+    ),
   );
+  const searchActive = Boolean(query.trim()) && matches.length > 0;
+  const treeIsTopLevel = searchActive || isTopLevel;
+  const canopyPeople = searchActive
+    ? matches.slice(0, CANOPY_SLOTS.length)
+    : firstGeneration;
+  const canopyOverflow = searchActive
+    ? matches.slice(CANOPY_SLOTS.length)
+    : [];
 
   const trail = ancestryTrail(snapshot, focusId, byId);
 
   function resetView() {
     setFocusId(ROOT_FATHER_ID);
     setQuery("");
+    treeRef.current?.scrollIntoView({ block: "start" });
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <section>
+    <>
+      <div ref={treeRef} id="family-tree" className="w-full scroll-mt-0">
+        <HeritageTree
+          isTopLevel={treeIsTopLevel}
+          canopyPeople={canopyPeople}
+          canopyOverflow={canopyOverflow}
+          subject={treeIsTopLevel ? null : focus}
+          hangingChildren={searchActive ? [] : hangingChildren}
+          focusId={focusId}
+          onSelect={selectPerson}
+          placeMode={placeMode}
+        />
+        {showEmptyBranch && !searchActive ? (
+          <p className="mx-auto mt-4 max-w-3xl px-4 text-center text-black/60">
+            No children are recorded for {displayName(focus)} yet. Suggest an
+            update below if you know more of this branch.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mx-auto w-full max-w-[96rem] px-3 pb-20 pt-8 sm:px-6">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-3">
           <label className="min-w-0 flex-1 basis-48">
             <span className="sr-only">Search the family</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search a name…"
+              placeholder="Search a name or place…"
               className="min-h-11 w-full rounded-full border border-black/10 bg-white/90 px-4 py-2 text-base outline-none ring-ember/30 focus:ring-2"
             />
           </label>
@@ -96,24 +140,30 @@ export function FamilyTree({
         {query.trim() ? (
           <ul className="mx-auto mt-3 max-h-40 max-w-3xl overflow-auto rounded-2xl bg-white/80 p-2 text-sm shadow">
             {matches.length ? (
-              matches.map((person) => (
-                <li key={person.id}>
-                  <button
-                    className="min-h-11 w-full rounded-xl px-3 py-2 text-left hover:bg-leaf-soft"
-                    onClick={() => {
-                      setFocusId(person.id);
-                      setQuery("");
-                    }}
-                  >
-                    {displayName(person)}
-                    {yearRange(person) ? (
-                      <span className="text-black/50"> {yearRange(person)}</span>
-                    ) : null}
-                  </button>
-                </li>
-              ))
+              matches.map((person) => {
+                const placeHint = matchingLivePlace(person, snapshot, query);
+                return (
+                  <li key={person.id}>
+                    <button
+                      className="min-h-11 w-full rounded-xl px-3 py-2 text-left hover:bg-leaf-soft"
+                      onClick={() => {
+                        selectPerson(person.id);
+                        setQuery("");
+                      }}
+                    >
+                      {displayName(person)}
+                      {yearRange(person) ? (
+                        <span className="text-black/50"> {yearRange(person)}</span>
+                      ) : null}
+                      {placeHint ? (
+                        <span className="block text-black/45">{placeHint}</span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })
             ) : (
-              <li className="px-3 py-2 text-black/50">No names match yet.</li>
+              <li className="px-3 py-2 text-black/50">No people match yet.</li>
             )}
           </ul>
         ) : null}
@@ -124,7 +174,7 @@ export function FamilyTree({
               {index ? <span aria-hidden>›</span> : null}
               <button
                 className="inline-flex min-h-11 items-center hover:underline"
-                onClick={() => setFocusId(person.id)}
+                onClick={() => selectPerson(person.id)}
               >
                 {displayName(person)}
               </button>
@@ -132,25 +182,26 @@ export function FamilyTree({
           ))}
         </nav>
 
-        <div className="relative left-1/2 mt-4 w-screen -translate-x-1/2">
-          <HeritageTree
-            isTopLevel={isTopLevel}
-            canopyPeople={firstGeneration}
-            subject={isTopLevel ? null : focus}
-            hangingChildren={hangingChildren}
-            focusId={focusId}
-            onSelect={setFocusId}
-            placeMode={placeMode}
-          />
-          {showEmptyBranch ? (
-            <p className="mx-auto mt-4 max-w-3xl px-4 text-center text-black/60">
-              No children are recorded for {displayName(focus)} yet. Suggest an
-              update below if you know more of this branch.
-            </p>
-          ) : null}
+        <div className="mt-10 mb-8">
+          <p className="text-center font-[family-name:var(--font-script)] text-2xl text-ember sm:text-3xl">
+            Our Roots Run Deep
+          </p>
+          <StoryTitle size="lg" className="mt-2" />
+          <p className="mx-auto mt-4 max-w-2xl text-center text-bark/80">
+            Tap a parent to see their children branch off of them. Use Reset to
+            return to the first generation.
+          </p>
+          <p className="mt-3 text-center">
+            <a
+              href="#suggest"
+              className="inline-flex min-h-11 items-center text-sm text-ember underline-offset-4 hover:underline"
+            >
+              Suggest an update
+            </a>
+          </p>
         </div>
 
-        <div ref={panelRef} className="mx-auto mt-8 w-full max-w-4xl scroll-mt-6">
+        <div ref={panelRef} className="mx-auto w-full max-w-4xl scroll-mt-6">
           <PersonPanel
             person={focus}
             parents={parents}
@@ -159,12 +210,12 @@ export function FamilyTree({
             siblings={siblings}
             residences={residences}
             contact={contact}
-            onSelect={setFocusId}
+            onSelect={selectPerson}
             onSuggest={onSuggest}
           />
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -255,6 +306,48 @@ function ancestryTrail(
     if (father) trail.unshift(father);
   }
   return trail;
+}
+
+function personMatchesQuery(
+  person: Person,
+  snapshot: FamilySnapshot,
+  q: string,
+): boolean {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return false;
+  if (displayName(person).toLowerCase().includes(needle)) return true;
+  const lived = snapshot.residences.some(
+    (row) =>
+      row.personId === person.id && row.place.toLowerCase().includes(needle),
+  );
+  if (lived) return true;
+  const contact = snapshot.contacts.find((row) => row.personId === person.id);
+  return Boolean(
+    contact?.shareAddress &&
+      contact.address?.toLowerCase().includes(needle),
+  );
+}
+
+function matchingLivePlace(
+  person: Person,
+  snapshot: FamilySnapshot,
+  q: string,
+): string | null {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return null;
+  const residence = snapshot.residences.find(
+    (row) =>
+      row.personId === person.id && row.place.toLowerCase().includes(needle),
+  );
+  if (residence) return residence.place;
+  const contact = snapshot.contacts.find((row) => row.personId === person.id);
+  if (
+    contact?.shareAddress &&
+    contact.address?.toLowerCase().includes(needle)
+  ) {
+    return contact.address;
+  }
+  return null;
 }
 
 function visibleContact(contact: Contact | undefined) {
