@@ -18,7 +18,10 @@ export function HeritagePersonNode({
       type="button"
       aria-label={`Open ${person.givenName}${surname ? ` ${surname}` : ""}`}
       aria-pressed={active}
-      onClick={() => onSelect(person.id)}
+      onClick={(event) => {
+        event.currentTarget.blur();
+        onSelect(person.id);
+      }}
       className={`relative aspect-square w-full min-w-11 overflow-hidden rounded-full border-[3px] text-[#fff8e7] shadow-[0_8px_18px_rgba(68,32,13,0.28)] transition duration-200 hover:shadow-[0_0_22px_rgba(239,163,26,0.45)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#efa31a]/50 ${
         active
           ? "border-[#ff8a2a] bg-[#d95b16] ring-4 ring-[#ff8a2a]/55 shadow-[0_0_26px_rgba(217,91,22,0.55)]"

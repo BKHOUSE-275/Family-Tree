@@ -36,9 +36,12 @@ export function FamilyTree({
   const treeRef = useRef<HTMLDivElement>(null);
   const shouldScrollToPanel = useRef(false);
 
-  function selectPerson(id: string) {
-    shouldScrollToPanel.current = true;
+  function selectPerson(id: string, scrollToIntro = false) {
+    shouldScrollToPanel.current = scrollToIntro;
     setFocusId(id);
+    if (!scrollToIntro) {
+      treeRef.current?.focus({ preventScroll: true });
+    }
   }
 
   useEffect(() => {
@@ -99,7 +102,12 @@ export function FamilyTree({
 
   return (
     <>
-      <div ref={treeRef} id="family-tree" className="w-full scroll-mt-0">
+      <div
+          ref={treeRef}
+          id="family-tree"
+          tabIndex={-1}
+          className="w-full scroll-mt-0 outline-none"
+        >
         <HeritageTree
           isTopLevel={treeIsTopLevel}
           canopyPeople={canopyPeople}
@@ -147,7 +155,7 @@ export function FamilyTree({
                     <button
                       className="min-h-11 w-full rounded-xl px-3 py-2 text-left hover:bg-leaf-soft"
                       onClick={() => {
-                        selectPerson(person.id);
+                        selectPerson(person.id, true);
                         setQuery("");
                       }}
                     >
@@ -187,8 +195,7 @@ export function FamilyTree({
           </p>
           <StoryTitle size="lg" className="mt-2" />
           <p className="mx-auto mt-4 max-w-2xl text-center text-bark/80">
-            Tap a parent to see their children branch off of them. Use Reset to
-            return to the first generation.
+          Tap a name on the Family Tree to see their children branch off of them.
           </p>
           <p className="mt-3 text-center">
             <a

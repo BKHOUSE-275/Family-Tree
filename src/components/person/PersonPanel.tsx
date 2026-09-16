@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { displayName, yearRange, type Person } from "@/lib/types";
+import { displayName, formatFamilyDate, yearRange, type Person } from "@/lib/types";
 
 export function PersonPanel({
   person,
@@ -72,7 +72,11 @@ export function PersonPanel({
 
         {hasDetails ? (
           <dl className="mt-6 space-y-4 text-sm">
-            <Field label="1A. Place of birth" value={person.birthPlace} extra={person.birthDate} />
+            <Field
+              label="1A. Place of birth"
+              value={person.birthPlace}
+              extra={formatFamilyDate(person.birthDate) || person.birthDate}
+            />
             {showHeadstone ? (
               <div>
                 <dt className="font-semibold text-script">1B. Headstone</dt>
@@ -81,7 +85,9 @@ export function PersonPanel({
                     <div className="min-w-0 flex-1">
                       {person.headstoneLocation}
                       {person.deathDate ? (
-                        <span className="block text-black/55">Died {person.deathDate}</span>
+                        <span className="block text-black/55">
+                          Died {formatFamilyDate(person.deathDate) || person.deathDate}
+                        </span>
                       ) : null}
                     </div>
                   ) : null}
@@ -130,10 +136,17 @@ export function PersonPanel({
                   >
                     {displayName(row.person)}
                   </button>
-                  <p className="text-black/60">
-                    {[row.date, row.place].filter(Boolean).join(" · ")}
-                    {row.notes ? ` — ${row.notes}` : ""}
-                  </p>
+                  {row.date || row.place || row.notes ? (
+                    <p className="text-black/60">
+                      {row.date ? (
+                        <span className="block">
+                          Marriage date: {formatFamilyDate(row.date) || row.date}
+                        </span>
+                      ) : null}
+                      {row.place ? <span className="block">{row.place}</span> : null}
+                      {row.notes ? <span className="block">{row.notes}</span> : null}
+                    </p>
+                  ) : null}
                 </li>
               ))}
             </ul>

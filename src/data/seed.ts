@@ -556,7 +556,7 @@ export const seedSnapshot: FamilySnapshot = {
       id: "union-felix-adaline",
       personAId: "felix-mitchell",
       personBId: "adaline-kiah",
-      startDate: "03 Sep 1873",
+      startDate: "September 3, 1873",
       place: "Hamilton, Florida, United States",
       notes: null,
     },

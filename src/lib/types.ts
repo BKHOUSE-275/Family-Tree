@@ -132,6 +132,70 @@ export function displayName(person: Person): string {
   return `${person.givenName}${nick}${surname}${suffix}`.trim();
 }
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+const MONTH_INDEX: Record<string, number> = Object.fromEntries(
+  MONTHS.flatMap((name, index) => [
+    [name.toLowerCase(), index],
+    [name.slice(0, 3).toLowerCase(), index],
+  ]),
+);
+
+/** Display family dates as month, day, year when a full date is known. */
+export function formatFamilyDate(value: string | null | undefined): string {
+  if (!value) return "";
+  const raw = value.trim();
+  if (!raw) return "";
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const month = Number(iso[2]) - 1;
+    const day = Number(iso[3]);
+    if (month >= 0 && month < 12 && day >= 1 && day <= 31) {
+      return `${MONTHS[month]} ${day}, ${iso[1]}`;
+    }
+  }
+
+  const dayMonthYear = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\.?,?\s+(\d{4})$/);
+  if (dayMonthYear) {
+    const month = MONTH_INDEX[dayMonthYear[2].toLowerCase()];
+    if (month != null) {
+      return `${MONTHS[month]} ${Number(dayMonthYear[1])}, ${dayMonthYear[3]}`;
+    }
+  }
+
+  const monthDayYear = raw.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (monthDayYear) {
+    const month = MONTH_INDEX[monthDayYear[1].toLowerCase()];
+    if (month != null) {
+      return `${MONTHS[month]} ${Number(monthDayYear[2])}, ${monthDayYear[3]}`;
+    }
+  }
+
+  const monthYear = raw.match(/^([A-Za-z]+)\.?,?\s+(\d{4})$/);
+  if (monthYear) {
+    const month = MONTH_INDEX[monthYear[1].toLowerCase()];
+    if (month != null) {
+      return `${MONTHS[month]} ${monthYear[2]}`;
+    }
+  }
+
+  return raw;
+}
+
 export function yearRange(person: Person): string {
   const start = person.birthDate?.match(/\d{4}/)?.[0] ?? "";
   const end = person.isDeceased ? (person.deathDate?.match(/\d{4}/)?.[0] ?? "") : "";
