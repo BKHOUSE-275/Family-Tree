@@ -41,8 +41,8 @@ export const BRANCH_EVEN: PctSlot[] = [
   { cx: 38.8, cy: 64.3, size: 8.6 },
   { cx: 62.0, cy: 64.7, size: 8.6 },
   { cx: 75.8, cy: 61.3, size: 8.6 },
-  { cx: 41.1, cy: 39.6, size: 8.6 },
-  { cx: 61.0, cy: 39.6, size: 8.6 },
+  { cx: 41.1, cy: 43.1, size: 8.6 },
+  { cx: 61.0, cy: 43.1, size: 8.6 },
 ];
 
 /**
@@ -51,9 +51,9 @@ export const BRANCH_EVEN: PctSlot[] = [
  */
 export const BRANCH_CENTERS: PctSlot[] = [
   { cx: 50.9, cy: 54.6, size: 8.6 },
-  { cx: 33.1, cy: 51.1, size: 8.6 },
+  { cx: 33.0, cy: 51.1, size: 8.6 },
   { cx: 50.9, cy: 10.1, size: 8.6 },
-  { cx: 67.3, cy: 51.1, size: 8.6 },
+  { cx: 68.9, cy: 51.1, size: 8.6 },
 ];
 
 /**
