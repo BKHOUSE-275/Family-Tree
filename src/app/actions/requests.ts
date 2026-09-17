@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getAppUser, requireAdmin } from "@/lib/auth";
+import { getAppUser, requirePermission, requireSuperAdmin } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { notifyCommitteeOfRequest } from "@/lib/mail";
 import { getChangeRequest, getPerson, saveChangeRequest, savePerson } from "@/lib/store";
@@ -290,6 +290,13 @@ export async function submitChangeRequestAction(formData: FormData) {
   };
 
   await saveChangeRequest(request);
+  await recordAudit(
+    user ?? { id: request.submitterUserId, email },
+    "request.submit",
+    personId ? ((await personLabel(personId)) ?? "Family suggestion") : "Family suggestion",
+    requestType === "add_person" ? "Asked to add a person" : "Sent a change for review",
+    personId,
+  );
   try {
     await notifyCommitteeOfRequest(request);
   } catch (error) {
@@ -297,12 +304,13 @@ export async function submitChangeRequestAction(formData: FormData) {
   }
 
   revalidatePath("/admin/requests");
+  revalidatePath("/admin/activity");
   revalidatePath("/");
   redirect("/?sent=1#suggest");
 }
 
 export async function reviewChangeRequestAction(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requirePermission("requests.review");
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const current = await getChangeRequest(id);
@@ -311,6 +319,7 @@ export async function reviewChangeRequestAction(formData: FormData) {
   }
 
   const status = decision === "approved" ? "approved" : "rejected";
+  let photoNote = "";
   const next: ChangeRequest = {
     ...current,
     status,
@@ -329,8 +338,9 @@ export async function reviewChangeRequestAction(formData: FormData) {
       if (bool(formData, "attachHeadstone") && current.headstonePhotoUrl) {
         updated.headstonePhotoUrl = current.headstonePhotoUrl;
       }
-      if (updated !== person && (updated.photoUrl !== person.photoUrl || updated.headstonePhotoUrl !== person.headstonePhotoUrl)) {
+      if (updated.photoUrl !== person.photoUrl || updated.headstonePhotoUrl !== person.headstonePhotoUrl) {
         await savePerson(updated);
+        photoNote = " · attached submitted photos";
       }
     }
   }
@@ -341,7 +351,44 @@ export async function reviewChangeRequestAction(formData: FormData) {
     user,
     status === "approved" ? "request.approve" : "request.reject",
     person ? displayName(person) : "Family suggestion",
-    status === "approved" ? "Approved a change request" : "Rejected a change request",
+    status === "approved" ? `Approved a change request${photoNote}` : "Rejected a change request",
+    current.personId,
+  );
+  revalidatePath("/admin");
+  revalidatePath("/admin/requests");
+  revalidatePath("/admin/activity");
+  revalidatePath("/");
+  revalidatePath("/tree");
+  if (current.personId) {
+    revalidatePath(`/admin/people/${current.personId}`);
+  }
+}
+
+export async function cancelChangeRequestAction(formData: FormData) {
+  const user = await requireSuperAdmin();
+  const id = String(formData.get("id") ?? "");
+  const current = await getChangeRequest(id);
+  if (!current) {
+    throw new Error("That request was not found.");
+  }
+  if (current.status !== "pending") {
+    throw new Error("Only pending requests can be cancelled.");
+  }
+
+  const next: ChangeRequest = {
+    ...current,
+    status: "rejected",
+    adminNote: str(formData, "adminNote") ?? "Cancelled by super admin",
+    reviewedAt: new Date().toISOString(),
+    reviewedBy: user.id,
+  };
+  await saveChangeRequest(next);
+  const person = current.personId ? await getPerson(current.personId) : null;
+  await recordAudit(
+    user,
+    "request.reject",
+    person ? displayName(person) : "Family suggestion",
+    "Cancelled a pending change request",
     current.personId,
   );
   revalidatePath("/admin");

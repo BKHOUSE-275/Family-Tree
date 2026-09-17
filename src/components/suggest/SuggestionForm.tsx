@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { submitChangeRequestAction } from "@/app/actions/requests";
 import { PhotoField } from "@/components/admin/PhotoField";
+import { PersonPicker } from "@/components/ui/PersonPicker";
 import {
   displayName,
   type Contact,
@@ -67,41 +68,6 @@ function RequesterFields({
         />
       </label>
     </>
-  );
-}
-
-function PersonOptionSelect({
-  name,
-  people,
-  defaultValue = "",
-  required = false,
-  label,
-  emptyLabel,
-}: {
-  name: string;
-  people: { id: string; label: string }[];
-  defaultValue?: string;
-  required?: boolean;
-  label: ReactNode;
-  emptyLabel: string;
-}) {
-  return (
-    <label className="block text-sm font-semibold text-script">
-      {label}
-      <select
-        name={name}
-        required={required}
-        defaultValue={defaultValue}
-        className="ui-select mt-1"
-      >
-        <option value="">{emptyLabel}</option>
-        {people.map((person) => (
-          <option key={person.id} value={person.id}>
-            {person.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -245,23 +211,20 @@ export function SuggestionForm({
               load their current details, then edit what should change.
             </p>
             <RequesterFields defaultName={defaultName} defaultEmail={defaultEmail} />
-            <label className="block text-sm font-semibold text-script">
-              About this person <RequiredMark />
-              <select
-                name="personId"
-                required
-                value={personId}
-                onChange={(event) => onPersonChange(event.target.value)}
-                className="ui-select mt-1"
-              >
-                <option value="">Select a person</option>
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <PersonPicker
+              name="personId"
+              required
+              allowNone={false}
+              value={personId}
+              onChange={onPersonChange}
+              people={people}
+              label={
+                <>
+                  About this person <RequiredMark />
+                </>
+              }
+              emptyLabel="Select a person"
+            />
 
             {selected?.person ? (
               <div key={selected.person.id} className="space-y-4 border-t border-bark/10 pt-4">
@@ -386,14 +349,14 @@ export function SuggestionForm({
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <PersonOptionSelect
+                  <PersonPicker
                     name="parentId1"
                     people={people}
                     defaultValue={selected.parentIds[0] ?? ""}
                     label="Parent 1"
                     emptyLabel="Optional"
                   />
-                  <PersonOptionSelect
+                  <PersonPicker
                     name="parentId2"
                     people={people}
                     defaultValue={selected.parentIds[1] ?? ""}
@@ -403,7 +366,7 @@ export function SuggestionForm({
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <PersonOptionSelect
+                  <PersonPicker
                     name="partnerId"
                     people={people}
                     defaultValue={selected.partnerId}
@@ -561,10 +524,11 @@ export function SuggestionForm({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <PersonOptionSelect
+              <PersonPicker
                 name="personId"
                 people={people}
                 required
+                allowNone={false}
                 label={
                   <>
                     Related to <RequiredMark />
@@ -585,13 +549,13 @@ export function SuggestionForm({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <PersonOptionSelect
+              <PersonPicker
                 name="parentId1"
                 people={people}
                 label="Parent 1"
                 emptyLabel="Optional"
               />
-              <PersonOptionSelect
+              <PersonPicker
                 name="parentId2"
                 people={people}
                 label="Parent 2"
@@ -600,7 +564,7 @@ export function SuggestionForm({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <PersonOptionSelect
+              <PersonPicker
                 name="partnerId"
                 people={people}
                 label="Spouse"

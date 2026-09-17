@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { savePersonAndRedirect } from "@/app/actions/family";
 import { PersonForm } from "@/components/admin/PersonForm";
-import { getAppUser } from "@/lib/auth";
+import { getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
 import { isCommittee } from "@/lib/types";
 
@@ -9,6 +8,7 @@ export default async function NewPersonPage() {
   const user = await getAppUser();
   if (!user) redirect("/sign-in?redirect_url=/admin/people/new");
   if (!isCommittee(user.role)) redirect("/");
+  if (!userHasPermission(user, "people.create")) redirect("/admin");
   const snapshot = await getSnapshot();
 
   return (
@@ -17,7 +17,7 @@ export default async function NewPersonPage() {
         Add a person
       </h1>
       <div className="mt-8">
-        <PersonForm snapshot={snapshot} action={savePersonAndRedirect} />
+        <PersonForm snapshot={snapshot} />
       </div>
     </main>
   );

@@ -50,5 +50,9 @@ export async function recordAudit(
     entityLabel,
     summary,
   };
-  await saveAuditEvent(event);
+  try {
+    await saveAuditEvent(event);
+  } catch (error) {
+    console.error("Could not record activity", error);
+  }
 }

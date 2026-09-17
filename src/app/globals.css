@@ -107,3 +107,48 @@ body {
   background: var(--gold);
   color: var(--bark);
 }
+
+.ui-checkbox {
+  appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-content: center;
+  border-radius: 0.35rem;
+  border: 1.5px solid color-mix(in srgb, var(--bark) 40%, transparent);
+  background: #fff8ee;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ui-checkbox:hover {
+  border-color: var(--bark);
+}
+
+.ui-checkbox:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+.ui-checkbox:checked {
+  background: var(--leaf);
+  border-color: var(--leaf-deep);
+}
+
+.ui-checkbox:checked::after {
+  content: "";
+  width: 0.28rem;
+  height: 0.5rem;
+  margin-bottom: 0.12rem;
+  border: solid #fff8ee;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.ui-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

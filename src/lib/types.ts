@@ -1,5 +1,64 @@
 export type Role = "member" | "admin" | "super_admin";
 
+export const ADMIN_PERMISSION_KEYS = [
+  "people.edit",
+  "people.create",
+  "people.delete",
+  "requests.review",
+  "activity.view",
+  "profiles.link",
+] as const;
+
+export type AdminPermission = (typeof ADMIN_PERMISSION_KEYS)[number];
+export type AdminPermissions = Record<AdminPermission, boolean>;
+
+export const ADMIN_PERMISSION_LABELS: Record<AdminPermission, string> = {
+  "people.edit": "People list and edit",
+  "people.create": "Add person",
+  "people.delete": "Remove person",
+  "requests.review": "Review change requests",
+  "activity.view": "View activity",
+  "profiles.link": "Link a login to a person",
+};
+
+export function defaultAdminPermissions(): AdminPermissions {
+  return {
+    "people.edit": true,
+    "people.create": true,
+    "people.delete": true,
+    "requests.review": true,
+    "activity.view": true,
+    "profiles.link": true,
+  };
+}
+
+export function parseAdminPermissions(raw: unknown, role: Role = "admin"): AdminPermissions {
+  const defaults = defaultAdminPermissions();
+  if (role === "super_admin") return defaults;
+  if (raw == null || raw === "") return defaults;
+  let parsed: Partial<AdminPermissions> = {};
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw) as Partial<AdminPermissions>;
+    } catch {
+      return defaults;
+    }
+  } else if (typeof raw === "object") {
+    parsed = raw as Partial<AdminPermissions>;
+  }
+  return { ...defaults, ...parsed };
+}
+
+export function hasPermission(
+  role: Role,
+  permissions: AdminPermissions | undefined,
+  key: AdminPermission,
+) {
+  if (role === "super_admin") return true;
+  if (role !== "admin") return false;
+  return Boolean(permissions?.[key]);
+}
+
 export type ChangeRequestStatus = "pending" | "approved" | "rejected";
 
 export type AuditAction =
@@ -7,8 +66,10 @@ export type AuditAction =
   | "person.update"
   | "person.delete"
   | "contact.update"
+  | "request.submit"
   | "request.approve"
   | "request.reject"
+  | "profile.link"
   | "role.change";
 
 export type Person = {
@@ -69,6 +130,7 @@ export type Profile = {
   personId: string | null;
   role: Role;
   email: string | null;
+  permissions: AdminPermissions;
 };
 
 export type ChangeRequest = {

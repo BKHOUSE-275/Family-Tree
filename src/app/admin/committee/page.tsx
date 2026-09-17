@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import {
+  cancelAdminInviteAction,
   demoteAdminAction,
   inviteAdminAction,
-  promoteAdminAction,
 } from "@/app/actions/committee";
+import { AdminPermissionsForm } from "@/components/admin/AdminPermissionsForm";
 import { getAppUser } from "@/lib/auth";
 import { committeeAllowlist } from "@/lib/auth-constants";
 import { getSnapshot } from "@/lib/store";
+import { defaultAdminPermissions } from "@/lib/types";
 
 function roleLabel(role: string) {
   if (role === "super_admin") return "Super admin";
@@ -24,7 +26,6 @@ export default async function CommitteePage() {
   const committee = snapshot.profiles.filter(
     (profile) => profile.role === "admin" || profile.role === "super_admin",
   );
-  const members = snapshot.profiles.filter((profile) => profile.role === "member");
   const pendingInvites = snapshot.committeeInvites.filter((invite) => !invite.usedAt);
 
   return (
@@ -33,8 +34,8 @@ export default async function CommitteePage() {
         Admins
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
-        Super admins add committee members and can take admin access away. Emails
-        in ADMIN_EMAILS stay super admins.
+        Super admins add committee members and choose which desk tools each
+        admin can use. Emails in ADMIN_EMAILS stay super admins.
       </p>
 
       <section className="mt-10 rounded-3xl bg-white p-6 shadow">
@@ -43,23 +44,28 @@ export default async function CommitteePage() {
           {committee.map((profile) => {
             const locked = Boolean(profile.email && envSupers.has(profile.email.toLowerCase()));
             return (
-              <li
-                key={profile.userId}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-page px-4 py-3"
-              >
-                <div>
-                  <p className="font-semibold">{profile.email ?? profile.userId}</p>
-                  <p className="text-sm text-black/55">
-                    {roleLabel(profile.role)}
-                    {locked ? " · from ADMIN_EMAILS" : ""}
-                  </p>
+              <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{profile.email ?? profile.userId}</p>
+                    <p className="text-sm text-black/55">
+                      {roleLabel(profile.role)}
+                      {locked ? " · from ADMIN_EMAILS" : ""}
+                    </p>
+                  </div>
+                  {locked || profile.userId === user.id ? null : (
+                    <form action={demoteAdminAction}>
+                      <input type="hidden" name="userId" value={profile.userId} />
+                      <button className="text-sm text-ember hover:underline">Remove admin</button>
+                    </form>
+                  )}
                 </div>
-                {locked || profile.userId === user.id ? null : (
-                  <form action={demoteAdminAction}>
-                    <input type="hidden" name="userId" value={profile.userId} />
-                    <button className="text-sm text-ember hover:underline">Remove admin</button>
-                  </form>
-                )}
+                {profile.role === "admin" && !locked ? (
+                  <AdminPermissionsForm
+                    userId={profile.userId}
+                    permissions={profile.permissions ?? defaultAdminPermissions()}
+                  />
+                ) : null}
               </li>
             );
           })}
@@ -67,33 +73,9 @@ export default async function CommitteePage() {
       </section>
 
       <section className="mt-8 rounded-3xl bg-white p-6 shadow">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl">Promote a member</h2>
-        {members.length ? (
-          <form action={promoteAdminAction} className="mt-4 space-y-3">
-            <label className="block text-sm font-semibold text-script">
-              Existing login
-              <select name="userId" required className="ui-select mt-1">
-                <option value="">Choose a member</option>
-                {members.map((profile) => (
-                  <option key={profile.userId} value={profile.userId}>
-                    {profile.email ?? profile.userId}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="min-h-11 rounded-full bg-ember px-6 py-2 text-white">Make admin</button>
-          </form>
-        ) : (
-          <p className="mt-3 text-sm text-black/55">
-            No member logins yet. Invite by email below, or wait for a relative to sign up.
-          </p>
-        )}
-      </section>
-
-      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Invite by email</h2>
         <p className="mt-1 text-sm text-black/60">
-          They become an admin the next time they sign in with this address.
+          They become an admin the next time they enter this address on committee sign-in.
         </p>
         <form action={inviteAdminAction} className="mt-4 space-y-3">
           <label className="block text-sm font-semibold text-script">
@@ -110,8 +92,17 @@ export default async function CommitteePage() {
         {pendingInvites.length ? (
           <ul className="mt-4 space-y-2 text-sm">
             {pendingInvites.map((invite) => (
-              <li key={invite.id} className="text-black/70">
-                {invite.email} · waiting to sign in
+              <li
+                key={invite.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-page px-4 py-3 text-black/70"
+              >
+                <span>{invite.email} · waiting to sign in</span>
+                <form action={cancelAdminInviteAction}>
+                  <input type="hidden" name="inviteId" value={invite.id} />
+                  <button type="submit" className="text-sm text-ember hover:underline">
+                    Cancel invite
+                  </button>
+                </form>
               </li>
             ))}
           </ul>

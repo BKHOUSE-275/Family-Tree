@@ -1,17 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { LOCAL_AUTH_COOKIE, isNeonAuthConfigured } from "@/lib/auth-constants";
+import { COMMITTEE_SESSION_COOKIE, readCommitteeSessionToken } from "@/lib/committee-session";
 import { getNeonAuth } from "@/lib/neon-auth";
 
-const PROTECTED = [/^\/admin(?:\/|$)/, /^\/profile(?:\/|$)/];
+const ADMIN = /^\/admin(?:\/|$)/;
+const PROFILE = /^\/profile(?:\/|$)/;
 
-function isProtected(pathname: string) {
-  return PROTECTED.some((pattern) => pattern.test(pathname));
+function signInRedirect(request: NextRequest) {
+  const signIn = request.nextUrl.clone();
+  signIn.pathname = "/sign-in";
+  signIn.searchParams.set("redirect_url", request.nextUrl.pathname);
+  return NextResponse.redirect(signIn);
 }
 
-export default function proxy(request: NextRequest) {
-  if (!isProtected(request.nextUrl.pathname)) {
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isAdmin = ADMIN.test(pathname);
+  const isProfile = PROFILE.test(pathname);
+  if (!isAdmin && !isProfile) {
     return NextResponse.next();
+  }
+
+  const committee = await readCommitteeSessionToken(
+    request.cookies.get(COMMITTEE_SESSION_COOKIE)?.value,
+  );
+  if (committee) {
+    return NextResponse.next();
+  }
+
+  if (isAdmin) {
+    return signInRedirect(request);
   }
 
   if (isNeonAuthConfigured()) {
@@ -22,10 +41,7 @@ export default function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const signIn = request.nextUrl.clone();
-  signIn.pathname = "/sign-in";
-  signIn.searchParams.set("redirect_url", request.nextUrl.pathname);
-  return NextResponse.redirect(signIn);
+  return signInRedirect(request);
 }
 
 export const config = {

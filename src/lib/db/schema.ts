@@ -92,6 +92,7 @@ export const profiles = pgTable("profiles", {
   }),
   role: text("role").$type<"member" | "admin" | "super_admin">().notNull().default("member"),
   email: text("email"),
+  permissions: text("permissions"),
 });
 
 export const changeRequests = pgTable("change_requests", {
@@ -125,8 +126,10 @@ export const auditEvents = pgTable("audit_events", {
       | "person.update"
       | "person.delete"
       | "contact.update"
+      | "request.submit"
       | "request.approve"
       | "request.reject"
+      | "profile.link"
       | "role.change"
     >()
     .notNull(),

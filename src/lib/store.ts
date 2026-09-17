@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
-import { eq, sql } from "drizzle-orm";
+import { eq, isNull, or, sql } from "drizzle-orm";
 import { seedSnapshot } from "@/data/seed";
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import {
@@ -29,7 +29,7 @@ import type {
   Role,
   Sibling,
 } from "@/lib/types";
-import { isRootPerson } from "@/lib/types";
+import { defaultAdminPermissions, isRootPerson, parseAdminPermissions } from "@/lib/types";
 
 export { isRootPerson };
 
@@ -88,6 +88,13 @@ function mapPerson(row: typeof people.$inferSelect): Person {
   };
 }
 
+function toIso(value: Date | string | null | undefined) {
+  if (value == null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
 function mapChangeRequest(row: typeof changeRequests.$inferSelect): ChangeRequest {
   return {
     id: row.id,
@@ -99,8 +106,8 @@ function mapChangeRequest(row: typeof changeRequests.$inferSelect): ChangeReques
     headstonePhotoUrl: row.headstonePhotoUrl,
     status: row.status,
     adminNote: row.adminNote,
-    createdAt: row.createdAt.toISOString(),
-    reviewedAt: row.reviewedAt?.toISOString() ?? null,
+    createdAt: toIso(row.createdAt) ?? new Date().toISOString(),
+    reviewedAt: toIso(row.reviewedAt),
     reviewedBy: row.reviewedBy,
   };
 }
@@ -108,7 +115,7 @@ function mapChangeRequest(row: typeof changeRequests.$inferSelect): ChangeReques
 function mapAuditEvent(row: typeof auditEvents.$inferSelect): AuditEvent {
   return {
     id: row.id,
-    createdAt: row.createdAt.toISOString(),
+    createdAt: toIso(row.createdAt) ?? new Date().toISOString(),
     actorUserId: row.actorUserId,
     actorEmail: row.actorEmail,
     action: row.action,
@@ -124,8 +131,24 @@ function mapInvite(row: typeof committeeInvites.$inferSelect): CommitteeInvite {
     email: row.email,
     invitedByUserId: row.invitedByUserId,
     invitedByEmail: row.invitedByEmail,
-    createdAt: row.createdAt.toISOString(),
-    usedAt: row.usedAt?.toISOString() ?? null,
+    createdAt: toIso(row.createdAt) ?? new Date().toISOString(),
+    usedAt: toIso(row.usedAt),
+  };
+}
+
+function mapProfile(row: {
+  userId: string;
+  personId: string | null;
+  role: Role;
+  email: string | null;
+  permissions?: unknown;
+}): Profile {
+  return {
+    userId: row.userId,
+    personId: row.personId,
+    role: row.role,
+    email: row.email,
+    permissions: parseAdminPermissions(row.permissions, row.role),
   };
 }
 
@@ -136,6 +159,7 @@ function normalizeSnapshot(snapshot: FamilySnapshot): FamilySnapshot {
       ...person,
       headstonePhotoUrl: person.headstonePhotoUrl ?? null,
     })),
+    profiles: (snapshot.profiles ?? []).map(mapProfile),
     changeRequests: snapshot.changeRequests ?? [],
     auditEvents: snapshot.auditEvents ?? [],
     committeeInvites: snapshot.committeeInvites ?? [],
@@ -165,6 +189,9 @@ async function ensureAuxTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       used_at TIMESTAMPTZ
     )
+  `);
+  await db.execute(sql`
+    ALTER TABLE profiles ADD COLUMN IF NOT EXISTS permissions TEXT
   `);
 }
 
@@ -203,7 +230,12 @@ async function insertSnapshot(snapshot: FamilySnapshot) {
     await db.insert(siblings).values(snapshot.siblings);
   }
   if (snapshot.profiles.length) {
-    await db.insert(profiles).values(snapshot.profiles);
+    await db.insert(profiles).values(
+      snapshot.profiles.map((profile) => ({
+        ...profile,
+        permissions: JSON.stringify(profile.permissions ?? defaultAdminPermissions()),
+      })),
+    );
   }
 }
 
@@ -233,12 +265,14 @@ async function loadFromNeon(): Promise<FamilySnapshot> {
   let auditRows: (typeof auditEvents.$inferSelect)[] = [];
   let inviteRows: (typeof committeeInvites.$inferSelect)[] = [];
   try {
-    [auditRows, inviteRows] = await Promise.all([
-      db.select().from(auditEvents),
-      db.select().from(committeeInvites),
-    ]);
+    auditRows = await db.select().from(auditEvents);
   } catch (error) {
-    console.error("Could not load audit or committee invite tables", error);
+    console.error("Could not load audit events", error);
+  }
+  try {
+    inviteRows = await db.select().from(committeeInvites);
+  } catch (error) {
+    console.error("Could not load committee invites", error);
   }
   return {
     people: peopleRows.map(mapPerson),
@@ -247,12 +281,7 @@ async function loadFromNeon(): Promise<FamilySnapshot> {
     partnerships: partnershipRows,
     residences: residenceRows,
     siblings: siblingRows,
-    profiles: profileRows.map((row) => ({
-      userId: row.userId,
-      personId: row.personId,
-      role: row.role,
-      email: row.email,
-    })),
+    profiles: profileRows.map(mapProfile),
     changeRequests: requestRows.map(mapChangeRequest),
     auditEvents: auditRows.map(mapAuditEvent),
     committeeInvites: inviteRows.map(mapInvite),
@@ -433,12 +462,35 @@ export async function savePartnership(input: Partnership) {
   await writeLocal(snapshot);
 }
 
+export async function deletePartnershipsForPerson(personId: string) {
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    await db
+      .delete(partnerships)
+      .where(or(eq(partnerships.personAId, personId), eq(partnerships.personBId, personId)));
+    return;
+  }
+  const snapshot = await readLocal();
+  snapshot.partnerships = snapshot.partnerships.filter(
+    (union) => union.personAId !== personId && union.personBId !== personId,
+  );
+  await writeLocal(snapshot);
+}
+
 export async function getProfile(userId: string) {
   const snapshot = await getSnapshot();
   return snapshot.profiles.find((p) => p.userId === userId) ?? null;
 }
 
-function profileRow(input: Profile) {
+export async function findProfileByEmail(email: string) {
+  const snapshot = await getSnapshot();
+  const needle = email.trim().toLowerCase();
+  return (
+    snapshot.profiles.find((profile) => profile.email?.toLowerCase() === needle) ?? null
+  );
+}
+
+function profileRow(input: Profile): Profile {
   const personId = input.personId?.trim() ? input.personId.trim() : null;
   const email = input.email?.trim() ? input.email.trim() : null;
   return {
@@ -446,6 +498,7 @@ function profileRow(input: Profile) {
     personId,
     role: input.role,
     email,
+    permissions: parseAdminPermissions(input.permissions, input.role),
   };
 }
 
@@ -456,8 +509,9 @@ export async function upsertProfile(input: Profile) {
     const values = {
       userId: row.userId,
       role: row.role,
-      ...(row.email ? { email: row.email } : {}),
-      ...(row.personId ? { personId: row.personId } : {}),
+      email: row.email,
+      personId: row.personId,
+      permissions: JSON.stringify(row.permissions),
     };
     await db
       .insert(profiles)
@@ -466,8 +520,9 @@ export async function upsertProfile(input: Profile) {
         target: profiles.userId,
         set: {
           role: row.role,
-          ...(row.email ? { email: row.email } : {}),
-          ...(row.personId ? { personId: row.personId } : {}),
+          email: row.email,
+          personId: row.personId,
+          permissions: JSON.stringify(row.permissions),
         },
       });
     return;
@@ -486,6 +541,7 @@ export async function setProfileRole(userId: string, role: Role) {
       personId: null,
       role: "member" as const,
       email: null,
+      permissions: parseAdminPermissions(undefined, "member"),
     };
   await upsertProfile({ ...current, role });
 }
@@ -586,13 +642,72 @@ export async function saveCommitteeInvite(input: CommitteeInvite) {
 }
 
 export async function findPendingInvite(email: string) {
-  const snapshot = await getSnapshot();
   const needle = email.trim().toLowerCase();
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(committeeInvites)
+      .where(isNull(committeeInvites.usedAt));
+    const row = rows.find((item) => item.email.trim().toLowerCase() === needle);
+    return row ? mapInvite(row) : null;
+  }
+  const snapshot = await readLocal();
   return (
     snapshot.committeeInvites.find(
-      (invite) => !invite.usedAt && invite.email.toLowerCase() === needle,
+      (invite) => !invite.usedAt && invite.email.trim().toLowerCase() === needle,
     ) ?? null
   );
+}
+
+export async function getCommitteeInvite(id: string) {
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(committeeInvites)
+      .where(eq(committeeInvites.id, id))
+      .limit(1);
+    return rows[0] ? mapInvite(rows[0]) : null;
+  }
+  const snapshot = await readLocal();
+  return snapshot.committeeInvites.find((invite) => invite.id === id) ?? null;
+}
+
+export async function deleteCommitteeInvite(id: string) {
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    await db.delete(committeeInvites).where(eq(committeeInvites.id, id));
+    return;
+  }
+  const snapshot = await readLocal();
+  snapshot.committeeInvites = snapshot.committeeInvites.filter(
+    (invite) => invite.id !== id,
+  );
+  await writeLocal(snapshot);
+}
+
+export async function deletePendingInvitesForEmail(email: string) {
+  const needle = email.trim().toLowerCase();
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(committeeInvites)
+      .where(isNull(committeeInvites.usedAt));
+    for (const row of rows) {
+      if (row.email.trim().toLowerCase() === needle) {
+        await db.delete(committeeInvites).where(eq(committeeInvites.id, row.id));
+      }
+    }
+    return;
+  }
+  const snapshot = await readLocal();
+  snapshot.committeeInvites = snapshot.committeeInvites.filter(
+    (invite) =>
+      invite.usedAt || invite.email.trim().toLowerCase() !== needle,
+  );
+  await writeLocal(snapshot);
 }
 
 export type { ParentChild, Partnership, Residence, Sibling };

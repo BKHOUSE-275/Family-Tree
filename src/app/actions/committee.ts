@@ -5,12 +5,22 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { committeeAllowlist } from "@/lib/auth-constants";
 import {
+  deleteCommitteeInvite,
+  deletePendingInvitesForEmail,
   findPendingInvite,
+  findProfileByEmail,
+  getCommitteeInvite,
   getProfile,
   getSnapshot,
   saveCommitteeInvite,
   upsertProfile,
 } from "@/lib/store";
+import {
+  ADMIN_PERMISSION_KEYS,
+  defaultAdminPermissions,
+  parseAdminPermissions,
+  type AdminPermissions,
+} from "@/lib/types";
 
 function str(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -18,27 +28,6 @@ function str(formData: FormData, key: string) {
 
 function isEnvSuper(email: string | null) {
   return Boolean(email && committeeAllowlist().includes(email.toLowerCase()));
-}
-
-export async function promoteAdminAction(formData: FormData) {
-  const actor = await requireSuperAdmin();
-  const userId = str(formData, "userId");
-  const profile = await getProfile(userId);
-  if (!profile) throw new Error("That login was not found.");
-  if (profile.role !== "member") {
-    throw new Error("Only members can be promoted to admin.");
-  }
-  await upsertProfile({ ...profile, role: "admin" });
-  await recordAudit(
-    actor,
-    "role.change",
-    profile.email ?? profile.userId,
-    "Promoted to admin",
-    profile.userId,
-  );
-  revalidatePath("/admin");
-  revalidatePath("/admin/committee");
-  revalidatePath("/admin/activity");
 }
 
 export async function demoteAdminAction(formData: FormData) {
@@ -62,6 +51,9 @@ export async function demoteAdminAction(formData: FormData) {
     }
   }
   await upsertProfile({ ...profile, role: "member" });
+  if (profile.email) {
+    await deletePendingInvitesForEmail(profile.email);
+  }
   await recordAudit(
     actor,
     "role.change",
@@ -82,32 +74,103 @@ export async function inviteAdminAction(formData: FormData) {
   }
   const snapshot = await getSnapshot();
   const existing = snapshot.profiles.find((row) => row.email?.toLowerCase() === email);
-  if (existing) {
-    if (existing.role === "member") {
-      await upsertProfile({ ...existing, role: "admin" });
-      await recordAudit(
-        actor,
-        "role.change",
-        email,
-        "Promoted existing login to admin",
-        existing.userId,
-      );
-    }
-  } else {
-    const pending = await findPendingInvite(email);
-    if (pending) {
-      throw new Error("That email already has a pending admin invite.");
-    }
-    await saveCommitteeInvite({
-      id: `invite-${crypto.randomUUID()}`,
+  if (existing?.role === "super_admin") {
+    revalidatePath("/admin/committee");
+    return;
+  }
+
+  await upsertProfile({
+    userId: existing?.userId ?? `email:${email}`,
+    personId: existing?.personId ?? null,
+    role: "admin",
+    email,
+    permissions: existing?.permissions ?? defaultAdminPermissions(),
+  });
+
+  if (existing?.role === "member") {
+    await recordAudit(
+      actor,
+      "role.change",
       email,
-      invitedByUserId: actor.id,
-      invitedByEmail: actor.email,
-      createdAt: new Date().toISOString(),
-      usedAt: null,
-    });
+      "Promoted existing login to admin",
+      existing.userId,
+    );
+  } else if (!existing) {
+    const pending = await findPendingInvite(email);
+    if (!pending) {
+      await saveCommitteeInvite({
+        id: `invite-${crypto.randomUUID()}`,
+        email,
+        invitedByUserId: actor.id,
+        invitedByEmail: actor.email,
+        createdAt: new Date().toISOString(),
+        usedAt: null,
+      });
+    }
     await recordAudit(actor, "role.change", email, "Invited as admin", email);
   }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/committee");
+  revalidatePath("/admin/activity");
+}
+
+export async function cancelAdminInviteAction(formData: FormData) {
+  const actor = await requireSuperAdmin();
+  const inviteId = str(formData, "inviteId");
+  const invite = await getCommitteeInvite(inviteId);
+  if (!invite) {
+    throw new Error("That invite was not found.");
+  }
+  if (invite.usedAt) {
+    throw new Error("That invite was already used.");
+  }
+
+  await deleteCommitteeInvite(invite.id);
+
+  const profile = await findProfileByEmail(invite.email);
+  if (profile && profile.role === "admin" && !isEnvSuper(profile.email)) {
+    await upsertProfile({ ...profile, role: "member" });
+  }
+
+  await recordAudit(
+    actor,
+    "role.change",
+    invite.email,
+    "Cancelled an admin invite",
+    profile?.userId ?? invite.email,
+  );
+  revalidatePath("/admin");
+  revalidatePath("/admin/committee");
+  revalidatePath("/admin/activity");
+}
+
+export async function updateAdminPermissionsAction(formData: FormData) {
+  const actor = await requireSuperAdmin();
+  const userId = str(formData, "userId");
+  const profile = await getProfile(userId);
+  if (!profile) throw new Error("That login was not found.");
+  if (profile.role !== "admin") {
+    throw new Error("Permissions can only be changed for regular admins.");
+  }
+  if (isEnvSuper(profile.email)) {
+    throw new Error("Env-listed super admins keep every tool.");
+  }
+  const permissions = Object.fromEntries(
+    ADMIN_PERMISSION_KEYS.map((key) => [key, formData.get(key) === "on"]),
+  ) as AdminPermissions;
+  await upsertProfile({
+    ...profile,
+    permissions: parseAdminPermissions(permissions, "admin"),
+  });
+  await recordAudit(
+    actor,
+    "role.change",
+    profile.email ?? profile.userId,
+    "Updated admin tools",
+    profile.userId,
+  );
+  revalidatePath("/admin");
   revalidatePath("/admin/committee");
   revalidatePath("/admin/activity");
 }

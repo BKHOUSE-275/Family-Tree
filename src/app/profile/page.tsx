@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { saveContactAction } from "@/app/actions/family";
+import { ContactForm } from "@/components/admin/ContactForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
 import { displayName, isCommittee } from "@/lib/types";
@@ -45,55 +45,7 @@ export default async function ProfilePage() {
           </div>
 
           {isCommittee(user.role) ? (
-            <form action={saveContactAction} className="space-y-4 rounded-3xl bg-white p-6 shadow">
-              <input type="hidden" name="personId" value={person.id} />
-              <p className="text-sm text-black/60">
-                Committee members can publish shared contact details for this
-                linked person.
-              </p>
-              <label className="block text-sm font-semibold text-script">
-                Address
-                <textarea
-                  name="address"
-                  defaultValue={contact?.address ?? ""}
-                  rows={3}
-                  className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="shareAddress" defaultChecked={contact?.shareAddress} />
-                Share address with family
-              </label>
-              <label className="block text-sm font-semibold text-script">
-                Telephone
-                <input
-                  name="phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  defaultValue={contact?.phone ?? ""}
-                  className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="sharePhone" defaultChecked={contact?.sharePhone} />
-                Share telephone with family
-              </label>
-              <label className="block text-sm font-semibold text-script">
-                Email
-                <input
-                  name="email"
-                  type="email"
-                  defaultValue={contact?.email ?? ""}
-                  className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="shareEmail" defaultChecked={contact?.shareEmail} />
-                Share email with family
-              </label>
-              <button className="min-h-11 rounded-full bg-script px-6 py-2 text-white">Save contact</button>
-            </form>
+            <ContactForm personId={person.id} contact={contact ?? null} />
           ) : null}
         </div>
       ) : (

@@ -47,7 +47,12 @@ async function main() {
     await db.insert(contacts).values(snapshot.contacts).onConflictDoNothing();
   }
   if (snapshot.profiles.length) {
-    await db.insert(profiles).values(snapshot.profiles).onConflictDoNothing();
+    await db.insert(profiles).values(
+      snapshot.profiles.map((profile) => ({
+        ...profile,
+        permissions: JSON.stringify(profile.permissions),
+      })),
+    ).onConflictDoNothing();
   }
 
   console.log(`Seeded ${snapshot.people.length} people into Neon.`);

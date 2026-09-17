@@ -1,9 +1,19 @@
 import Link from "next/link";
-import { reviewChangeRequestAction } from "@/app/actions/requests";
+import { redirect } from "next/navigation";
+import {
+  cancelChangeRequestAction,
+  reviewChangeRequestAction,
+} from "@/app/actions/requests";
+import { getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { displayName } from "@/lib/types";
+import { displayName, isCommittee } from "@/lib/types";
 
 export default async function ChangeRequestsPage() {
+  const user = await getAppUser();
+  if (!user) redirect("/sign-in?redirect_url=/admin/requests");
+  if (!isCommittee(user.role)) redirect("/");
+  if (!userHasPermission(user, "requests.review")) redirect("/admin");
+
   const snapshot = await getSnapshot();
   const byId = new Map(snapshot.people.map((person) => [person.id, person]));
   const pending = snapshot.changeRequests.filter((row) => row.status === "pending");
@@ -30,6 +40,7 @@ export default async function ChangeRequestsPage() {
                   key={request.id}
                   request={request}
                   personName={person ? displayName(person) : null}
+                  canCancel={user.role === "super_admin"}
                 />
               );
             })}
@@ -68,6 +79,7 @@ export default async function ChangeRequestsPage() {
 function RequestCard({
   request,
   personName,
+  canCancel,
 }: {
   request: {
     id: string;
@@ -80,6 +92,7 @@ function RequestCard({
     createdAt: string;
   };
   personName: string | null;
+  canCancel: boolean;
 }) {
   return (
     <li className="rounded-3xl bg-white p-6 shadow">
@@ -133,6 +146,15 @@ function RequestCard({
             <Link href={`/admin/people/${request.personId}`} className="self-center text-sm text-ember underline">
               Open person editor
             </Link>
+          ) : null}
+          {canCancel ? (
+            <button
+              type="submit"
+              formAction={cancelChangeRequestAction}
+              className="min-h-11 rounded-full border border-ember/40 px-5 py-2 text-ember"
+            >
+              Cancel request
+            </button>
           ) : null}
         </div>
       </form>
