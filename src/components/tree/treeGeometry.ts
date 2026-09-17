@@ -25,30 +25,33 @@ type SlotPair = [PctSlot, PctSlot];
 
 /**
  * Even count → complete left/right pairs, so the canopy stays symmetrical.
- * Odd count → those pairs plus one centerline seat.
- * The original 8 painted holes fill first; extra authored seats are used
- * only after those 8 are taken. Returned seats are ordered top-to-bottom,
- * then left-to-right, for children sorted by birthday (oldest first).
+ * Odd count → those pairs plus leftover centerline seats.
+ * After pairs are full, remaining authored centers are used before any
+ * generated overflow. The original 8 painted holes fill first.
+ * Returned seats are ordered top-to-bottom, then left-to-right.
  */
 export function balancedSlots(
   evenSlots: PctSlot[],
   centers: PctSlot[],
   count: number,
+  origin?: PctSlot,
 ): PctSlot[] {
   if (count <= 0) return [];
 
   const layout = classifySlots(evenSlots, centers);
-  const evenCount = count % 2 === 0 ? count : count - 1;
-  const pairCount = Math.min(evenCount / 2, layout.pairs.length);
   const placed: PctSlot[] = [];
+  let remaining = count;
 
-  for (let i = 0; i < pairCount; i += 1) {
-    const [left, right] = layout.pairs[i]!;
+  for (const [left, right] of layout.pairs) {
+    if (remaining < 2) break;
     placed.push({ ...left }, { ...right });
+    remaining -= 2;
   }
 
-  if (count % 2 === 1) {
-    placed.push({ ...pickCenter(layout.centers, count) });
+  if (remaining > 0) {
+    for (const slot of takeCenters(layout.centers, remaining, origin, count)) {
+      placed.push({ ...slot });
+    }
   }
 
   return sortSlotsForBirthOrder(placed);
@@ -59,26 +62,19 @@ export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] 
   if (count === 0) return [];
 
   const layout = classifySlots(BRANCH_EVEN, BRANCH_CENTERS);
-  const authoredEven = layout.pairs.length * 2;
-  const fitsAuthored =
-    count <= authoredEven ||
-    (count % 2 === 1 && count <= authoredEven + 1);
+  const authoredMax = layout.pairs.length * 2 + layout.centers.length;
 
-  if (fitsAuthored) {
-    return balancedSlots(BRANCH_EVEN, BRANCH_CENTERS, count);
+  if (count <= authoredMax) {
+    return balancedSlots(BRANCH_EVEN, BRANCH_CENTERS, count, origin);
   }
 
-  const placed = layout.pairs.flatMap(([left, right]) => [
-    { ...left },
-    { ...right },
-  ]);
+  const placed = balancedSlots(
+    BRANCH_EVEN,
+    BRANCH_CENTERS,
+    authoredMax,
+    origin,
+  );
   let remaining = count - placed.length;
-
-  if (remaining % 2 === 1 && layout.centers.length > 0) {
-    placed.push({ ...pickCenter(layout.centers, count) });
-    remaining -= 1;
-  }
-
   const pattern = branchRowPattern([
     ...BRANCH_EVEN,
     ...BRANCH_CENTERS,
@@ -128,14 +124,19 @@ function classifySlots(evenSlots: PctSlot[], centerSlots: PctSlot[]) {
   }
 
   const primary = pairGroup(primaryEven, primaryEven);
-  const extra = [
-    ...pairGroup(extraEven, extraEven).pairs,
-    ...pairGroup(extraSides, extraSides).pairs,
-  ];
-  centers.push(...primary.leftover);
+  const extraEvenGrouped = pairGroup(extraEven, extraEven);
+  const extraSideGrouped = pairGroup(extraSides, extraSides);
+  centers.push(
+    ...primary.leftover,
+    ...extraEvenGrouped.leftover,
+    ...extraSideGrouped.leftover,
+  );
   centers.sort((a, b) => a.cy - b.cy || a.cx - b.cx);
 
-  return { pairs: [...primary.pairs, ...extra], centers };
+  return {
+    pairs: [...primary.pairs, ...extraEvenGrouped.pairs, ...extraSideGrouped.pairs],
+    centers,
+  };
 }
 
 function pairGroup(slots: PctSlot[], authoredOrder: PctSlot[]) {
@@ -202,6 +203,33 @@ function sortSlotsForBirthOrder(slots: PctSlot[]) {
   const rows = clusterRows(slots);
   rows.sort((a, b) => meanCy(a) - meanCy(b));
   return rows.flatMap((row) => [...row].sort((a, b) => a.cx - b.cx));
+}
+
+/**
+ * Map leftover center seats.
+ * Hero canopy (no origin): 1/3 → top, 5/7 → mid, 9+ → lower.
+ * Open branch: seats under the parent first, then remaining centers top-down.
+ */
+function takeCenters(
+  centers: PctSlot[],
+  needed: number,
+  origin: PctSlot | undefined,
+  oddCount: number,
+): PctSlot[] {
+  if (needed <= 0 || centers.length === 0) return [];
+  const ranked = rankCenters(centers, origin);
+  if (!origin && needed === 1) {
+    return [pickCenter(ranked, oddCount)];
+  }
+  return ranked.slice(0, Math.min(needed, ranked.length));
+}
+
+function rankCenters(centers: PctSlot[], origin?: PctSlot) {
+  const sorted = [...centers].sort((a, b) => a.cy - b.cy || a.cx - b.cx);
+  if (!origin) return sorted;
+  const below = sorted.filter((slot) => slot.cy > origin.cy + 1);
+  const rest = sorted.filter((slot) => slot.cy <= origin.cy + 1);
+  return [...below, ...rest];
 }
 
 /**

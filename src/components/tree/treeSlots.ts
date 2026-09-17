@@ -33,16 +33,16 @@ export const BRANCH_SUBJECT: PctSlot = { cx: 50.9, cy: 35.9, size: 8.6 };
  * always fill first; later pairs are overflow seats.
  */
 export const BRANCH_EVEN: PctSlot[] = [
-  { cx: 41.2, cy: 20.9, size: 8.6 },
+  { cx: 41.1, cy: 20.9, size: 8.6 },
   { cx: 61.0, cy: 20.9, size: 8.6 },
-  { cx: 29.1, cy: 38.7, size: 8.6 },
-  { cx: 70.0, cy: 38.7, size: 8.6 },
-  { cx: 23.3, cy: 61.3, size: 8.6 },
-  { cx: 38.6, cy: 64.6, size: 8.6 },
-  { cx: 62.0, cy: 64.6, size: 8.6 },
-  { cx: 79.1, cy: 61.3, size: 8.6 },
-  { cx: 41.2, cy: 46.7, size: 8.6 },
-  { cx: 61.0, cy: 46.7, size: 8.6 },
+  { cx: 27.0, cy: 37.7, size: 8.6 },
+  { cx: 73.1, cy: 37.7, size: 8.6 },
+  { cx: 24.3, cy: 61.3, size: 8.6 },
+  { cx: 40.1, cy: 64.6, size: 8.6 },
+  { cx: 60.4, cy: 64.6, size: 8.6 },
+  { cx: 75.8, cy: 61.3, size: 8.6 },
+  { cx: 39.3, cy: 35.9, size: 8.6 },
+  { cx: 61.0, cy: 35.9, size: 8.6 },
 ];
 
 /**
@@ -50,10 +50,10 @@ export const BRANCH_EVEN: PctSlot[] = [
  * Runtime placement classifies these by position (pair vs center).
  */
 export const BRANCH_CENTERS: PctSlot[] = [
-  { cx: 50.9, cy: 58.4, size: 8.6 },
-  { cx: 31.7, cy: 52.9, size: 8.6 },
+  { cx: 50.9, cy: 51.1, size: 8.6 },
+  { cx: 33.8, cy: 51.1, size: 8.6 },
   { cx: 50.9, cy: 10.1, size: 8.6 },
-  { cx: 71.7, cy: 52.9, size: 8.6 },
+  { cx: 66.3, cy: 51.1, size: 8.6 },
 ];
 
 /**

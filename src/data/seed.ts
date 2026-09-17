@@ -1,4 +1,4 @@
-import type { FamilySnapshot, Person } from "@/lib/types";
+import type { FamilySnapshot, ParentChild, Person } from "@/lib/types";
 
 function person(
   id: string,
@@ -25,6 +25,49 @@ function person(
 }
 
 const deceased = { isDeceased: true as const };
+
+const SLOT_COUNTS = Array.from({ length: 14 }, (_, index) => index + 1);
+
+function slotDemoFamily(): {
+  people: Person[];
+  parentChildren: ParentChild[];
+} {
+  const people: Person[] = [
+    person("slot-demo", "Slot", "Demo", {
+      birthDate: "January 1, 2000",
+      notes:
+        "Temporary placement preview. Open 1–14 to see that many children on the branch.",
+    }),
+  ];
+  const parentChildren: ParentChild[] = [
+    { parentId: "felix-mitchell", childId: "slot-demo" },
+    { parentId: "adaline-kiah", childId: "slot-demo" },
+  ];
+
+  for (const count of SLOT_COUNTS) {
+    const parentId = `slot-n-${count}`;
+    people.push(
+      person(parentId, String(count), "Seats", {
+        birthDate: `January ${count}, 2001`,
+        notes: `Placement preview with ${count} child${count === 1 ? "" : "ren"}.`,
+      }),
+    );
+    parentChildren.push({ parentId: "slot-demo", childId: parentId });
+    for (let child = 1; child <= count; child += 1) {
+      const childId = `slot-n-${count}-c-${child}`;
+      people.push(
+        person(childId, String(child), "", {
+          birthDate: `February ${child}, ${2000 + count}`,
+        }),
+      );
+      parentChildren.push({ parentId, childId });
+    }
+  }
+
+  return { people, parentChildren };
+}
+
+const slotDemo = slotDemoFamily();
 
 export const seedSnapshot: FamilySnapshot = {
   people: [
@@ -310,6 +353,8 @@ export const seedSnapshot: FamilySnapshot = {
     person("claudia-mitchell", "Claudia", "Mitchell"),
     person("vernice-mitchell", "Vernice", "Mitchell"),
     person("cathy-mitchell", "Cathy", "Mitchell"),
+
+    ...slotDemo.people,
   ],
   contacts: [],
   parentChildren: [
@@ -550,6 +595,8 @@ export const seedSnapshot: FamilySnapshot = {
       "vernice-mitchell",
       "cathy-mitchell",
     ].map((childId) => ({ parentId: "james-fangalang-mitchell", childId })),
+
+    ...slotDemo.parentChildren,
   ],
   partnerships: [
     {
