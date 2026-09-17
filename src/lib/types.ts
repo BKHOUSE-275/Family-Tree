@@ -206,18 +206,73 @@ export function yearRange(person: Person): string {
 }
 
 export function birthYear(person: Person): number | null {
-  const match = person.birthDate?.match(/\d{4}/);
-  return match ? Number(match[0]) : null;
+  return parseBirthDateParts(person.birthDate)?.year ?? null;
+}
+
+/** Year, month, and day for sorting; missing month/day sort before known ones. */
+export function parseBirthDateParts(
+  value: string | null | undefined,
+): { year: number; month: number; day: number } | null {
+  if (!value) return null;
+  const raw = value.trim();
+  if (!raw) return null;
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    return {
+      year: Number(iso[1]),
+      month: Number(iso[2]),
+      day: Number(iso[3]),
+    };
+  }
+
+  const dayMonthYear = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\.?,?\s+(\d{4})$/);
+  if (dayMonthYear) {
+    const month = MONTH_INDEX[dayMonthYear[2].toLowerCase()];
+    if (month != null) {
+      return {
+        year: Number(dayMonthYear[3]),
+        month: month + 1,
+        day: Number(dayMonthYear[1]),
+      };
+    }
+  }
+
+  const monthDayYear = raw.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (monthDayYear) {
+    const month = MONTH_INDEX[monthDayYear[1].toLowerCase()];
+    if (month != null) {
+      return {
+        year: Number(monthDayYear[3]),
+        month: month + 1,
+        day: Number(monthDayYear[2]),
+      };
+    }
+  }
+
+  const monthYear = raw.match(/^([A-Za-z]+)\.?,?\s+(\d{4})$/);
+  if (monthYear) {
+    const month = MONTH_INDEX[monthYear[1].toLowerCase()];
+    if (month != null) {
+      return { year: Number(monthYear[2]), month: month + 1, day: 0 };
+    }
+  }
+
+  const year = raw.match(/\d{4}/);
+  if (!year) return null;
+  return { year: Number(year[0]), month: 0, day: 0 };
 }
 
 export function sortByBirth<T extends Person>(people: T[]): T[] {
   return [...people].sort((a, b) => {
-    const yearA = birthYear(a);
-    const yearB = birthYear(b);
-    if (yearA == null && yearB == null) return 0;
-    if (yearA == null) return 1;
-    if (yearB == null) return -1;
-    if (yearA !== yearB) return yearA - yearB;
+    const partsA = parseBirthDateParts(a.birthDate);
+    const partsB = parseBirthDateParts(b.birthDate);
+    if (!partsA && !partsB) return 0;
+    if (!partsA) return 1;
+    if (!partsB) return -1;
+    if (partsA.year !== partsB.year) return partsA.year - partsB.year;
+    if (partsA.month !== partsB.month) return partsA.month - partsB.month;
+    if (partsA.day !== partsB.day) return partsA.day - partsB.day;
     return displayName(a).localeCompare(displayName(b));
   });
 }

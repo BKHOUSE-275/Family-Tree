@@ -24,21 +24,64 @@ const CANOPY_EVEN = [
 const ROOT_FATHER_ID = "felix-mitchell";
 const ROOT_MOTHER_ID = "adaline-kiah";
 
-function birthYear(person) {
-  const match = person.birthDate?.match(/\d{4}/);
-  return match ? Number(match[0]) : null;
-}
-
 function sortByBirth(people) {
   return [...people].sort((a, b) => {
-    const yearA = birthYear(a);
-    const yearB = birthYear(b);
-    if (yearA == null && yearB == null) return 0;
-    if (yearA == null) return 1;
-    if (yearB == null) return -1;
-    if (yearA !== yearB) return yearA - yearB;
+    const rankA = birthRank(a);
+    const rankB = birthRank(b);
+    if (!rankA && !rankB) return 0;
+    if (!rankA) return 1;
+    if (!rankB) return -1;
+    if (rankA.year !== rankB.year) return rankA.year - rankB.year;
+    if (rankA.month !== rankB.month) return rankA.month - rankB.month;
+    if (rankA.day !== rankB.day) return rankA.day - rankB.day;
     return `${a.givenName} ${a.surname}`.localeCompare(`${b.givenName} ${b.surname}`);
   });
+}
+
+function birthRank(person) {
+  const raw = person.birthDate?.trim();
+  if (!raw) return null;
+  const year = raw.match(/\d{4}/);
+  if (!year) return null;
+  const monthNames = {
+    jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3,
+    apr: 4, april: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7,
+    aug: 8, august: 8, sep: 9, september: 9, oct: 10, october: 10,
+    nov: 11, november: 11, dec: 12, december: 12,
+  };
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return { year: Number(iso[1]), month: Number(iso[2]), day: Number(iso[3]) };
+  const monthDay = raw.match(/^([A-Za-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (monthDay && monthNames[monthDay[1].toLowerCase()] != null) {
+    return {
+      year: Number(monthDay[3]),
+      month: monthNames[monthDay[1].toLowerCase()],
+      day: Number(monthDay[2]),
+    };
+  }
+  const monthYear = raw.match(/^([A-Za-z]+)\.?,?\s+(\d{4})$/);
+  if (monthYear && monthNames[monthYear[1].toLowerCase()] != null) {
+    return {
+      year: Number(monthYear[2]),
+      month: monthNames[monthYear[1].toLowerCase()],
+      day: 0,
+    };
+  }
+  return { year: Number(year[0]), month: 0, day: 0 };
+}
+
+function sortSlotsForBirth(slots) {
+  const rows = [];
+  const sorted = [...slots].sort((a, b) => a.cy - b.cy || a.cx - b.cx);
+  for (const slot of sorted) {
+    const row = rows.find((group) => {
+      const mean = group.reduce((sum, item) => sum + item.cy, 0) / group.length;
+      return Math.abs(mean - slot.cy) <= 5;
+    });
+    if (row) row.push(slot);
+    else rows.push([slot]);
+  }
+  return rows.flatMap((row) => [...row].sort((a, b) => a.cx - b.cx));
 }
 
 function uniquePeople(people) {
@@ -84,9 +127,10 @@ const canopyPeople = sortByBirth(
   ]),
 ).slice(0, CANOPY_EVEN.length);
 
+const canopySlots = sortSlotsForBirth(CANOPY_EVEN);
 const nodes = canopyPeople
   .map((person, index) => {
-    const slot = CANOPY_EVEN[index];
+    const slot = canopySlots[index];
     const surname = [person.surname, person.suffix].filter(Boolean).join(" ");
     const photo = person.photoUrl
       ? `<img src="${escapeHtml(person.photoUrl)}" alt="">`
