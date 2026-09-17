@@ -483,10 +483,25 @@ export async function getProfile(userId: string) {
 }
 
 export async function findProfileByEmail(email: string) {
-  const snapshot = await getSnapshot();
   const needle = email.trim().toLowerCase();
+  if (!needle) return null;
+  if (isDatabaseConfigured()) {
+    const db = getDb();
+    const rows = await db.select().from(profiles);
+    const row = rows.find((profile) => {
+      const stored = profile.email?.trim().toLowerCase();
+      if (stored === needle) return true;
+      return profile.userId.trim().toLowerCase() === `email:${needle}`;
+    });
+    return row ? mapProfile(row) : null;
+  }
+  const snapshot = await readLocal();
   return (
-    snapshot.profiles.find((profile) => profile.email?.toLowerCase() === needle) ?? null
+    snapshot.profiles.find((profile) => {
+      const stored = profile.email?.trim().toLowerCase();
+      if (stored === needle) return true;
+      return profile.userId.trim().toLowerCase() === `email:${needle}`;
+    }) ?? null
   );
 }
 

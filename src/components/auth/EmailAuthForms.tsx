@@ -1,11 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState } from "react";
 import {
   lookupCommitteeEmail,
   signInSuperAdminPasscode,
   signUpWithEmail,
-  type CommitteeEmailState,
 } from "@/app/actions/auth";
 
 const fieldClass =
@@ -13,39 +12,23 @@ const fieldClass =
 
 export function SignInForm({
   redirectUrl,
+  initialEmail = "",
+  initialStep = "email",
+  error,
 }: {
   redirectUrl: string;
+  initialEmail?: string;
+  initialStep?: "email" | "passcode";
+  error?: string;
   inviteRequired?: boolean;
 }) {
-  const [emailState, emailAction, emailPending] = useActionState(
-    lookupCommitteeEmail,
-    null as CommitteeEmailState,
-  );
-  const [passState, passAction, passPending] = useActionState(
-    signInSuperAdminPasscode,
-    null as CommitteeEmailState,
-  );
-  const [step, setStep] = useState<"email" | "passcode">("email");
-  const email = passState?.email || emailState?.email || "";
-  const next = passState?.next || emailState?.next;
-
-  useEffect(() => {
-    if (next) window.location.replace(next);
-  }, [next]);
-
-  useEffect(() => {
-    if (emailState?.step === "passcode" || passState?.step === "passcode") {
-      setStep("passcode");
-    }
-  }, [emailState, passState]);
-
-  if (step === "passcode") {
+  if (initialStep === "passcode") {
     return (
-      <form action={passAction} className="rounded-3xl bg-white p-6 shadow">
+      <form action={signInSuperAdminPasscode} className="rounded-3xl bg-white p-6 shadow">
         <input type="hidden" name="redirect_url" value={redirectUrl} />
-        <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="email" value={initialEmail} />
         <p className="text-sm text-black/65">
-          Super admin sign-in for <strong>{email}</strong>
+          Super admin sign-in for <strong>{initialEmail}</strong>
         </p>
         <label className="mt-4 block text-sm font-semibold text-script">
           Passcode
@@ -58,30 +41,21 @@ export function SignInForm({
             placeholder="Family gate password"
           />
         </label>
-        {passState?.error ? (
-          <p className="mt-3 rounded-xl bg-ember/10 px-3 py-2 text-sm text-ember">
-            {passState.error}
-          </p>
+        {error ? (
+          <p className="mt-3 rounded-xl bg-ember/10 px-3 py-2 text-sm text-ember">{error}</p>
         ) : null}
-        <button
-          disabled={passPending || Boolean(next)}
-          className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white disabled:opacity-60"
-        >
-          {next ? "Opening…" : passPending ? "Checking…" : "Open the committee desk"}
+        <button className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white">
+          Open the committee desk
         </button>
-        <button
-          type="button"
-          className="mt-3 w-full text-sm text-script underline"
-          onClick={() => setStep("email")}
-        >
+        <a href="/sign-in" className="mt-3 block w-full text-center text-sm text-script underline">
           Use a different email
-        </button>
+        </a>
       </form>
     );
   }
 
   return (
-    <form action={emailAction} className="rounded-3xl bg-white p-6 shadow">
+    <form action={lookupCommitteeEmail} className="rounded-3xl bg-white p-6 shadow">
       <input type="hidden" name="redirect_url" value={redirectUrl} />
       <label className="block text-sm font-semibold text-script">
         Email
@@ -90,18 +64,15 @@ export function SignInForm({
           type="email"
           required
           autoComplete="email"
-          defaultValue={email}
+          defaultValue={initialEmail}
           className={fieldClass}
         />
       </label>
-      {emailState?.error ? (
-        <p className="mt-3 text-sm text-ember">{emailState.error}</p>
+      {error ? (
+        <p className="mt-3 rounded-xl bg-ember/10 px-3 py-2 text-sm text-ember">{error}</p>
       ) : null}
-      <button
-        disabled={emailPending || Boolean(next)}
-        className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white disabled:opacity-60"
-      >
-        {next ? "Opening…" : emailPending ? "Checking…" : "Continue"}
+      <button className="mt-4 min-h-11 w-full rounded-full bg-script py-2 text-base text-white">
+        Continue
       </button>
     </form>
   );

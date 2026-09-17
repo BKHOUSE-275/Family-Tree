@@ -60,6 +60,25 @@ async function issueCommitteeSession(profile: Profile, redirectUrl: string) {
   return isCommittee(profile.role) ? next : fallback;
 }
 
+function signInUrl(input: {
+  redirectUrl: string;
+  email?: string;
+  step?: "passcode";
+  error?: string;
+}) {
+  const params = new URLSearchParams();
+  params.set("redirect_url", input.redirectUrl);
+  if (input.email) params.set("email", input.email);
+  if (input.step) params.set("step", input.step);
+  if (input.error) params.set("error", input.error);
+  return `/sign-in?${params.toString()}`;
+}
+
+async function openCommitteeDesk(profile: Profile, redirectUrl: string): Promise<never> {
+  const next = await issueCommitteeSession(profile, redirectUrl);
+  redirect(next);
+}
+
 export type CommitteeEmailState = {
   error?: string;
   step?: "passcode";
@@ -67,25 +86,35 @@ export type CommitteeEmailState = {
   next?: string;
 } | null;
 
-export async function lookupCommitteeEmail(
-  _prev: CommitteeEmailState,
-  formData: FormData,
-): Promise<CommitteeEmailState> {
+export async function lookupCommitteeEmail(formData: FormData) {
   const email = normalizeEmail(formData.get("email"));
   const redirectUrl = safeRedirect(formData.get("redirect_url"));
   if (!email || !email.includes("@")) {
-    return { error: "Enter a committee email address." };
+    redirect(signInUrl({ redirectUrl, error: "Enter a committee email address." }));
   }
 
-  const existing = await findProfileByEmail(email);
-  const invite = await findPendingInvite(email);
+  let existing;
+  let invite;
+  try {
+    existing = await findProfileByEmail(email);
+    invite = await findPendingInvite(email);
+  } catch (error) {
+    console.error("Committee email lookup failed", error);
+    redirect(
+      signInUrl({
+        redirectUrl,
+        email,
+        error: "Could not reach the committee list. Try again.",
+      }),
+    );
+  }
 
   if (existing?.role === "super_admin") {
-    return { step: "passcode", email };
+    redirect(signInUrl({ redirectUrl, email, step: "passcode" }));
   }
 
   if (existing && isCommittee(existing.role)) {
-    return { next: await issueCommitteeSession(existing, redirectUrl) };
+    await openCommitteeDesk(existing, redirectUrl);
   }
 
   if (invite) {
@@ -108,35 +137,45 @@ export async function lookupCommitteeEmail(
       "Accepted an admin invite",
       profile.userId,
     );
-    return { next: await issueCommitteeSession(profile, redirectUrl) };
+    await openCommitteeDesk(profile, redirectUrl);
   }
 
-  return { error: "That email is not on the committee." };
+  redirect(
+    signInUrl({
+      redirectUrl,
+      email,
+      error: "That email is not on the committee.",
+    }),
+  );
 }
 
-export async function signInSuperAdminPasscode(
-  _prev: CommitteeEmailState,
-  formData: FormData,
-): Promise<CommitteeEmailState> {
+export async function signInSuperAdminPasscode(formData: FormData) {
   const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "").trim();
   const redirectUrl = safeRedirect(formData.get("redirect_url"));
   const expected = (process.env.FAMILY_GATE_PASSWORD ?? "").trim();
-  const existing = await findProfileByEmail(email);
-  const allowed = existing?.role === "super_admin";
+  const passcodeUrl = (error: string) =>
+    signInUrl({ redirectUrl, email, step: "passcode", error });
 
+  let existing;
+  try {
+    existing = await findProfileByEmail(email);
+  } catch (error) {
+    console.error("Super admin sign-in failed", error);
+    redirect(passcodeUrl("Could not open the committee desk. Try again."));
+  }
+
+  const allowed = existing?.role === "super_admin";
   if (!email || !allowed) {
-    return { error: "That email is not a super admin.", step: "passcode", email };
+    redirect(passcodeUrl("That email is not a super admin."));
   }
   if (!expected) {
-    return {
-      error: "FAMILY_GATE_PASSWORD is not loaded. Save .env and restart npm run dev.",
-      step: "passcode",
-      email,
-    };
+    redirect(
+      passcodeUrl("FAMILY_GATE_PASSWORD is not loaded. Save .env and restart npm run dev."),
+    );
   }
   if (password !== expected) {
-    return { error: "That passcode is not right.", step: "passcode", email };
+    redirect(passcodeUrl("That passcode is not right."));
   }
 
   const profile: Profile = {
@@ -147,7 +186,7 @@ export async function signInSuperAdminPasscode(
     permissions: defaultAdminPermissions(),
   };
   await upsertProfile(profile);
-  return { next: await issueCommitteeSession(profile, redirectUrl) };
+  await openCommitteeDesk(profile, redirectUrl);
 }
 
 export async function signInWithEmail(
