@@ -140,7 +140,8 @@ export function PersonPanel({
                     <p className="text-black/60">
                       {row.date ? (
                         <span className="block">
-                          Marriage date: {formatFamilyDate(row.date) || row.date}
+                          <span className="font-bold text-black">Marriage date:</span>{" "}
+                          {formatFamilyDate(row.date) || row.date}
                         </span>
                       ) : null}
                       {row.place ? <span className="block">{row.place}</span> : null}

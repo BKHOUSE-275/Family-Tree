@@ -52,10 +52,9 @@ export function BranchPlacePage() {
           Place the parent and children
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-center text-bark/80">
-          The first circle is the parent. The next eight match the hero canopy
-          (even counts). Extra circles cover larger families; the last three are
-          centerline seats for odd counts. Drag them into place, then copy the
-          locations.
+          The first circle is the parent. The next ten are paired seats for even
+          counts; the last is the centerline seat for odd counts. Drag them into
+          place, then copy the locations.
         </p>
         <p className="mt-3 text-center">
           <Link
@@ -81,7 +80,7 @@ export function BranchPlacePage() {
               onSlotsChange={setSlots}
               formatSlots={formatBranchSlots}
               title="Place the next generation"
-              help="Parent is first. Next eight match the hero canopy; then extras for larger families; last three are odd-count centers. Drag, click the tree, or use arrow keys."
+              help="Parent is first. Next ten are even-count pairs; last is the odd-count center. Drag, click the tree, or use arrow keys."
               labelFor={() => ""}
               onAdd={addChild}
               onRemove={removeLast}

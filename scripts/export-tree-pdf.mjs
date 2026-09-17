@@ -11,13 +11,13 @@ const chrome =
   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 
 const CANOPY_EVEN = [
-  { cx: 42.0, cy: 21.7, size: 8.6 },
-  { cx: 59.7, cy: 21.6, size: 8.6 },
-  { cx: 29.6, cy: 37.9, size: 8.6 },
+  { cx: 40.9, cy: 20.9, size: 8.6 },
+  { cx: 60.6, cy: 21.0, size: 8.6 },
+  { cx: 29.0, cy: 37.9, size: 8.6 },
   { cx: 69.6, cy: 38.6, size: 8.6 },
   { cx: 23.7, cy: 61.3, size: 8.6 },
-  { cx: 38.6, cy: 64.6, size: 8.6 },
-  { cx: 62.3, cy: 64.8, size: 8.6 },
+  { cx: 38.8, cy: 64.6, size: 8.6 },
+  { cx: 62.0, cy: 64.9, size: 8.6 },
   { cx: 77.7, cy: 60.2, size: 8.6 },
 ];
 
