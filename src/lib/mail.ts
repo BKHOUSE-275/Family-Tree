@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { committeeAllowlist } from "@/lib/auth-constants";
 import { getSnapshot } from "@/lib/store";
 import { isCommittee, displayName, type ChangeRequest } from "@/lib/types";
 
@@ -11,10 +10,13 @@ export async function notifyCommitteeOfRequest(request: ChangeRequest) {
   }
 
   const snapshot = await getSnapshot();
-  const fromProfiles = snapshot.profiles
-    .filter((profile) => isCommittee(profile.role) && profile.email)
-    .map((profile) => profile.email!.toLowerCase());
-  const recipients = [...new Set([...committeeAllowlist(), ...fromProfiles])];
+  const recipients = [
+    ...new Set(
+      snapshot.profiles
+        .filter((profile) => isCommittee(profile.role) && profile.email)
+        .map((profile) => profile.email!.toLowerCase()),
+    ),
+  ];
   if (!recipients.length) {
     console.warn("No committee email addresses found; skipping alert.");
     return;

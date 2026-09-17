@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
-import { committeeAllowlist } from "@/lib/auth-constants";
 import {
   deleteCommitteeInvite,
   deletePendingInvitesForEmail,
@@ -26,10 +25,6 @@ function str(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function isEnvSuper(email: string | null) {
-  return Boolean(email && committeeAllowlist().includes(email.toLowerCase()));
-}
-
 export async function demoteAdminAction(formData: FormData) {
   const actor = await requireSuperAdmin();
   const userId = str(formData, "userId");
@@ -39,13 +34,10 @@ export async function demoteAdminAction(formData: FormData) {
   if (profile.role === "member") {
     throw new Error("That person is already a member.");
   }
-  if (isEnvSuper(profile.email)) {
-    throw new Error("Env-listed super admins cannot be demoted here. Change ADMIN_EMAILS instead.");
-  }
   if (profile.role === "super_admin") {
-    const remaining =
-      snapshot.profiles.filter((row) => row.userId !== userId && row.role === "super_admin").length +
-      committeeAllowlist().filter((email) => email !== profile.email?.toLowerCase()).length;
+    const remaining = snapshot.profiles.filter(
+      (row) => row.userId !== userId && row.role === "super_admin",
+    ).length;
     if (remaining < 1) {
       throw new Error("The last super admin cannot be removed.");
     }
@@ -129,7 +121,7 @@ export async function cancelAdminInviteAction(formData: FormData) {
   await deleteCommitteeInvite(invite.id);
 
   const profile = await findProfileByEmail(invite.email);
-  if (profile && profile.role === "admin" && !isEnvSuper(profile.email)) {
+  if (profile && profile.role === "admin") {
     await upsertProfile({ ...profile, role: "member" });
   }
 
@@ -152,9 +144,6 @@ export async function updateAdminPermissionsAction(formData: FormData) {
   if (!profile) throw new Error("That login was not found.");
   if (profile.role !== "admin") {
     throw new Error("Permissions can only be changed for regular admins.");
-  }
-  if (isEnvSuper(profile.email)) {
-    throw new Error("Env-listed super admins keep every tool.");
   }
   const permissions = Object.fromEntries(
     ADMIN_PERMISSION_KEYS.map((key) => [key, formData.get(key) === "on"]),

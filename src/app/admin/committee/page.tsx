@@ -6,7 +6,6 @@ import {
 } from "@/app/actions/committee";
 import { AdminPermissionsForm } from "@/components/admin/AdminPermissionsForm";
 import { getAppUser } from "@/lib/auth";
-import { committeeAllowlist } from "@/lib/auth-constants";
 import { getSnapshot } from "@/lib/store";
 import { defaultAdminPermissions } from "@/lib/types";
 
@@ -22,10 +21,10 @@ export default async function CommitteePage() {
   if (user.role !== "super_admin") redirect("/admin");
 
   const snapshot = await getSnapshot();
-  const envSupers = new Set(committeeAllowlist());
   const committee = snapshot.profiles.filter(
     (profile) => profile.role === "admin" || profile.role === "super_admin",
   );
+  const superAdminCount = committee.filter((profile) => profile.role === "super_admin").length;
   const pendingInvites = snapshot.committeeInvites.filter((invite) => !invite.usedAt);
 
   return (
@@ -35,32 +34,31 @@ export default async function CommitteePage() {
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
         Super admins add committee members and choose which desk tools each
-        admin can use. Emails in ADMIN_EMAILS stay super admins.
+        admin can use. Committee emails live on each admin’s profile.
       </p>
 
       <section className="mt-10 rounded-3xl bg-white p-6 shadow">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Committee</h2>
         <ul className="mt-4 space-y-3">
           {committee.map((profile) => {
-            const locked = Boolean(profile.email && envSupers.has(profile.email.toLowerCase()));
+            const isSelf = profile.userId === user.id;
+            const lastSuper =
+              profile.role === "super_admin" && superAdminCount < 2;
             return (
               <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">{profile.email ?? profile.userId}</p>
-                    <p className="text-sm text-black/55">
-                      {roleLabel(profile.role)}
-                      {locked ? " · from ADMIN_EMAILS" : ""}
-                    </p>
+                    <p className="text-sm text-black/55">{roleLabel(profile.role)}</p>
                   </div>
-                  {locked || profile.userId === user.id ? null : (
+                  {isSelf || lastSuper ? null : (
                     <form action={demoteAdminAction}>
                       <input type="hidden" name="userId" value={profile.userId} />
                       <button className="text-sm text-ember hover:underline">Remove admin</button>
                     </form>
                   )}
                 </div>
-                {profile.role === "admin" && !locked ? (
+                {profile.role === "admin" ? (
                   <AdminPermissionsForm
                     userId={profile.userId}
                     permissions={profile.permissions ?? defaultAdminPermissions()}

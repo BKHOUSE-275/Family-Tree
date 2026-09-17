@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import {
   LOCAL_AUTH_COOKIE,
   LOCAL_USER_ID,
-  committeeAllowlist,
   isNeonAuthConfigured,
 } from "@/lib/auth-constants";
 import { getNeonAuth } from "@/lib/neon-auth";
@@ -32,10 +31,6 @@ function safeRedirect(value: FormDataEntryValue | null) {
 
 function normalizeEmail(value: FormDataEntryValue | null) {
   return String(value ?? "").trim().toLowerCase();
-}
-
-function isEnvSuper(email: string) {
-  return committeeAllowlist().includes(email);
 }
 
 function committeeUserId(email: string, existing?: Profile | null) {
@@ -84,10 +79,8 @@ export async function lookupCommitteeEmail(
 
   const existing = await findProfileByEmail(email);
   const invite = await findPendingInvite(email);
-  const envSuper = isEnvSuper(email);
-  const storedSuper = existing?.role === "super_admin";
 
-  if (envSuper || storedSuper) {
+  if (existing?.role === "super_admin") {
     return { step: "passcode", email };
   }
 
@@ -130,7 +123,7 @@ export async function signInSuperAdminPasscode(
   const redirectUrl = safeRedirect(formData.get("redirect_url"));
   const expected = (process.env.FAMILY_GATE_PASSWORD ?? "").trim();
   const existing = await findProfileByEmail(email);
-  const allowed = isEnvSuper(email) || existing?.role === "super_admin";
+  const allowed = existing?.role === "super_admin";
 
   if (!email || !allowed) {
     return { error: "That email is not a super admin.", step: "passcode", email };

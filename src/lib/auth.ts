@@ -15,7 +15,6 @@ import {
 import {
   LOCAL_AUTH_COOKIE,
   LOCAL_USER_ID,
-  committeeAllowlist,
   isNeonAuthConfigured,
 } from "@/lib/auth-constants";
 import {
@@ -35,15 +34,6 @@ export type AppUser = {
   permissions: AdminPermissions;
   isLocal: boolean;
 };
-
-function isAllowlisted(email: string | null) {
-  return Boolean(email && committeeAllowlist().includes(email.toLowerCase()));
-}
-
-function roleForEmail(email: string | null, stored: Role): Role {
-  if (isAllowlisted(email)) return "super_admin";
-  return stored;
-}
 
 export function userHasPermission(user: AppUser, key: AdminPermission) {
   return hasPermission(user.role, user.permissions, key);
@@ -66,17 +56,14 @@ async function userFromProfile(input: {
   personId: string | null;
   permissions?: AdminPermissions;
   isLocal: boolean;
-  elevate?: boolean;
 }): Promise<AppUser> {
-  const role =
-    input.elevate === false ? input.role : roleForEmail(input.email, input.role);
   return {
     id: input.id,
     email: input.email,
     name: input.name ?? input.email,
-    role,
+    role: input.role,
     personId: input.personId,
-    permissions: parseAdminPermissions(input.permissions, role),
+    permissions: parseAdminPermissions(input.permissions, input.role),
     isLocal: input.isLocal,
   };
 }
@@ -114,7 +101,6 @@ export async function getAppUser(): Promise<AppUser | null> {
       personId: profile?.personId ?? null,
       permissions: profile?.permissions,
       isLocal: false,
-      elevate: false,
     });
   }
 
