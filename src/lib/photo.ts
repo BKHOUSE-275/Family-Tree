@@ -69,12 +69,12 @@ export async function storePreparedPhoto(photo: {
 }) {
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const blob = await put(photo.pathname, photo.body, {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       token: process.env.BLOB_READ_WRITE_TOKEN,
       contentType: photo.contentType,
     });
-    return { url: blob.url };
+    return { url: `/api/photos?src=${encodeURIComponent(blob.url)}` };
   }
 
   if (process.env.VERCEL) {

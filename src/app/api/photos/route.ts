@@ -1,3 +1,4 @@
+import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { preparePhotoUpload, storePreparedPhoto } from "@/lib/photo";
 
@@ -5,6 +6,39 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+
+function isVercelBlobUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get("src");
+  if (!src || !isVercelBlobUrl(src)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  const result = await get(src, {
+    access: "private",
+    token: process.env.BLOB_READ_WRITE_TOKEN,
+  });
+
+  if (result?.statusCode !== 200 || !result.stream) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  return new NextResponse(result.stream, {
+    headers: {
+      "Content-Type": result.blob.contentType || "image/jpeg",
+      "Cache-Control": "private, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
 
 export async function POST(request: Request) {
   try {
