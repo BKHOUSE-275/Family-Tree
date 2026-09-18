@@ -20,6 +20,15 @@ const PERSON_FIELDS: Array<[keyof Person, string]> = [
   ["headstonePhotoUrl", "Headstone photo"],
   ["familysearchId", "FamilySearch ID"],
   ["notes", "Notes"],
+  ["showPhoto", "Show photo"],
+  ["showMaidenName", "Show maiden name"],
+  ["showBirthDate", "Show birth date"],
+  ["showBirthPlace", "Show place of birth"],
+  ["showDeathDate", "Show death date"],
+  ["showHeadstone", "Show headstone"],
+  ["showNotes", "Show notes"],
+  ["showResidences", "Show residences"],
+  ["showMarriage", "Show marriage details"],
 ];
 
 export function personFieldDiff(before: Person | null, after: Person, extras: string[] = []) {

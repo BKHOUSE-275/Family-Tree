@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LinkProfileForm } from "@/components/admin/LinkProfileForm";
 import { PeopleList } from "@/components/admin/PeopleList";
 import { buildActivityFeed } from "@/lib/activity";
 import { committeeHomePath, getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot, isPlaced } from "@/lib/store";
-import { displayName, isCommittee, toPersonPickerOption, yearRange } from "@/lib/types";
+import { displayName, isCommittee, yearRange } from "@/lib/types";
 
 export default async function AdminPage() {
   const user = await getAppUser();
   if (!user) redirect("/sign-in?redirect_url=/admin");
   if (!isCommittee(user.role)) redirect("/");
-  if (!userHasPermission(user, "people.edit") && !userHasPermission(user, "profiles.link")) {
+  if (!userHasPermission(user, "people.edit")) {
     redirect(committeeHomePath(user));
   }
 
@@ -29,11 +28,9 @@ export default async function AdminPage() {
   }));
   const pendingCount = snapshot.changeRequests.filter((row) => row.status === "pending").length;
   const recent = buildActivityFeed(snapshot).slice(0, 8);
-  const peopleOptions = snapshot.people.map(toPersonPickerOption);
   const canEdit = userHasPermission(user, "people.edit");
   const canCreate = userHasPermission(user, "people.create");
   const canDelete = userHasPermission(user, "people.delete");
-  const canLink = userHasPermission(user, "profiles.link");
   const canSeeActivity = userHasPermission(user, "activity.view");
   const canSeeRequests = userHasPermission(user, "requests.review");
 
@@ -104,39 +101,6 @@ export default async function AdminPage() {
       ) : null}
 
       {canEdit ? <PeopleList people={peopleRows} canDelete={canDelete} /> : null}
-
-      {canLink ? (
-        <section className="mt-10 rounded-3xl bg-white p-6 shadow">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl">Link a login to a person</h2>
-          <p className="mt-1 text-sm text-black/60">
-            After a relative signs in once, they appear here. Choose who they are
-            on the tree so they can add phone, email, and address.
-          </p>
-          {snapshot.profiles.length ? (
-            <ul className="mt-4 space-y-3">
-              {snapshot.profiles.map((profile) => (
-                <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
-                  <p className="mb-3 text-sm">
-                    {profile.email ?? profile.userId}
-                    <span className="ml-2 text-xs text-black/45">
-                      {profile.role.replace("_", " ")}
-                    </span>
-                  </p>
-                  <LinkProfileForm
-                    userId={profile.userId}
-                    defaultPersonId={profile.personId ?? ""}
-                    people={peopleOptions}
-                  />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-sm text-black/55">
-              No logins yet. Invite an admin, then they appear here after they sign in.
-            </p>
-          )}
-        </section>
-      ) : null}
     </main>
   );
 }

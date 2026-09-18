@@ -4,7 +4,13 @@ import { useActionState } from "react";
 import { savePersonAction, type SavePersonState } from "@/app/actions/family";
 import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
-import { toPersonPickerOption, type FamilySnapshot, type Person } from "@/lib/types";
+import {
+  PERSON_VISIBILITY_FIELDS,
+  personVisibility,
+  toPersonPickerOption,
+  type FamilySnapshot,
+  type Person,
+} from "@/lib/types";
 
 export function PersonForm({
   person,
@@ -61,6 +67,7 @@ export function PersonForm({
             type="checkbox"
             name="isDeceased"
             defaultChecked={person?.isDeceased}
+            className="ui-checkbox"
           />
           Deceased
         </label>
@@ -92,19 +99,15 @@ export function PersonForm({
         />
       </label>
 
+      {parents[1]?.parentId ? (
+        <input type="hidden" name="parentId2" value={parents[1].parentId} />
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <PersonPicker
           name="parentId1"
-          label="Parent 1"
+          label="Parent"
           people={options}
           defaultValue={parents[0]?.parentId ?? ""}
-          emptyLabel="None"
-        />
-        <PersonPicker
-          name="parentId2"
-          label="Parent 2"
-          people={options}
-          defaultValue={parents[1]?.parentId ?? ""}
           emptyLabel="None"
         />
         <PersonPicker
@@ -140,6 +143,30 @@ export function PersonForm({
           ),
         )}
       </fieldset>
+
+      <section className="rounded-2xl border border-black/10 bg-leaf-soft/50 p-5">
+        <h2 className="text-sm font-semibold text-script">Show on the family tree</h2>
+        <p className="mt-1 text-sm text-black/60">
+          Unchecked details stay in the record for the committee, but visitors
+          will not see them.
+        </p>
+        <div className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          {PERSON_VISIBILITY_FIELDS.map((field) => (
+            <label
+              key={field.key}
+              className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-script"
+            >
+              <input
+                type="checkbox"
+                name={field.key}
+                defaultChecked={personVisibility(person)[field.key]}
+                className="ui-checkbox"
+              />
+              {field.label}
+            </label>
+          ))}
+        </div>
+      </section>
 
       {state?.error ? <p className="text-sm text-ember">{state.error}</p> : null}
       <button

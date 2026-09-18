@@ -6,6 +6,8 @@ import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
 import {
   displayName,
+  personVisibility,
+  redactPersonForPublic,
   type Contact,
   type FamilySnapshot,
   type Person,
@@ -86,6 +88,7 @@ function lookupChangeContext(snapshot: FamilySnapshot, personId: string) {
     };
   }
 
+  const vis = personVisibility(person);
   const contact = snapshot.contacts.find((row) => row.personId === personId) ?? null;
   const parentIds = snapshot.parentChildren
     .filter((link) => link.childId === personId)
@@ -98,17 +101,26 @@ function lookupChangeContext(snapshot: FamilySnapshot, personId: string) {
       ? partnership.personBId
       : partnership.personAId
     : "";
-  const residences = snapshot.residences
-    .filter((row) => row.personId === personId)
-    .map((row) => ({ year: row.year, place: row.place }));
+  const residences = vis.showResidences
+    ? snapshot.residences
+        .filter((row) => row.personId === personId)
+        .map((row) => ({ year: row.year, place: row.place }))
+    : [];
 
   return {
-    person,
-    contact,
+    person: redactPersonForPublic(person),
+    contact: contact
+      ? {
+          ...contact,
+          address: contact.shareAddress ? contact.address : null,
+          phone: contact.sharePhone ? contact.phone : null,
+          email: contact.shareEmail ? contact.email : null,
+        }
+      : null,
     parentIds,
     partnerId,
-    marriageDate: partnership?.startDate ?? "",
-    marriagePlace: partnership?.place ?? "",
+    marriageDate: vis.showMarriage ? partnership?.startDate ?? "" : "",
+    marriagePlace: vis.showMarriage ? partnership?.place ?? "" : "",
     residences,
   };
 }
@@ -358,22 +370,13 @@ export function SuggestionForm({
                   </label>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <PersonPicker
-                    name="parentId1"
-                    people={people}
-                    defaultValue={selected.parentIds[0] ?? ""}
-                    label="Parent 1"
-                    emptyLabel="Optional"
-                  />
-                  <PersonPicker
-                    name="parentId2"
-                    people={people}
-                    defaultValue={selected.parentIds[1] ?? ""}
-                    label="Parent 2"
-                    emptyLabel="Optional"
-                  />
-                </div>
+                <PersonPicker
+                  name="parentId1"
+                  people={people}
+                  defaultValue={selected.parentIds[0] ?? ""}
+                  label="Parent"
+                  emptyLabel="Optional"
+                />
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <PersonPicker
@@ -566,20 +569,12 @@ export function SuggestionForm({
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PersonPicker
-                name="parentId1"
-                people={people}
-                label="Parent 1"
-                emptyLabel="Optional"
-              />
-              <PersonPicker
-                name="parentId2"
-                people={people}
-                label="Parent 2"
-                emptyLabel="Optional"
-              />
-            </div>
+            <PersonPicker
+              name="parentId1"
+              people={people}
+              label="Parent"
+              emptyLabel="Optional"
+            />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <PersonPicker

@@ -29,7 +29,12 @@ import type {
   Role,
   Sibling,
 } from "@/lib/types";
-import { defaultAdminPermissions, isRootPerson, parseAdminPermissions } from "@/lib/types";
+import {
+  defaultAdminPermissions,
+  isRootPerson,
+  parseAdminPermissions,
+  personVisibility,
+} from "@/lib/types";
 
 export { isRootPerson };
 
@@ -86,6 +91,7 @@ function mapPerson(row: typeof people.$inferSelect): Person {
     headstonePhotoUrl: row.headstonePhotoUrl,
     familysearchId: row.familysearchId,
     notes: row.notes,
+    ...personVisibility(row),
   };
 }
 
@@ -160,6 +166,7 @@ function normalizeSnapshot(snapshot: FamilySnapshot): FamilySnapshot {
       ...person,
       maidenName: person.maidenName ?? null,
       headstonePhotoUrl: person.headstonePhotoUrl ?? null,
+      ...personVisibility(person),
     })),
     profiles: (snapshot.profiles ?? []).map(mapProfile),
     changeRequests: snapshot.changeRequests ?? [],
@@ -168,7 +175,10 @@ function normalizeSnapshot(snapshot: FamilySnapshot): FamilySnapshot {
   };
 }
 
+let auxTablesReady = false;
+
 async function ensureAuxTables() {
+  if (auxTablesReady) return;
   const db = getDb();
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS audit_events (
@@ -198,6 +208,34 @@ async function ensureAuxTables() {
   await db.execute(sql`
     ALTER TABLE people ADD COLUMN IF NOT EXISTS maiden_name TEXT
   `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_photo BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_maiden_name BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_birth_date BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_birth_place BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_death_date BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_headstone BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_notes BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_residences BOOLEAN NOT NULL DEFAULT true
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS show_marriage BOOLEAN NOT NULL DEFAULT true
+  `);
+  auxTablesReady = true;
 }
 
 async function ensureNeonSeeded() {

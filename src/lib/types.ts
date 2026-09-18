@@ -88,7 +88,77 @@ export type Person = {
   headstonePhotoUrl: string | null;
   familysearchId: string | null;
   notes: string | null;
+  showPhoto: boolean;
+  showMaidenName: boolean;
+  showBirthDate: boolean;
+  showBirthPlace: boolean;
+  showDeathDate: boolean;
+  showHeadstone: boolean;
+  showNotes: boolean;
+  showResidences: boolean;
+  showMarriage: boolean;
 };
+
+export const PERSON_VISIBILITY_FIELDS = [
+  { key: "showPhoto", label: "Profile photo" },
+  { key: "showMaidenName", label: "Maiden name" },
+  { key: "showBirthDate", label: "Birth date" },
+  { key: "showBirthPlace", label: "Place of birth" },
+  { key: "showDeathDate", label: "Death date" },
+  { key: "showHeadstone", label: "Headstone" },
+  { key: "showNotes", label: "Notes" },
+  { key: "showResidences", label: "Residences" },
+  { key: "showMarriage", label: "Marriage details" },
+] as const;
+
+export type PersonVisibilityField = (typeof PERSON_VISIBILITY_FIELDS)[number]["key"];
+
+export function defaultPersonVisibility(): Pick<Person, PersonVisibilityField> {
+  return {
+    showPhoto: true,
+    showMaidenName: true,
+    showBirthDate: true,
+    showBirthPlace: true,
+    showDeathDate: true,
+    showHeadstone: true,
+    showNotes: true,
+    showResidences: true,
+    showMarriage: true,
+  };
+}
+
+export function personVisibility(
+  person: Partial<Pick<Person, PersonVisibilityField>> | null | undefined,
+): Pick<Person, PersonVisibilityField> {
+  const defaults = defaultPersonVisibility();
+  return {
+    showPhoto: person?.showPhoto ?? defaults.showPhoto,
+    showMaidenName: person?.showMaidenName ?? defaults.showMaidenName,
+    showBirthDate: person?.showBirthDate ?? defaults.showBirthDate,
+    showBirthPlace: person?.showBirthPlace ?? defaults.showBirthPlace,
+    showDeathDate: person?.showDeathDate ?? defaults.showDeathDate,
+    showHeadstone: person?.showHeadstone ?? defaults.showHeadstone,
+    showNotes: person?.showNotes ?? defaults.showNotes,
+    showResidences: person?.showResidences ?? defaults.showResidences,
+    showMarriage: person?.showMarriage ?? defaults.showMarriage,
+  };
+}
+
+export function redactPersonForPublic(person: Person): Person {
+  const vis = personVisibility(person);
+  return {
+    ...person,
+    ...vis,
+    photoUrl: vis.showPhoto ? person.photoUrl : null,
+    maidenName: vis.showMaidenName ? person.maidenName : null,
+    birthDate: vis.showBirthDate ? person.birthDate : null,
+    birthPlace: vis.showBirthPlace ? person.birthPlace : null,
+    deathDate: vis.showDeathDate ? person.deathDate : null,
+    headstoneLocation: vis.showHeadstone ? person.headstoneLocation : null,
+    headstonePhotoUrl: vis.showHeadstone ? person.headstonePhotoUrl : null,
+    notes: vis.showNotes ? person.notes : null,
+  };
+}
 
 export type Contact = {
   personId: string;

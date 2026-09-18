@@ -10,6 +10,8 @@ import {
   ROOT_MOTHER_ID,
   displayName,
   isRootPerson,
+  personVisibility,
+  redactPersonForPublic,
   sortByBirth,
   yearRange,
   type Contact,
@@ -110,10 +112,10 @@ export function FamilyTree({
         >
         <HeritageTree
           isTopLevel={treeIsTopLevel}
-          canopyPeople={canopyPeople}
-          canopyOverflow={canopyOverflow}
-          subject={treeIsTopLevel ? null : focus}
-          hangingChildren={searchActive ? [] : hangingChildren}
+          canopyPeople={canopyPeople.map(redactPersonForPublic)}
+          canopyOverflow={canopyOverflow.map(redactPersonForPublic)}
+          subject={treeIsTopLevel ? null : redactPersonForPublic(focus)}
+          hangingChildren={searchActive ? [] : hangingChildren.map(redactPersonForPublic)}
           focusId={focusId}
           onSelect={selectPerson}
           placeMode={placeMode}
@@ -150,6 +152,7 @@ export function FamilyTree({
             {matches.length ? (
               matches.map((person) => {
                 const placeHint = matchingLivePlace(person, snapshot, query);
+                const years = yearRange(redactPersonForPublic(person));
                 return (
                   <li key={person.id}>
                     <button
@@ -160,9 +163,7 @@ export function FamilyTree({
                       }}
                     >
                       {displayName(person)}
-                      {yearRange(person) ? (
-                        <span className="text-black/50"> {yearRange(person)}</span>
-                      ) : null}
+                      {years ? <span className="text-black/50"> {years}</span> : null}
                       {placeHint ? (
                         <span className="block text-black/45">{placeHint}</span>
                       ) : null}
@@ -322,11 +323,16 @@ function personMatchesQuery(
   const needle = q.trim().toLowerCase();
   if (!needle) return false;
   if (displayName(person).toLowerCase().includes(needle)) return true;
-  if (person.maidenName?.toLowerCase().includes(needle)) return true;
-  const lived = snapshot.residences.some(
-    (row) =>
-      row.personId === person.id && row.place.toLowerCase().includes(needle),
-  );
+  const vis = personVisibility(person);
+  if (vis.showMaidenName && person.maidenName?.toLowerCase().includes(needle)) {
+    return true;
+  }
+  const lived =
+    vis.showResidences &&
+    snapshot.residences.some(
+      (row) =>
+        row.personId === person.id && row.place.toLowerCase().includes(needle),
+    );
   if (lived) return true;
   const contact = snapshot.contacts.find((row) => row.personId === person.id);
   return Boolean(
@@ -342,11 +348,14 @@ function matchingLivePlace(
 ): string | null {
   const needle = q.trim().toLowerCase();
   if (!needle) return null;
-  const residence = snapshot.residences.find(
-    (row) =>
-      row.personId === person.id && row.place.toLowerCase().includes(needle),
-  );
-  if (residence) return residence.place;
+  const vis = personVisibility(person);
+  if (vis.showResidences) {
+    const residence = snapshot.residences.find(
+      (row) =>
+        row.personId === person.id && row.place.toLowerCase().includes(needle),
+    );
+    if (residence) return residence.place;
+  }
   const contact = snapshot.contacts.find((row) => row.personId === person.id);
   if (
     contact?.shareAddress &&

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { ContactForm } from "@/components/admin/ContactForm";
 import { PersonForm } from "@/components/admin/PersonForm";
 import { getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
@@ -21,6 +22,7 @@ export default async function EditPersonPage({
   const snapshot = await getSnapshot();
   const person = snapshot.people.find((row) => row.id === id);
   if (!person) notFound();
+  const contact = snapshot.contacts.find((row) => row.personId === id) ?? null;
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -32,8 +34,9 @@ export default async function EditPersonPage({
           Saved.
         </p>
       ) : null}
-      <div className="mt-8">
+      <div className="mt-8 space-y-8">
         <PersonForm person={person} snapshot={snapshot} />
+        <ContactForm personId={person.id} contact={contact} />
       </div>
     </main>
   );

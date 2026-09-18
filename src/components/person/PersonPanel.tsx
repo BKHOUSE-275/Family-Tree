@@ -1,7 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { displayName, formatFamilyDate, yearRange, type Person } from "@/lib/types";
+import {
+  displayName,
+  formatFamilyDate,
+  personVisibility,
+  redactPersonForPublic,
+  yearRange,
+  type Person,
+} from "@/lib/types";
 
 export function PersonPanel({
   person,
@@ -28,15 +35,21 @@ export function PersonPanel({
   onSelect: (id: string) => void;
   onSuggest?: (personId: string) => void;
 }) {
-  const years = yearRange(person);
+  const vis = personVisibility(person);
+  const view = redactPersonForPublic(person);
+  const years = yearRange(view);
+  const shownResidences = vis.showResidences ? residences : [];
+  const shownPartners = vis.showMarriage
+    ? partners
+    : partners.map((row) => ({ ...row, date: null, place: null, notes: null }));
   const showHeadstone =
-    person.isDeceased &&
-    Boolean(person.headstoneLocation || person.deathDate || person.headstonePhotoUrl);
+    view.isDeceased &&
+    Boolean(view.headstoneLocation || view.deathDate || view.headstonePhotoUrl);
   const hasDetails =
-    Boolean(person.birthPlace || person.birthDate) ||
+    Boolean(view.birthPlace || view.birthDate) ||
     showHeadstone ||
     Boolean(contact?.address || contact?.phone || contact?.email) ||
-    Boolean(person.notes);
+    Boolean(view.notes);
 
   return (
     <AnimatePresence mode="wait">
@@ -50,10 +63,10 @@ export function PersonPanel({
       >
         <div className="flex items-start gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-leaf-soft text-leaf-deep ring-2 ring-gold/70 sm:h-24 sm:w-24">
-            {person.photoUrl ? (
+            {view.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={person.photoUrl}
+                src={view.photoUrl}
                 alt={displayName(person)}
                 className="h-full w-full object-cover"
               />
@@ -66,8 +79,8 @@ export function PersonPanel({
             <h2 className="font-[family-name:var(--font-display)] text-2xl leading-tight break-words sm:text-3xl">
               {displayName(person)}
             </h2>
-            {person.maidenName ? (
-              <p className="text-sm text-black/60">née {person.maidenName}</p>
+            {view.maidenName ? (
+              <p className="text-sm text-black/60">née {view.maidenName}</p>
             ) : null}
             {years ? <p className="text-sm text-black/60">{years}</p> : null}
           </div>
@@ -77,27 +90,27 @@ export function PersonPanel({
           <dl className="mt-6 space-y-4 text-sm">
             <Field
               label="1A. Place of birth"
-              value={person.birthPlace}
-              extra={formatFamilyDate(person.birthDate) || person.birthDate}
+              value={view.birthPlace}
+              extra={formatFamilyDate(view.birthDate) || view.birthDate}
             />
             {showHeadstone ? (
               <div>
                 <dt className="font-semibold text-script">1B. Headstone</dt>
                 <dd className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-                  {person.headstoneLocation || person.deathDate ? (
+                  {view.headstoneLocation || view.deathDate ? (
                     <div className="min-w-0 flex-1">
-                      {person.headstoneLocation}
-                      {person.deathDate ? (
+                      {view.headstoneLocation}
+                      {view.deathDate ? (
                         <span className="block text-black/55">
-                          Died {formatFamilyDate(person.deathDate) || person.deathDate}
+                          Died {formatFamilyDate(view.deathDate) || view.deathDate}
                         </span>
                       ) : null}
                     </div>
                   ) : null}
-                  {person.headstonePhotoUrl ? (
+                  {view.headstonePhotoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={person.headstonePhotoUrl}
+                      src={view.headstonePhotoUrl}
                       alt={`Headstone for ${displayName(person)}`}
                       className="h-28 w-36 shrink-0 rounded-xl object-cover ring-1 ring-bark/15"
                     />
@@ -108,15 +121,15 @@ export function PersonPanel({
             <Field label="2. Address" value={contact?.address} />
             <Field label="3. Telephone" value={contact?.phone} />
             <Field label="4. Email" value={contact?.email} />
-            <Field label="Notes" value={person.notes} />
+            <Field label="Notes" value={view.notes} />
           </dl>
         ) : null}
 
-        {residences.length ? (
+        {shownResidences.length ? (
           <section className="mt-6">
             <h3 className="text-xs uppercase tracking-[0.2em] text-script">Residences</h3>
             <ul className="mt-2 space-y-1 text-sm">
-              {residences.map((row) => (
+              {shownResidences.map((row) => (
                 <li key={`${row.year}-${row.place}`}>
                   {row.year ? <strong>{row.year}: </strong> : null}
                   {row.place}
@@ -127,11 +140,11 @@ export function PersonPanel({
         ) : null}
 
         <RelationList title="Parents" people={parents} activeId={person.id} onSelect={onSelect} />
-        {partners.length ? (
+        {shownPartners.length ? (
           <section className="mt-6">
             <h3 className="text-xs uppercase tracking-[0.2em] text-script">Spouse / partnership</h3>
             <ul className="mt-2 space-y-2 text-sm">
-              {partners.map((row) => (
+              {shownPartners.map((row) => (
                 <li key={row.person.id}>
                   <button
                     className="inline-flex min-h-11 items-center text-left text-ember hover:underline"

@@ -3,6 +3,7 @@
 import { put } from "@vercel/blob";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin, requirePermission } from "@/lib/auth";
@@ -114,6 +115,15 @@ export async function savePersonAction(
       headstonePhotoUrl: str(formData, "headstonePhotoUrl"),
       familysearchId: str(formData, "familysearchId"),
       notes: str(formData, "notes"),
+      showPhoto: bool(formData, "showPhoto"),
+      showMaidenName: bool(formData, "showMaidenName"),
+      showBirthDate: bool(formData, "showBirthDate"),
+      showBirthPlace: bool(formData, "showBirthPlace"),
+      showDeathDate: bool(formData, "showDeathDate"),
+      showHeadstone: bool(formData, "showHeadstone"),
+      showNotes: bool(formData, "showNotes"),
+      showResidences: bool(formData, "showResidences"),
+      showMarriage: bool(formData, "showMarriage"),
     };
     await savePerson(person);
 
@@ -264,6 +274,7 @@ export async function linkProfileAction(
       personId,
     );
     revalidatePath("/admin");
+    revalidatePath("/admin/committee");
     revalidatePath("/admin/activity");
     revalidatePath("/profile");
     return { ok: true };
@@ -274,7 +285,7 @@ export async function linkProfileAction(
 
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
-export async function uploadPhotoAction(formData: FormData) {
+function photoFileFromForm(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("Choose a photo to upload.");
@@ -282,14 +293,15 @@ export async function uploadPhotoAction(formData: FormData) {
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error("Please choose a photo under 8 MB.");
   }
+  return file;
+}
 
-  const photo = await preparePhotoUpload(file);
-
+async function storePhotoBytes(body: Buffer, pathname: string, contentType: string) {
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(photo.pathname, photo.body, {
+    const blob = await put(pathname, body, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN,
-      contentType: photo.contentType,
+      contentType,
     });
     return { url: blob.url };
   }
@@ -298,9 +310,45 @@ export async function uploadPhotoAction(formData: FormData) {
     throw new Error("Set BLOB_READ_WRITE_TOKEN to upload photos on Vercel.");
   }
 
-  const safeName = path.basename(photo.pathname);
+  const safeName = path.basename(pathname);
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), photo.body);
+  await writeFile(path.join(dir, safeName), body);
   return { url: `/uploads/${safeName}` };
+}
+
+async function jpegPreview(body: Buffer) {
+  return sharp(body)
+    .rotate()
+    .resize({
+      width: 2400,
+      height: 2400,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+}
+
+export async function previewPhotoAction(formData: FormData) {
+  try {
+    const prepared = await preparePhotoUpload(photoFileFromForm(formData));
+    const body = await jpegPreview(prepared.body);
+    return storePhotoBytes(
+      body,
+      prepared.pathname.replace(/\.[^.]+$/, ".jpg"),
+      "image/jpeg",
+    );
+  } catch (error) {
+    return { error: actionError(error) };
+  }
+}
+
+export async function uploadPhotoAction(formData: FormData) {
+  try {
+    const photo = await preparePhotoUpload(photoFileFromForm(formData));
+    return storePhotoBytes(photo.body, photo.pathname, photo.contentType);
+  } catch (error) {
+    return { error: actionError(error) };
+  }
 }

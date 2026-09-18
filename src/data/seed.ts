@@ -1,4 +1,9 @@
-import type { FamilySnapshot, ParentChild, Person } from "@/lib/types";
+import {
+  defaultPersonVisibility,
+  type FamilySnapshot,
+  type ParentChild,
+  type Person,
+} from "@/lib/types";
 
 function person(
   id: string,
@@ -22,6 +27,7 @@ function person(
     headstonePhotoUrl: extra.headstonePhotoUrl ?? null,
     familysearchId: extra.familysearchId ?? null,
     notes: extra.notes ?? null,
+    ...defaultPersonVisibility(),
   };
 }
 

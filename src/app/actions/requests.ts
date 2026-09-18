@@ -65,7 +65,6 @@ function buildChangeInfoMessage(input: {
   deathDate: string | null;
   headstoneLocation: string | null;
   parent1Label: string | null;
-  parent2Label: string | null;
   spouseLabel: string | null;
   marriageDate: string | null;
   marriagePlace: string | null;
@@ -99,8 +98,7 @@ function buildChangeInfoMessage(input: {
     `Deceased: ${input.isDeceased ? "yes" : "no"}`,
     `Death date: ${input.deathDate ?? "(none)"}`,
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
-    `Parent 1: ${input.parent1Label ?? "(none)"}`,
-    `Parent 2: ${input.parent2Label ?? "(none)"}`,
+    `Parent: ${input.parent1Label ?? "(none)"}`,
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
     `Marriage date: ${input.marriageDate ?? "(none)"}`,
     `Marriage place: ${input.marriagePlace ?? "(none)"}`,
@@ -126,7 +124,6 @@ function buildAddPersonMessage(input: {
   relationshipType: string;
   relatedLabel: string;
   parent1Label: string | null;
-  parent2Label: string | null;
   spouseLabel: string | null;
   marriageDate: string | null;
   marriagePlace: string | null;
@@ -161,8 +158,7 @@ function buildAddPersonMessage(input: {
     `Death date: ${input.deathDate ?? "(none)"}`,
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
     `Relationship: ${relationship} ${input.relatedLabel}`,
-    `Parent 1: ${input.parent1Label ?? "(none)"}`,
-    `Parent 2: ${input.parent2Label ?? "(none)"}`,
+    `Parent: ${input.parent1Label ?? "(none)"}`,
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
     `Marriage date: ${input.marriageDate ?? "(none)"}`,
     `Marriage place: ${input.marriagePlace ?? "(none)"}`,
@@ -210,7 +206,6 @@ export async function submitChangeRequestAction(formData: FormData) {
       throw new Error("That person was not found.");
     }
     const parentId1 = str(formData, "parentId1");
-    const parentId2 = str(formData, "parentId2");
     const partnerId = str(formData, "partnerId");
     message = buildChangeInfoMessage({
       submitterName,
@@ -231,7 +226,6 @@ export async function submitChangeRequestAction(formData: FormData) {
       deathDate: str(formData, "deathDate"),
       headstoneLocation: str(formData, "headstoneLocation"),
       parent1Label: await personLabel(parentId1),
-      parent2Label: await personLabel(parentId2),
       spouseLabel: await personLabel(partnerId),
       marriageDate: str(formData, "marriageDate"),
       marriagePlace: str(formData, "marriagePlace"),
@@ -257,7 +251,6 @@ export async function submitChangeRequestAction(formData: FormData) {
     }
 
     const parentId1 = str(formData, "parentId1");
-    const parentId2 = str(formData, "parentId2");
     const partnerId = str(formData, "partnerId");
 
     message = buildAddPersonMessage({
@@ -279,7 +272,6 @@ export async function submitChangeRequestAction(formData: FormData) {
       relationshipType,
       relatedLabel,
       parent1Label: await personLabel(parentId1),
-      parent2Label: await personLabel(parentId2),
       spouseLabel: await personLabel(partnerId),
       marriageDate: str(formData, "marriageDate"),
       marriagePlace: str(formData, "marriagePlace"),

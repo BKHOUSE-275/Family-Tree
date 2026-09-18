@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 import {
   cancelAdminInviteAction,
-  demoteAdminAction,
   inviteAdminAction,
 } from "@/app/actions/committee";
 import { AdminPermissionsForm } from "@/components/admin/AdminPermissionsForm";
+import { CommitteeMemberActions } from "@/components/admin/CommitteeMemberActions";
+import { LinkProfileForm } from "@/components/admin/LinkProfileForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { defaultAdminPermissions } from "@/lib/types";
+import { defaultAdminPermissions, toPersonPickerOption } from "@/lib/types";
 
 function roleLabel(role: string) {
   if (role === "super_admin") return "Super admin";
@@ -26,6 +27,7 @@ export default async function CommitteePage() {
   );
   const superAdminCount = committee.filter((profile) => profile.role === "super_admin").length;
   const pendingInvites = snapshot.committeeInvites.filter((invite) => !invite.usedAt);
+  const peopleOptions = snapshot.people.map(toPersonPickerOption);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -33,44 +35,12 @@ export default async function CommitteePage() {
         Admins
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
-        Super admins add committee members and choose which desk tools each
-        admin can use. Committee emails live on each admin’s profile.
+        Super admins invite committee members, promote admins, and choose which
+        desk tools each admin can use. Committee emails live on each admin’s
+        profile.
       </p>
 
       <section className="mt-10 rounded-3xl bg-white p-6 shadow">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl">Committee</h2>
-        <ul className="mt-4 space-y-3">
-          {committee.map((profile) => {
-            const isSelf = profile.userId === user.id;
-            const lastSuper =
-              profile.role === "super_admin" && superAdminCount < 2;
-            return (
-              <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{profile.email ?? profile.userId}</p>
-                    <p className="text-sm text-black/55">{roleLabel(profile.role)}</p>
-                  </div>
-                  {isSelf || lastSuper ? null : (
-                    <form action={demoteAdminAction}>
-                      <input type="hidden" name="userId" value={profile.userId} />
-                      <button className="text-sm text-ember hover:underline">Remove admin</button>
-                    </form>
-                  )}
-                </div>
-                {profile.role === "admin" ? (
-                  <AdminPermissionsForm
-                    userId={profile.userId}
-                    permissions={profile.permissions ?? defaultAdminPermissions()}
-                  />
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Invite by email</h2>
         <p className="mt-1 text-sm text-black/60">
           They become an admin the next time they enter this address on committee sign-in.
@@ -105,6 +75,71 @@ export default async function CommitteePage() {
             ))}
           </ul>
         ) : null}
+      </section>
+
+      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
+        <h2 className="font-[family-name:var(--font-display)] text-3xl">Committee</h2>
+        <ul className="mt-4 space-y-3">
+          {committee.map((profile) => {
+            const isSelf = profile.userId === user.id;
+            const lastSuper =
+              profile.role === "super_admin" && superAdminCount < 2;
+            const canRemove = !isSelf && !lastSuper;
+            return (
+              <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{profile.email ?? profile.userId}</p>
+                    <p className="text-sm text-black/55">{roleLabel(profile.role)}</p>
+                  </div>
+                  <CommitteeMemberActions
+                    userId={profile.userId}
+                    label={profile.email ?? profile.userId}
+                    canPromote={profile.role === "admin"}
+                    canRemove={canRemove}
+                  />
+                </div>
+                {profile.role === "admin" ? (
+                  <AdminPermissionsForm
+                    userId={profile.userId}
+                    permissions={profile.permissions ?? defaultAdminPermissions()}
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
+        <h2 className="font-[family-name:var(--font-display)] text-3xl">Link a login to a person</h2>
+        <p className="mt-1 text-sm text-black/60">
+          After a relative signs in once, they appear here. Choose who they are
+          on the tree so they can add phone, email, and address.
+        </p>
+        {snapshot.profiles.length ? (
+          <ul className="mt-4 space-y-3">
+            {snapshot.profiles.map((profile) => (
+              <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
+                <p className="mb-3 text-sm">
+                  {profile.email ?? profile.userId}
+                  <span className="ml-2 text-xs text-black/45">
+                    {profile.role.replace("_", " ")}
+                  </span>
+                </p>
+                <LinkProfileForm
+                  userId={profile.userId}
+                  defaultPersonId={profile.personId ?? ""}
+                  people={peopleOptions}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-sm text-black/55">
+            No logins yet. Invite an admin, then they appear here after they sign in.
+          </p>
+        )}
       </section>
     </main>
   );

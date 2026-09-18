@@ -25,6 +25,23 @@ function str(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+export type CommitteeActionState = { error?: string; ok?: boolean } | null;
+
+function actionError(error: unknown) {
+  return error instanceof Error ? error.message : "Could not save. Try again.";
+}
+
+function gatePasswordError(password: string) {
+  const expected = (process.env.FAMILY_GATE_PASSWORD ?? "").trim();
+  if (!expected) {
+    return "FAMILY_GATE_PASSWORD is not loaded. Save .env and restart npm run dev.";
+  }
+  if (password !== expected) {
+    return "That passcode is not right.";
+  }
+  return null;
+}
+
 export async function demoteAdminAction(formData: FormData) {
   const actor = await requireSuperAdmin();
   const userId = str(formData, "userId");
@@ -56,6 +73,47 @@ export async function demoteAdminAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/admin/committee");
   revalidatePath("/admin/activity");
+}
+
+export async function promoteToSuperAdminAction(
+  _prev: CommitteeActionState,
+  formData: FormData,
+): Promise<CommitteeActionState> {
+  try {
+    const actor = await requireSuperAdmin();
+    const userId = str(formData, "userId");
+    const password = String(formData.get("password") ?? "").trim();
+    const passwordError = gatePasswordError(password);
+    if (passwordError) return { error: passwordError };
+
+    const profile = await getProfile(userId);
+    if (!profile) return { error: "That login was not found." };
+    if (profile.role === "super_admin") {
+      return { error: "That person is already a super admin." };
+    }
+    if (profile.role !== "admin") {
+      return { error: "Only a current admin can be made a super admin." };
+    }
+
+    await upsertProfile({
+      ...profile,
+      role: "super_admin",
+      permissions: defaultAdminPermissions(),
+    });
+    await recordAudit(
+      actor,
+      "role.change",
+      profile.email ?? profile.userId,
+      "Promoted to super admin",
+      profile.userId,
+    );
+    revalidatePath("/admin");
+    revalidatePath("/admin/committee");
+    revalidatePath("/admin/activity");
+    return { ok: true };
+  } catch (error) {
+    return { error: actionError(error) };
+  }
 }
 
 export async function inviteAdminAction(formData: FormData) {

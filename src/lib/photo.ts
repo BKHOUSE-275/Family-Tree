@@ -42,16 +42,20 @@ export async function preparePhotoUpload(file: File) {
     try {
       const { default: convert } = await import("heic-convert");
       const jpeg = Buffer.from(
-        await convert({ buffer: bytes, format: "JPEG", quality: 0.9 }),
+        await convert({ buffer: bytes, format: "JPEG", quality: 0.92 }),
       );
+      if (jpeg.length < 100 || jpeg[0] !== 0xff || jpeg[1] !== 0xd8) {
+        throw new Error("HEIC conversion produced an invalid JPEG.");
+      }
       return {
         body: jpeg,
         pathname: `family/${stamp}-${safeBaseName(file.name)}.jpg`,
         contentType: "image/jpeg" as const,
       };
-    } catch {
+    } catch (error) {
+      console.error("HEIC conversion failed", error);
       throw new Error(
-        "This iPhone photo could not be converted. Export it as JPEG and try again.",
+        "This iPhone photo could not be converted. Try a JPEG or PNG, or export the photo as JPEG and upload again.",
       );
     }
   }
@@ -59,6 +63,9 @@ export async function preparePhotoUpload(file: File) {
   const ext =
     (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") ||
     "jpg";
+  if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext) && !file.type.startsWith("image/")) {
+    throw new Error("Please choose a JPEG, PNG, or iPhone HEIC photo.");
+  }
   return {
     body: bytes,
     pathname: `family/${stamp}-${safeBaseName(file.name)}.${ext}`,

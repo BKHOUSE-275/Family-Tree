@@ -152,3 +152,7 @@ body {
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+.photo-crop-dialog::backdrop {
+  background: rgba(42, 24, 16, 0.55);
+}
