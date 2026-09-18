@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["heic-convert", "heic-decode", "libheif-js", "sharp"],
+  transpilePackages: ["heic-to"],
   experimental: {
     serverActions: {
       bodySizeLimit: "9mb",

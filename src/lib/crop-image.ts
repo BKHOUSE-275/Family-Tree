@@ -86,6 +86,25 @@ function drawScaled(
   return canvas;
 }
 
+export async function heicFileToCropSrc(file: File) {
+  try {
+    const { heicTo } = await import("heic-to/csp");
+    const jpeg = await heicTo({
+      blob: file,
+      type: "image/jpeg",
+      quality: 0.9,
+    });
+    const converted = new File([jpeg], croppedPhotoName(file.name), {
+      type: "image/jpeg",
+    });
+    return await fileToCropSrc(converted);
+  } catch {
+    throw new Error(
+      "This iPhone photo could not be converted. Export it as JPEG or PNG and try again.",
+    );
+  }
+}
+
 export async function fileToCropSrc(file: File) {
   if (typeof createImageBitmap === "function") {
     try {

@@ -3,7 +3,6 @@
 import { put } from "@vercel/blob";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
-import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin, requirePermission } from "@/lib/auth";
@@ -315,33 +314,6 @@ async function storePhotoBytes(body: Buffer, pathname: string, contentType: stri
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, safeName), body);
   return { url: `/uploads/${safeName}` };
-}
-
-async function jpegPreview(body: Buffer) {
-  return sharp(body)
-    .rotate()
-    .resize({
-      width: 2400,
-      height: 2400,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: 85 })
-    .toBuffer();
-}
-
-export async function previewPhotoAction(formData: FormData) {
-  try {
-    const prepared = await preparePhotoUpload(photoFileFromForm(formData));
-    const body = await jpegPreview(prepared.body);
-    return storePhotoBytes(
-      body,
-      prepared.pathname.replace(/\.[^.]+$/, ".jpg"),
-      "image/jpeg",
-    );
-  } catch (error) {
-    return { error: actionError(error) };
-  }
 }
 
 export async function uploadPhotoAction(formData: FormData) {

@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { previewPhotoAction, uploadPhotoAction } from "@/app/actions/family";
+import { uploadPhotoAction } from "@/app/actions/family";
 import { PhotoCropDialog } from "@/components/admin/PhotoCropDialog";
 import {
   croppedPhotoName,
   fileToCropSrc,
+  heicFileToCropSrc,
   looksLikeHeic,
   looksLikeJpegOrPng,
 } from "@/lib/crop-image";
+
+function photoErrorMessage(err: unknown) {
+  const message = err instanceof Error ? err.message : "Upload failed";
+  if (/Minified React error #441|Server Components render/i.test(message)) {
+    return "The photo could not be uploaded. Try a JPEG or PNG under 8 MB.";
+  }
+  return message;
+}
 
 export function PhotoField({
   defaultUrl,
@@ -61,16 +70,11 @@ export function PhotoField({
     try {
       let src: string;
       if (looksLikeHeic(file)) {
-        const data = new FormData();
-        data.set("file", file);
-        const preview = await previewPhotoAction(data);
-        if ("error" in preview && preview.error) {
-          throw new Error(preview.error);
+        try {
+          src = await fileToCropSrc(file);
+        } catch {
+          src = await heicFileToCropSrc(file);
         }
-        if (!("url" in preview) || !preview.url) {
-          throw new Error("This iPhone photo could not be converted.");
-        }
-        src = preview.url;
       } else {
         if (!looksLikeJpegOrPng(file) && !file.type.startsWith("image/")) {
           throw new Error("Please choose a JPEG, PNG, or iPhone HEIC photo.");
@@ -81,7 +85,7 @@ export function PhotoField({
       cropSrcRef.current = src;
       setCropSrc(src);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(photoErrorMessage(err));
       setFileName(null);
     } finally {
       setPreparing(false);
@@ -109,7 +113,7 @@ export function PhotoField({
       closeCrop();
     } catch (err) {
       setBusy(false);
-      throw err instanceof Error ? err : new Error("Upload failed");
+      throw new Error(photoErrorMessage(err));
     }
   }
 
@@ -135,7 +139,7 @@ export function PhotoField({
           onChange={(event) => void onFile(event.target.files)}
         />
         <label htmlFor={inputId} className="ui-file-button">
-          {preparing ? "Opening…" : url ? "Replace photo" : "Choose photo"}
+          {preparing ? "Preparing…" : url ? "Replace photo" : "Choose photo"}
         </label>
         {url ? (
           <button
