@@ -26,13 +26,17 @@ async function personLabel(id: string | null) {
 function composePersonName(parts: {
   givenName: string | null;
   surname: string | null;
+  maidenName: string | null;
   nickname: string | null;
   suffix: string | null;
 }) {
   const base = [parts.givenName, parts.surname].filter(Boolean).join(" ");
   const withNick =
     parts.nickname && base ? `${base} (${parts.nickname})` : base || parts.nickname;
-  return parts.suffix && withNick ? `${withNick}, ${parts.suffix}` : withNick;
+  const withSuffix = parts.suffix && withNick ? `${withNick}, ${parts.suffix}` : withNick;
+  return parts.maidenName && withSuffix
+    ? `${withSuffix} (née ${parts.maidenName})`
+    : withSuffix;
 }
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
@@ -49,6 +53,7 @@ function buildChangeInfoMessage(input: {
   personLabel: string;
   givenName: string;
   surname: string | null;
+  maidenName: string | null;
   nickname: string | null;
   suffix: string | null;
   personPhone: string;
@@ -68,6 +73,7 @@ function buildChangeInfoMessage(input: {
   const fullName = composePersonName({
     givenName: input.givenName,
     surname: input.surname,
+    maidenName: input.maidenName,
     nickname: input.nickname,
     suffix: input.suffix,
   });
@@ -81,6 +87,7 @@ function buildChangeInfoMessage(input: {
     `Person: ${input.personLabel}`,
     `Given name: ${input.givenName}`,
     `Surname: ${input.surname ?? "(none)"}`,
+    `Maiden name: ${input.maidenName ?? "(none)"}`,
     `Nickname: ${input.nickname ?? "(none)"}`,
     `Suffix: ${input.suffix ?? "(none)"}`,
     `Full name: ${fullName}`,
@@ -106,6 +113,7 @@ function buildAddPersonMessage(input: {
   email: string | null;
   givenName: string;
   surname: string | null;
+  maidenName: string | null;
   nickname: string | null;
   suffix: string | null;
   personPhone: string;
@@ -126,6 +134,7 @@ function buildAddPersonMessage(input: {
   const fullName = composePersonName({
     givenName: input.givenName,
     surname: input.surname,
+    maidenName: input.maidenName,
     nickname: input.nickname,
     suffix: input.suffix,
   });
@@ -140,6 +149,7 @@ function buildAddPersonMessage(input: {
     "",
     `Given name: ${input.givenName}`,
     `Surname: ${input.surname ?? "(none)"}`,
+    `Maiden name: ${input.maidenName ?? "(none)"}`,
     `Nickname: ${input.nickname ?? "(none)"}`,
     `Suffix: ${input.suffix ?? "(none)"}`,
     `Full name: ${fullName}`,
@@ -209,6 +219,7 @@ export async function submitChangeRequestAction(formData: FormData) {
       personLabel: about,
       givenName,
       surname: str(formData, "surname"),
+      maidenName: str(formData, "maidenName"),
       nickname: str(formData, "nickname"),
       suffix: str(formData, "suffix"),
       personPhone,
@@ -255,6 +266,7 @@ export async function submitChangeRequestAction(formData: FormData) {
       email,
       givenName,
       surname: str(formData, "surname"),
+      maidenName: str(formData, "maidenName"),
       nickname: str(formData, "nickname"),
       suffix: str(formData, "suffix"),
       personPhone,

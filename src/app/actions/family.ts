@@ -102,6 +102,7 @@ export async function savePersonAction(
       id: existingId ?? slugId(`${givenName} ${surname}`),
       givenName,
       surname,
+      maidenName: str(formData, "maidenName"),
       nickname: str(formData, "nickname"),
       suffix: str(formData, "suffix"),
       photoUrl: str(formData, "photoUrl"),

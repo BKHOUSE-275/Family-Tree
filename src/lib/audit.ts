@@ -8,6 +8,7 @@ import {
 const PERSON_FIELDS: Array<[keyof Person, string]> = [
   ["givenName", "Given name"],
   ["surname", "Surname"],
+  ["maidenName", "Maiden name"],
   ["nickname", "Nickname"],
   ["suffix", "Suffix"],
   ["photoUrl", "Profile photo"],

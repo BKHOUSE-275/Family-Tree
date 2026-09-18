@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SuggestionForm } from "@/components/suggest/SuggestionForm";
 import { FamilyTree } from "@/components/tree/FamilyTree";
-import type { FamilySnapshot } from "@/lib/types";
+import type { FamilySnapshot, PersonPickerOption } from "@/lib/types";
 
 export function FamilyLanding({
   snapshot,
@@ -14,7 +14,7 @@ export function FamilyLanding({
   placeMode = false,
 }: {
   snapshot: FamilySnapshot;
-  people: { id: string; label: string }[];
+  people: PersonPickerOption[];
   sent: boolean;
   defaultEmail?: string;
   defaultName?: string;

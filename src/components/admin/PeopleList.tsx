@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { deletePersonAction } from "@/app/actions/family";
+import { isSlotDemoId } from "@/lib/types";
 
 export type AdminPersonRow = {
   id: string;
   name: string;
+  maidenName: string | null;
   years: string;
   placed: boolean;
   isDeceased: boolean;
@@ -16,6 +18,8 @@ export type AdminPersonRow = {
 };
 
 type FilterId =
+  | "name-az"
+  | "name-za"
   | "placed"
   | "unplaced"
   | "living"
@@ -28,6 +32,8 @@ type FilterId =
   | "no-familysearch";
 
 const FILTERS: { id: FilterId; group: string; label: string }[] = [
+  { id: "name-az", group: "sort", label: "Name A–Z" },
+  { id: "name-za", group: "sort", label: "Name Z–A" },
   { id: "placed", group: "placement", label: "On the tree" },
   { id: "unplaced", group: "placement", label: "Unplaced" },
   { id: "living", group: "status", label: "Living" },
@@ -57,15 +63,22 @@ export function PeopleList({
   );
 
   const filtered = useMemo(
-    () => people.filter((person) => matchesPerson(person, query, filters)),
+    () =>
+      sortPeople(
+        people.filter((person) => matchesPerson(person, query, filters)),
+        filters,
+      ),
     [people, query, filters],
   );
   const unplaced = useMemo(() => {
     const withoutPlacement = filters.filter(
       (id) => FILTER_BY_ID.get(id)?.group !== "placement",
     );
-    return people.filter(
-      (person) => !person.placed && matchesPerson(person, query, withoutPlacement),
+    return sortPeople(
+      people.filter(
+        (person) => !person.placed && matchesPerson(person, query, withoutPlacement),
+      ),
+      filters,
     );
   }, [people, query, filters]);
 
@@ -231,12 +244,18 @@ function PersonRow({
 function matchesPerson(person: AdminPersonRow, query: string, filters: FilterId[]) {
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length) {
-    const haystack = person.name.toLowerCase();
+    const haystack = [person.name, person.maidenName]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
     if (!tokens.every((token) => haystack.includes(token))) return false;
   }
 
   for (const filter of filters) {
     switch (filter) {
+      case "name-az":
+      case "name-za":
+        break;
       case "placed":
         if (!person.placed) return false;
         break;
@@ -271,4 +290,22 @@ function matchesPerson(person: AdminPersonRow, query: string, filters: FilterId[
   }
 
   return true;
+}
+
+function sortPeople(people: AdminPersonRow[], filters: FilterId[]) {
+  const family: AdminPersonRow[] = [];
+  const demo: AdminPersonRow[] = [];
+  for (const person of people) {
+    if (isSlotDemoId(person.id)) demo.push(person);
+    else family.push(person);
+  }
+
+  const sort = filters.find((id) => FILTER_BY_ID.get(id)?.group === "sort");
+  if (!sort) return [...family, ...demo];
+
+  const direction = sort === "name-za" ? -1 : 1;
+  const byName = (a: AdminPersonRow, b: AdminPersonRow) =>
+    direction *
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+  return [...family.sort(byName), ...demo.sort(byName)];
 }

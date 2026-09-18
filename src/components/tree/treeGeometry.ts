@@ -7,9 +7,9 @@ import {
   type PctSlot,
 } from "@/components/tree/treeSlots";
 
-/** Pixel size of the heirloom tree art (`public/1cecde82-d423-4d57-9c8a-24ee3d7846f3.png`). */
+/** Pixel size of the heirloom tree art (`public/a7619dc3-3153-4821-92a6-fcc6095ec5ff.png`). */
 export const ART = { w: 1536, h: 1024 };
-export const TREE_ART = "/1cecde82-d423-4d57-9c8a-24ee3d7846f3.png";
+export const TREE_ART = "/a7619dc3-3153-4821-92a6-fcc6095ec5ff.png";
 
 export type { PctSlot } from "@/components/tree/treeSlots";
 

@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { type PersonPickerOption } from "@/lib/types";
 
-export type PersonPickerOption = {
-  id: string;
-  label: string;
-};
+export type { PersonPickerOption };
+
+function pickerMatchesQuery(person: PersonPickerOption, query: string) {
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return true;
+  const haystack = [person.label, person.maidenName]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return tokens.every((token) => haystack.includes(token));
+}
 
 export function PersonPicker({
   name,
@@ -37,11 +45,10 @@ export function PersonPicker({
   const [active, setActive] = useState(0);
   const selectedId = value ?? internal;
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return people;
-    return people.filter((person) => person.label.toLowerCase().includes(needle));
-  }, [people, query]);
+  const filtered = useMemo(
+    () => people.filter((person) => pickerMatchesQuery(person, query)),
+    [people, query],
+  );
 
   const choices = useMemo(
     () => (allowNone ? [{ id: "", label: emptyLabel }, ...filtered] : filtered),
@@ -137,7 +144,14 @@ export function PersonPicker({
                     onMouseEnter={() => setActive(index)}
                     onClick={() => choose(person.id)}
                   >
-                    {person.label}
+                    <span>
+                      {person.label}
+                      {person.id && person.maidenName ? (
+                        <span className="block text-xs font-normal text-black/45">
+                          née {person.maidenName}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                 </li>
               ))

@@ -66,6 +66,9 @@ export function PersonPanel({
             <h2 className="font-[family-name:var(--font-display)] text-2xl leading-tight break-words sm:text-3xl">
               {displayName(person)}
             </h2>
+            {person.maidenName ? (
+              <p className="text-sm text-black/60">née {person.maidenName}</p>
+            ) : null}
             {years ? <p className="text-sm text-black/60">{years}</p> : null}
           </div>
         </div>

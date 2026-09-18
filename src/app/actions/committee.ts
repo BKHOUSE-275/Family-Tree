@@ -64,8 +64,7 @@ export async function inviteAdminAction(formData: FormData) {
   if (!email || !email.includes("@")) {
     throw new Error("Enter a valid email address.");
   }
-  const snapshot = await getSnapshot();
-  const existing = snapshot.profiles.find((row) => row.email?.toLowerCase() === email);
+  const existing = await findProfileByEmail(email);
   if (existing?.role === "super_admin") {
     revalidatePath("/admin/committee");
     return;

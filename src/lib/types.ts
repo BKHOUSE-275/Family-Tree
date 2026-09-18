@@ -76,6 +76,7 @@ export type Person = {
   id: string;
   givenName: string;
   surname: string;
+  maidenName: string | null;
   nickname: string | null;
   suffix: string | null;
   photoUrl: string | null;
@@ -192,6 +193,20 @@ export function displayName(person: Person): string {
   const suffix = person.suffix ? ` ${person.suffix}` : "";
   const surname = person.surname ? ` ${person.surname}` : "";
   return `${person.givenName}${nick}${surname}${suffix}`.trim();
+}
+
+export type PersonPickerOption = {
+  id: string;
+  label: string;
+  maidenName?: string | null;
+};
+
+export function toPersonPickerOption(person: Person): PersonPickerOption {
+  return {
+    id: person.id,
+    label: displayName(person),
+    maidenName: person.maidenName,
+  };
 }
 
 const MONTHS = [

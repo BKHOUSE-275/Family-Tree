@@ -5,7 +5,7 @@ import { PeopleList } from "@/components/admin/PeopleList";
 import { buildActivityFeed } from "@/lib/activity";
 import { committeeHomePath, getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot, isPlaced } from "@/lib/store";
-import { displayName, isCommittee, yearRange } from "@/lib/types";
+import { displayName, isCommittee, toPersonPickerOption, yearRange } from "@/lib/types";
 
 export default async function AdminPage() {
   const user = await getAppUser();
@@ -19,6 +19,7 @@ export default async function AdminPage() {
   const peopleRows = snapshot.people.map((person) => ({
     id: person.id,
     name: displayName(person),
+    maidenName: person.maidenName,
     years: yearRange(person),
     placed: isPlaced(snapshot, person.id),
     isDeceased: person.isDeceased,
@@ -28,10 +29,7 @@ export default async function AdminPage() {
   }));
   const pendingCount = snapshot.changeRequests.filter((row) => row.status === "pending").length;
   const recent = buildActivityFeed(snapshot).slice(0, 8);
-  const peopleOptions = snapshot.people.map((person) => ({
-    id: person.id,
-    label: displayName(person),
-  }));
+  const peopleOptions = snapshot.people.map(toPersonPickerOption);
   const canEdit = userHasPermission(user, "people.edit");
   const canCreate = userHasPermission(user, "people.create");
   const canDelete = userHasPermission(user, "people.delete");

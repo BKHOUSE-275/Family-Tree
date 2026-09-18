@@ -322,6 +322,7 @@ function personMatchesQuery(
   const needle = q.trim().toLowerCase();
   if (!needle) return false;
   if (displayName(person).toLowerCase().includes(needle)) return true;
+  if (person.maidenName?.toLowerCase().includes(needle)) return true;
   const lived = snapshot.residences.some(
     (row) =>
       row.personId === person.id && row.place.toLowerCase().includes(needle),

@@ -10,6 +10,7 @@ export const people = pgTable("people", {
   id: text("id").primaryKey(),
   givenName: text("given_name").notNull(),
   surname: text("surname").notNull().default(""),
+  maidenName: text("maiden_name"),
   nickname: text("nickname"),
   suffix: text("suffix"),
   photoUrl: text("photo_url"),

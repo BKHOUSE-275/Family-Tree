@@ -33,6 +33,9 @@ export default async function ProfilePage() {
             <p className="font-[family-name:var(--font-display)] text-2xl">
               {displayName(person)}
             </p>
+            {person.maidenName ? (
+              <p className="text-sm text-black/60">née {person.maidenName}</p>
+            ) : null}
             <p className="mt-2 text-sm text-black/60">
               Signed in as {user.email ?? user.name ?? user.id}
             </p>

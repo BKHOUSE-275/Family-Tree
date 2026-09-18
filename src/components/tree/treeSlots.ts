@@ -2,14 +2,14 @@ export type PctSlot = { cx: number; cy: number; size: number };
 
 /** Openings in the 1536×1024 canopy, as % of the image (paired / even layout). */
 export const CANOPY_EVEN: PctSlot[] = [
-  { cx: 40.9, cy: 20.9, size: 8.6 },
+  { cx: 41.3, cy: 21.0, size: 8.6 },
   { cx: 60.6, cy: 21.0, size: 8.6 },
-  { cx: 29.0, cy: 37.9, size: 8.6 },
-  { cx: 69.6, cy: 38.6, size: 8.6 },
-  { cx: 23.7, cy: 61.3, size: 8.6 },
-  { cx: 38.8, cy: 64.6, size: 8.6 },
-  { cx: 62.0, cy: 64.9, size: 8.6 },
-  { cx: 77.7, cy: 60.2, size: 8.6 },
+  { cx: 32.3, cy: 37.6, size: 8.6 },
+  { cx: 70.8, cy: 37.6, size: 8.6 },
+  { cx: 25.9, cy: 60.0, size: 8.6 },
+  { cx: 38.6, cy: 64.9, size: 8.6 },
+  { cx: 63.9, cy: 64.9, size: 8.6 },
+  { cx: 77.5, cy: 60.0, size: 8.6 },
 ];
 
 /**
@@ -17,7 +17,7 @@ export const CANOPY_EVEN: PctSlot[] = [
  * (top → mid → lower).
  */
 export const CANOPY_CENTERS: PctSlot[] = [
-  { cx: 51.0, cy: 9.6, size: 8.6 },
+  { cx: 51.2, cy: 10.3, size: 8.6 },
   { cx: 51.1, cy: 35.1, size: 8.6 },
   { cx: 51.2, cy: 57.3, size: 8.6 },
 ];
@@ -26,7 +26,7 @@ export const CANOPY_CENTERS: PctSlot[] = [
 export const CANOPY_SLOTS: PctSlot[] = CANOPY_EVEN;
 
 /** Parent portrait when a branch is open. */
-export const BRANCH_SUBJECT: PctSlot = { cx: 50.9, cy: 35.9, size: 8.6 };
+export const BRANCH_SUBJECT: PctSlot = { cx: 51.5, cy: 35.4, size: 8.6 };
 
 /**
  * Paired child openings. The first 8 match the original canopy holes and
@@ -35,14 +35,14 @@ export const BRANCH_SUBJECT: PctSlot = { cx: 50.9, cy: 35.9, size: 8.6 };
 export const BRANCH_EVEN: PctSlot[] = [
   { cx: 41.1, cy: 20.9, size: 8.6 },
   { cx: 61.0, cy: 20.9, size: 8.6 },
-  { cx: 27.0, cy: 37.7, size: 8.6 },
+  { cx: 30.2, cy: 37.7, size: 8.6 },
   { cx: 73.1, cy: 37.7, size: 8.6 },
-  { cx: 24.3, cy: 61.3, size: 8.6 },
-  { cx: 38.8, cy: 64.3, size: 8.6 },
-  { cx: 62.0, cy: 64.7, size: 8.6 },
-  { cx: 75.8, cy: 61.3, size: 8.6 },
-  { cx: 41.1, cy: 37.7, size: 8.6 },
-  { cx: 61.0, cy: 37.7, size: 8.6 },
+  { cx: 25.2, cy: 61.3, size: 8.6 },
+  { cx: 38.2, cy: 65.2, size: 8.6 },
+  { cx: 64.1, cy: 65.2, size: 8.6 },
+  { cx: 76.3, cy: 61.3, size: 8.6 },
+  { cx: 41.1, cy: 35.4, size: 8.6 },
+  { cx: 61.0, cy: 35.4, size: 8.6 },
 ];
 
 /**
@@ -51,7 +51,7 @@ export const BRANCH_EVEN: PctSlot[] = [
  */
 export const BRANCH_CENTERS: PctSlot[] = [
   { cx: 50.9, cy: 54.6, size: 8.6 },
-  { cx: 34.7, cy: 49.7, size: 8.6 },
+  { cx: 35.9, cy: 49.3, size: 8.6 },
   { cx: 50.9, cy: 10.1, size: 8.6 },
   { cx: 67.3, cy: 49.3, size: 8.6 },
 ];

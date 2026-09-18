@@ -4,8 +4,7 @@ import { useActionState } from "react";
 import { savePersonAction, type SavePersonState } from "@/app/actions/family";
 import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
-import type { FamilySnapshot, Person } from "@/lib/types";
-import { displayName } from "@/lib/types";
+import { toPersonPickerOption, type FamilySnapshot, type Person } from "@/lib/types";
 
 export function PersonForm({
   person,
@@ -36,7 +35,7 @@ export function PersonForm({
     : [];
   const options = snapshot.people
     .filter((row) => row.id !== person?.id)
-    .map((row) => ({ id: row.id, label: displayName(row) }));
+    .map(toPersonPickerOption);
 
   return (
     <form action={formAction} className="space-y-4 rounded-3xl bg-white p-6 shadow">
@@ -47,6 +46,12 @@ export function PersonForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field name="givenName" label="Given name" defaultValue={person?.givenName} required />
         <Field name="surname" label="Surname" defaultValue={person?.surname} />
+        <Field
+          name="maidenName"
+          label="Maiden name"
+          defaultValue={person?.maidenName}
+          placeholder="Birth surname, if different"
+        />
         <Field name="nickname" label="Nickname" defaultValue={person?.nickname} />
         <Field name="suffix" label="Suffix" defaultValue={person?.suffix} placeholder="Sr, Jr" />
         <Field name="birthDate" label="Birth date" defaultValue={person?.birthDate} placeholder="December 1839" />

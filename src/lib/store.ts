@@ -74,6 +74,7 @@ function mapPerson(row: typeof people.$inferSelect): Person {
     id: row.id,
     givenName: row.givenName,
     surname: row.surname,
+    maidenName: row.maidenName,
     nickname: row.nickname,
     suffix: row.suffix,
     photoUrl: row.photoUrl,
@@ -157,6 +158,7 @@ function normalizeSnapshot(snapshot: FamilySnapshot): FamilySnapshot {
     ...snapshot,
     people: snapshot.people.map((person) => ({
       ...person,
+      maidenName: person.maidenName ?? null,
       headstonePhotoUrl: person.headstonePhotoUrl ?? null,
     })),
     profiles: (snapshot.profiles ?? []).map(mapProfile),
@@ -192,6 +194,9 @@ async function ensureAuxTables() {
   `);
   await db.execute(sql`
     ALTER TABLE profiles ADD COLUMN IF NOT EXISTS permissions TEXT
+  `);
+  await db.execute(sql`
+    ALTER TABLE people ADD COLUMN IF NOT EXISTS maiden_name TEXT
   `);
 }
 

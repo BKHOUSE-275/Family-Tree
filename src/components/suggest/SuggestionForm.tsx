@@ -9,6 +9,7 @@ import {
   type Contact,
   type FamilySnapshot,
   type Person,
+  type PersonPickerOption,
 } from "@/lib/types";
 
 type RequestType = "change_info" | "add_person";
@@ -122,7 +123,7 @@ export function SuggestionForm({
   defaultName = "",
 }: {
   snapshot: FamilySnapshot;
-  people: { id: string; label: string }[];
+  people: PersonPickerOption[];
   personId: string;
   onPersonChange: (id: string) => void;
   sent: boolean;
@@ -248,6 +249,15 @@ export function SuggestionForm({
                       name="surname"
                       defaultValue={selected.person.surname}
                       className={fieldClass}
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold text-script">
+                    Maiden name
+                    <input
+                      name="maidenName"
+                      defaultValue={selected.person.maidenName ?? ""}
+                      className={fieldClass}
+                      placeholder="Birth surname, if different"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
@@ -457,6 +467,14 @@ export function SuggestionForm({
               <label className="block text-sm font-semibold text-script">
                 Surname
                 <input name="surname" className={fieldClass} placeholder="Last name" />
+              </label>
+              <label className="block text-sm font-semibold text-script">
+                Maiden name
+                <input
+                  name="maidenName"
+                  className={fieldClass}
+                  placeholder="Birth surname, if different"
+                />
               </label>
               <label className="block text-sm font-semibold text-script">
                 Nickname

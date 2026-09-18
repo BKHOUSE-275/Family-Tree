@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   LOCAL_AUTH_COOKIE,
@@ -113,10 +114,6 @@ export async function lookupCommitteeEmail(formData: FormData) {
     redirect(signInUrl({ redirectUrl, email, step: "passcode" }));
   }
 
-  if (existing && isCommittee(existing.role)) {
-    await openCommitteeDesk(existing, redirectUrl);
-  }
-
   if (invite) {
     const profile: Profile = {
       userId: committeeUserId(email, existing),
@@ -137,7 +134,14 @@ export async function lookupCommitteeEmail(formData: FormData) {
       "Accepted an admin invite",
       profile.userId,
     );
+    revalidatePath("/admin");
+    revalidatePath("/admin/committee");
+    revalidatePath("/admin/activity");
     await openCommitteeDesk(profile, redirectUrl);
+  }
+
+  if (existing && isCommittee(existing.role)) {
+    await openCommitteeDesk(existing, redirectUrl);
   }
 
   redirect(

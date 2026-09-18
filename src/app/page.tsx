@@ -2,7 +2,7 @@ import { CommitteeFooter } from "@/components/layout/CommitteeFooter";
 import { FamilyLanding } from "@/components/layout/FamilyLanding";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { displayName, isCommittee, sortByBirth, withoutSlotDemo } from "@/lib/types";
+import { isCommittee, sortByBirth, toPersonPickerOption, withoutSlotDemo } from "@/lib/types";
 
 export default async function HomePage({
   searchParams,
@@ -13,10 +13,7 @@ export default async function HomePage({
   const committee = Boolean(user && isCommittee(user.role));
   const snapshot = committee ? await getSnapshot() : withoutSlotDemo(await getSnapshot());
   const params = await searchParams;
-  const people = sortByBirth(snapshot.people).map((person) => ({
-    id: person.id,
-    label: displayName(person),
-  }));
+  const people = sortByBirth(snapshot.people).map(toPersonPickerOption);
 
   return (
     <>

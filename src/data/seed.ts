@@ -10,6 +10,7 @@ function person(
     id,
     givenName,
     surname,
+    maidenName: extra.maidenName ?? null,
     nickname: extra.nickname ?? null,
     suffix: extra.suffix ?? null,
     photoUrl: extra.photoUrl ?? null,
