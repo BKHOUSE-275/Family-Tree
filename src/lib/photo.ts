@@ -1,3 +1,7 @@
+import { put } from "@vercel/blob";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+
 const HEIC_BRANDS = new Set(["heic", "heif", "heix", "hevc", "hevx"]);
 
 function ftypBrands(bytes: Buffer) {
@@ -11,6 +15,7 @@ function ftypBrands(bytes: Buffer) {
 }
 
 export function isHeicPhoto(file: Pick<File, "name" | "type">, bytes: Buffer) {
+  if (bytes.length > 2 && bytes[0] === 0xff && bytes[1] === 0xd8) return false;
   const name = file.name.toLowerCase();
   const type = (file.type || "").toLowerCase();
   if (type === "image/avif" || name.endsWith(".avif")) return false;
@@ -52,7 +57,33 @@ export async function preparePhotoUpload(file: File) {
   }
   return {
     body: bytes,
-    pathname: `family/${stamp}-${safeBaseName(file.name)}.${ext}`,
+    pathname: `family/${stamp}-${safeBaseName(file.name)}.${ext === "jpeg" ? "jpg" : ext}`,
     contentType: file.type || (ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`),
   };
+}
+
+export async function storePreparedPhoto(photo: {
+  body: Buffer;
+  pathname: string;
+  contentType: string;
+}) {
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(photo.pathname, photo.body, {
+      access: "public",
+      addRandomSuffix: true,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      contentType: photo.contentType,
+    });
+    return { url: blob.url };
+  }
+
+  if (process.env.VERCEL) {
+    throw new Error("Set BLOB_READ_WRITE_TOKEN to upload photos on Vercel.");
+  }
+
+  const safeName = path.basename(photo.pathname);
+  const dir = path.join(process.cwd(), "public", "uploads");
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, safeName), photo.body);
+  return { url: `/uploads/${safeName}` };
 }

@@ -1,8 +1,5 @@
 "use server";
 
-import { put } from "@vercel/blob";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin, requirePermission } from "@/lib/auth";
@@ -20,7 +17,6 @@ import {
   setParents,
   upsertProfile,
 } from "@/lib/store";
-import { preparePhotoUpload } from "@/lib/photo";
 import { defaultAdminPermissions, displayName, type Contact, type Partnership, type Person, type Residence } from "@/lib/types";
 
 function slugId(name: string) {
@@ -277,49 +273,6 @@ export async function linkProfileAction(
     revalidatePath("/admin/activity");
     revalidatePath("/profile");
     return { ok: true };
-  } catch (error) {
-    return { error: actionError(error) };
-  }
-}
-
-const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
-
-function photoFileFromForm(formData: FormData) {
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Choose a photo to upload.");
-  }
-  if (file.size > MAX_PHOTO_BYTES) {
-    throw new Error("Please choose a photo under 8 MB.");
-  }
-  return file;
-}
-
-async function storePhotoBytes(body: Buffer, pathname: string, contentType: string) {
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(pathname, body, {
-      access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      contentType,
-    });
-    return { url: blob.url };
-  }
-
-  if (process.env.VERCEL) {
-    throw new Error("Set BLOB_READ_WRITE_TOKEN to upload photos on Vercel.");
-  }
-
-  const safeName = path.basename(pathname);
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), body);
-  return { url: `/uploads/${safeName}` };
-}
-
-export async function uploadPhotoAction(formData: FormData) {
-  try {
-    const photo = await preparePhotoUpload(photoFileFromForm(formData));
-    return storePhotoBytes(photo.body, photo.pathname, photo.contentType);
   } catch (error) {
     return { error: actionError(error) };
   }

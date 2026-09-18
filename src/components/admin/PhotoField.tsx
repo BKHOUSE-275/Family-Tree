@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { uploadPhotoAction } from "@/app/actions/family";
 import { PhotoCropDialog } from "@/components/admin/PhotoCropDialog";
 import {
-  croppedPhotoName,
   fileToCropSrc,
   heicFileToCropSrc,
   looksLikeHeic,
@@ -97,17 +95,15 @@ export function PhotoField({
     setBusy(true);
     setError(null);
     try {
-      const cropped = new File([blob], croppedPhotoName(fileName ?? "photo.jpg"), {
-        type: "image/jpeg",
-      });
+      const cropped = new File([blob], "photo.jpg", { type: "image/jpeg" });
       const data = new FormData();
       data.set("file", cropped);
-      const result = await uploadPhotoAction(data);
-      if ("error" in result && result.error) {
-        throw new Error(result.error);
-      }
-      if (!("url" in result) || !result.url) {
-        throw new Error("Upload failed");
+      const response = await fetch("/api/photos", { method: "POST", body: data });
+      const result = (await response.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+      if (!response.ok || !result?.url) {
+        throw new Error(result?.error ?? "The photo could not be uploaded.");
       }
       setUrl(result.url);
       closeCrop();
