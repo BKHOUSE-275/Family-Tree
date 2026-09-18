@@ -2,7 +2,7 @@ import { CommitteeFooter } from "@/components/layout/CommitteeFooter";
 import { FamilyLanding } from "@/components/layout/FamilyLanding";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { displayName, isCommittee, sortByBirth } from "@/lib/types";
+import { displayName, isCommittee, sortByBirth, withoutSlotDemo } from "@/lib/types";
 
 export default async function HomePage({
   searchParams,
@@ -10,7 +10,8 @@ export default async function HomePage({
   searchParams: Promise<{ sent?: string; place?: string }>;
 }) {
   const user = await getAppUser();
-  const snapshot = await getSnapshot();
+  const committee = Boolean(user && isCommittee(user.role));
+  const snapshot = committee ? await getSnapshot() : withoutSlotDemo(await getSnapshot());
   const params = await searchParams;
   const people = sortByBirth(snapshot.people).map((person) => ({
     id: person.id,
@@ -24,12 +25,12 @@ export default async function HomePage({
           snapshot={snapshot}
           people={people}
           sent={params.sent === "1"}
-          placeMode={params.place === "1"}
+          placeMode={committee && params.place === "1"}
           defaultEmail={user?.email ?? ""}
           defaultName={user?.name ?? ""}
         />
       </main>
-      {user && isCommittee(user.role) ? <CommitteeFooter /> : null}
+      {committee ? <CommitteeFooter /> : null}
     </>
   );
 }

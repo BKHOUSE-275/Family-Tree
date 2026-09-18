@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const artFile = "7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
+const artFile = "1cecde82-d423-4d57-9c8a-24ee3d7846f3.png";
 const chrome =
   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 

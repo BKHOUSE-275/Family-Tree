@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deletePersonAction } from "@/app/actions/family";
 import { LinkProfileForm } from "@/components/admin/LinkProfileForm";
+import { PeopleList } from "@/components/admin/PeopleList";
 import { buildActivityFeed } from "@/lib/activity";
 import { committeeHomePath, getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot, isPlaced } from "@/lib/store";
@@ -16,7 +16,16 @@ export default async function AdminPage() {
   }
 
   const snapshot = await getSnapshot();
-  const unplaced = snapshot.people.filter((person) => !isPlaced(snapshot, person.id));
+  const peopleRows = snapshot.people.map((person) => ({
+    id: person.id,
+    name: displayName(person),
+    years: yearRange(person),
+    placed: isPlaced(snapshot, person.id),
+    isDeceased: person.isDeceased,
+    hasPhoto: Boolean(person.photoUrl),
+    hasHeadstone: Boolean(person.headstoneLocation || person.headstonePhotoUrl),
+    hasFamilySearch: Boolean(person.familysearchId),
+  }));
   const pendingCount = snapshot.changeRequests.filter((row) => row.status === "pending").length;
   const recent = buildActivityFeed(snapshot).slice(0, 8);
   const peopleOptions = snapshot.people.map((person) => ({
@@ -96,52 +105,7 @@ export default async function AdminPage() {
         </section>
       ) : null}
 
-      {canEdit ? (
-        <>
-          <section className="mt-10">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl">Everyone</h2>
-            <ul className="mt-4 divide-y divide-black/8 rounded-3xl bg-white shadow">
-              {snapshot.people.map((person) => (
-                <li key={person.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div>
-                    <Link href={`/admin/people/${person.id}`} className="font-semibold hover:text-leaf-deep">
-                      {displayName(person)}
-                    </Link>
-                    {yearRange(person) ? (
-                      <p className="text-sm text-black/55">{yearRange(person)}</p>
-                    ) : null}
-                  </div>
-                  {canDelete ? (
-                    <form action={deletePersonAction}>
-                      <input type="hidden" name="id" value={person.id} />
-                      <button className="min-h-11 text-sm text-black/45 hover:text-leaf-deep">Remove</button>
-                    </form>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="mt-10">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl">Unplaced names</h2>
-            <p className="mt-1 text-sm text-black/60">
-              From the booklet lists where the parent line is not yet confirmed.
-            </p>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {unplaced.map((person) => (
-                <li key={person.id}>
-                  <Link
-                    href={`/admin/people/${person.id}`}
-                    className="inline-flex min-h-11 items-center rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep"
-                  >
-                    {displayName(person)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </>
-      ) : null}
+      {canEdit ? <PeopleList people={peopleRows} canDelete={canDelete} /> : null}
 
       {canLink ? (
         <section className="mt-10 rounded-3xl bg-white p-6 shadow">

@@ -1,0 +1,67 @@
+const HEIC_BRANDS = new Set(["heic", "heif", "heix", "hevc", "hevx"]);
+
+function ftypBrands(bytes: Buffer) {
+  if (bytes.length < 12 || bytes.toString("ascii", 4, 8) !== "ftyp") return [];
+  const end = Math.min(bytes.length, bytes.readUInt32BE(0));
+  const brands = [bytes.toString("ascii", 8, 12)];
+  for (let offset = 16; offset + 4 <= end; offset += 4) {
+    brands.push(bytes.toString("ascii", offset, offset + 4));
+  }
+  return brands.map((brand) => brand.toLowerCase());
+}
+
+export function isHeicPhoto(file: Pick<File, "name" | "type">, bytes: Buffer) {
+  const name = file.name.toLowerCase();
+  const type = (file.type || "").toLowerCase();
+  if (type === "image/avif" || name.endsWith(".avif")) return false;
+  if (
+    type === "image/heic" ||
+    type === "image/heif" ||
+    type === "image/heic-sequence" ||
+    type === "image/heif-sequence" ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  ) {
+    return true;
+  }
+  const brands = ftypBrands(bytes);
+  if (brands.includes("avif") || brands.includes("avis")) return false;
+  return brands.some((brand) => HEIC_BRANDS.has(brand));
+}
+
+function safeBaseName(name: string) {
+  const base = name.replace(/\.[^.]+$/, "") || "photo";
+  return base.replace(/[^a-zA-Z0-9._-]/g, "") || "photo";
+}
+
+export async function preparePhotoUpload(file: File) {
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const stamp = Date.now();
+
+  if (isHeicPhoto(file, bytes)) {
+    try {
+      const { default: convert } = await import("heic-convert");
+      const jpeg = Buffer.from(
+        await convert({ buffer: bytes, format: "JPEG", quality: 0.9 }),
+      );
+      return {
+        body: jpeg,
+        pathname: `family/${stamp}-${safeBaseName(file.name)}.jpg`,
+        contentType: "image/jpeg" as const,
+      };
+    } catch {
+      throw new Error(
+        "This iPhone photo could not be converted. Export it as JPEG and try again.",
+      );
+    }
+  }
+
+  const ext =
+    (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") ||
+    "jpg";
+  return {
+    body: bytes,
+    pathname: `family/${stamp}-${safeBaseName(file.name)}.${ext}`,
+    contentType: file.type || (ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`),
+  };
+}

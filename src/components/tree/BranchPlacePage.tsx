@@ -10,8 +10,7 @@ import {
   formatBranchSlots,
 } from "@/components/tree/treeSlots";
 import type { PctSlot } from "@/components/tree/treeSlots";
-
-const TREE_ART = "/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
+import { TREE_ART } from "@/components/tree/treeGeometry";
 
 function branchSlots() {
   return [BRANCH_SUBJECT, ...BRANCH_EVEN, ...BRANCH_CENTERS];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { uploadPhotoAction } from "@/app/actions/family";
 
 export function PhotoField({
@@ -15,6 +15,7 @@ export function PhotoField({
   preview?: "portrait" | "rect";
 }) {
   const inputId = useId();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [fileName, setFileName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,21 +39,39 @@ export function PhotoField({
     }
   }
 
+  function clearPhoto() {
+    setUrl("");
+    setFileName(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   return (
     <div>
       <input type="hidden" name={name} value={url} />
       <p className="text-sm font-semibold text-script">{label}</p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <input
+          ref={fileInputRef}
           id={inputId}
           type="file"
-          accept="image/*"
+          accept="image/*,image/heic,image/heif,.heic,.heif"
           className="sr-only"
           onChange={(event) => onFile(event.target.files)}
         />
         <label htmlFor={inputId} className="ui-file-button">
           {busy ? "Uploading…" : url ? "Replace photo" : "Choose photo"}
         </label>
+        {url ? (
+          <button
+            type="button"
+            onClick={clearPhoto}
+            disabled={busy}
+            className="min-h-11 rounded-full border border-ember/40 px-4 py-2 text-sm font-semibold text-ember hover:bg-ember/10 disabled:opacity-60"
+          >
+            Remove photo
+          </button>
+        ) : null}
         {fileName ? (
           <span className="max-w-[14rem] truncate text-sm text-bark/70">{fileName}</span>
         ) : null}

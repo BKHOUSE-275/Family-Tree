@@ -7,6 +7,7 @@ import { SlotPlacer } from "@/components/tree/SlotPlacer";
 import {
   ART,
   HERITAGE_SUBJECT,
+  TREE_ART,
   canopySlotsForCount,
   heritageChildCluster,
   type PctSlot,
@@ -17,8 +18,6 @@ import {
   formatCanopySlots,
 } from "@/components/tree/treeSlots";
 import type { Person } from "@/lib/types";
-
-export const TREE_ART = "/7a5e7b3d-93e5-43e1-8753-f2b8650c752e.png";
 
 const CANOPY_PLACE_SLOTS = [...CANOPY_EVEN, ...CANOPY_CENTERS];
 

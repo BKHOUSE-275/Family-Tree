@@ -355,3 +355,25 @@ export function isRootPerson(id: string) {
 export function isCommittee(role: Role) {
   return role === "admin" || role === "super_admin";
 }
+
+export function isSlotDemoId(id: string) {
+  return id === "slot-demo" || id.startsWith("slot-n-");
+}
+
+export function withoutSlotDemo(snapshot: FamilySnapshot): FamilySnapshot {
+  return {
+    ...snapshot,
+    people: snapshot.people.filter((person) => !isSlotDemoId(person.id)),
+    contacts: snapshot.contacts.filter((row) => !isSlotDemoId(row.personId)),
+    parentChildren: snapshot.parentChildren.filter(
+      (link) => !isSlotDemoId(link.parentId) && !isSlotDemoId(link.childId),
+    ),
+    partnerships: snapshot.partnerships.filter(
+      (row) => !isSlotDemoId(row.personAId) && !isSlotDemoId(row.personBId),
+    ),
+    residences: snapshot.residences.filter((row) => !isSlotDemoId(row.personId)),
+    siblings: snapshot.siblings.filter(
+      (row) => !isSlotDemoId(row.personAId) && !isSlotDemoId(row.personBId),
+    ),
+  };
+}

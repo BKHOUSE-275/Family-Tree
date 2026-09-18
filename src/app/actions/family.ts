@@ -20,6 +20,7 @@ import {
   setParents,
   upsertProfile,
 } from "@/lib/store";
+import { preparePhotoUpload } from "@/lib/photo";
 import { defaultAdminPermissions, displayName, type Contact, type Partnership, type Person, type Residence } from "@/lib/types";
 
 function slugId(name: string) {
@@ -281,10 +282,13 @@ export async function uploadPhotoAction(formData: FormData) {
     throw new Error("Please choose a photo under 8 MB.");
   }
 
+  const photo = await preparePhotoUpload(file);
+
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(`family/${Date.now()}-${file.name}`, file, {
+    const blob = await put(photo.pathname, photo.body, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN,
+      contentType: photo.contentType,
     });
     return { url: blob.url };
   }
@@ -293,10 +297,9 @@ export async function uploadPhotoAction(formData: FormData) {
     throw new Error("Set BLOB_READ_WRITE_TOKEN to upload photos on Vercel.");
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
+  const safeName = path.basename(photo.pathname);
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), bytes);
+  await writeFile(path.join(dir, safeName), photo.body);
   return { url: `/uploads/${safeName}` };
 }
