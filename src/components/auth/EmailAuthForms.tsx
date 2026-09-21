@@ -24,7 +24,7 @@ export function SignInForm({
 }) {
   if (initialStep === "passcode") {
     return (
-      <form action={signInSuperAdminPasscode} className="rounded-3xl bg-white p-6 shadow">
+      <form action={signInSuperAdminPasscode} className="rounded-3xl bg-white p-4 shadow sm:p-6">
         <input type="hidden" name="redirect_url" value={redirectUrl} />
         <input type="hidden" name="email" value={initialEmail} />
         <p className="text-sm text-black/65">
@@ -55,7 +55,7 @@ export function SignInForm({
   }
 
   return (
-    <form action={lookupCommitteeEmail} className="rounded-3xl bg-white p-6 shadow">
+    <form action={lookupCommitteeEmail} className="rounded-3xl bg-white p-4 shadow sm:p-6">
       <input type="hidden" name="redirect_url" value={redirectUrl} />
       <label className="block text-sm font-semibold text-script">
         Email
@@ -82,7 +82,7 @@ export function SignUpForm({ inviteRequired }: { inviteRequired: boolean }) {
   const [state, formAction, pending] = useActionState(signUpWithEmail, null);
 
   return (
-    <form action={formAction} className="rounded-3xl bg-white p-6 shadow">
+    <form action={formAction} className="rounded-3xl bg-white p-4 shadow sm:p-6">
       <label className="block text-sm font-semibold text-script">
         Your name
         <input name="name" required className={fieldClass} />

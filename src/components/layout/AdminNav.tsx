@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
 import type { AdminPermissions } from "@/lib/types";
@@ -11,13 +14,29 @@ export function AdminNav({
   isSuperAdmin: boolean;
   permissions: AdminPermissions;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="border-b border-bark/15 bg-bark pt-[env(safe-area-inset-top)] text-[color:var(--page)]">
       <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-        <p className="inline-flex min-h-11 items-center font-[family-name:var(--font-display)] text-lg">
-          Committee desk
-        </p>
-        <nav className="flex w-full flex-col text-sm sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="inline-flex min-h-11 items-center font-[family-name:var(--font-display)] text-lg">
+            Committee desk
+          </p>
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm sm:hidden"
+            aria-expanded={open}
+            aria-controls="admin-nav-links"
+            onClick={() => setOpen((current) => !current)}
+          >
+            {open ? "Close" : "Menu"}
+          </button>
+        </div>
+        <nav
+          id="admin-nav-links"
+          className={`${open ? "flex" : "hidden"} w-full flex-col text-sm sm:flex sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4`}
+        >
           {isSuperAdmin || permissions["people.edit"] ? (
             <Link href="/admin" className={navLink}>
               People

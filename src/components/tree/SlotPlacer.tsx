@@ -152,7 +152,7 @@ export function SlotPlacer({
         </button>
       ))}
 
-      <aside className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border border-bark/20 bg-white/95 p-3 text-sm shadow-xl">
+      <aside className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[min(22rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-2xl border border-bark/20 bg-white/95 p-3 text-sm shadow-xl sm:left-auto sm:right-4 sm:translate-x-0">
         <p className="font-medium text-bark">{title}</p>
         <p className="mt-1 text-xs text-bark/70">{help}</p>
         {current ? (

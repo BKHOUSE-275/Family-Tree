@@ -18,8 +18,8 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-10">
-      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6 sm:py-10">
+      <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         My profile
       </h1>
       <p className="mt-2 text-center text-black/65">
@@ -29,7 +29,7 @@ export default async function ProfilePage() {
 
       {person ? (
         <div className="mt-8 space-y-6">
-          <div className="rounded-3xl bg-white p-6 shadow">
+          <div className="rounded-3xl bg-white p-4 shadow sm:p-6">
             <p className="font-[family-name:var(--font-display)] text-2xl">
               {displayName(person)}
             </p>
@@ -52,7 +52,7 @@ export default async function ProfilePage() {
           ) : null}
         </div>
       ) : (
-        <div className="mt-8 rounded-3xl bg-white p-6 shadow">
+        <div className="mt-8 rounded-3xl bg-white p-4 shadow sm:p-6">
           <p>
             Your login is not linked to a person on the tree yet. Ask the
             committee to connect your account. You can still send a suggestion.

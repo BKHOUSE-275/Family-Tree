@@ -94,7 +94,7 @@ export function PhotoCropDialog({
           Crop photo
         </h2>
         <p className="mt-1 text-sm text-bark/70">{title}</p>
-        <div className="relative mt-4 h-72 overflow-hidden rounded-2xl bg-bark sm:h-80">
+        <div className="relative mt-4 h-56 overflow-hidden rounded-2xl bg-bark sm:h-80">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -133,7 +133,7 @@ export function PhotoCropDialog({
           Drag the photo to frame it. Pinch or use the slider to zoom.
         </p>
         {cropError ? <p className="mt-2 text-sm text-ember">{cropError}</p> : null}
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
+        <div className="mt-5 flex flex-wrap justify-end gap-3 pb-[env(safe-area-inset-bottom)]">
           <button
             type="button"
             onClick={onCancel}

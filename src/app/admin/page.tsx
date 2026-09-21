@@ -35,10 +35,10 @@ export default async function AdminPage() {
   const canSeeRequests = userHasPermission(user, "requests.review");
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-left sm:text-5xl">
+          <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-left sm:text-4xl md:text-5xl">
             Family admin
           </h1>
           <p className="mt-2 max-w-xl text-black/65">
@@ -67,7 +67,7 @@ export default async function AdminPage() {
       </div>
 
       {canSeeActivity ? (
-        <section className="mt-10 rounded-3xl bg-white p-6 shadow">
+        <section className="mt-10 rounded-3xl bg-white p-4 shadow sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-[family-name:var(--font-display)] text-3xl">Recent activity</h2>
             <Link href="/admin/activity" className="text-sm text-ember underline-offset-4 hover:underline">

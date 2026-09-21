@@ -25,8 +25,8 @@ export default async function EditPersonPage({
   const contact = snapshot.contacts.find((row) => row.personId === id) ?? null;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-10">
+      <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         {displayName(person)}
       </h1>
       {saved ? (

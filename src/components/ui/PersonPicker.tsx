@@ -130,7 +130,7 @@ export function PersonPicker({
               className="min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base font-normal"
             />
           </div>
-          <ul id={listId} role="listbox" className="max-h-64 overflow-y-auto py-1">
+          <ul id={listId} role="listbox" className="max-h-[min(16rem,50dvh)] overflow-y-auto py-1">
             {choices.length ? (
               choices.map((person, index) => (
                 <li key={person.id || "none"}>

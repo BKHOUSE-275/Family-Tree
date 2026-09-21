@@ -37,8 +37,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${script.variable} ${display.variable} ${body.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col overflow-x-hidden bg-page pb-[env(safe-area-inset-bottom)] text-ink">
-        <div className="flex flex-1 flex-col">{children}</div>
+      <body className="flex min-h-full min-w-0 flex-col overflow-x-hidden bg-page pb-[env(safe-area-inset-bottom)] text-ink">
+        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       </body>
     </html>
   );

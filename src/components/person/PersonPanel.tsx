@@ -59,7 +59,7 @@ export function PersonPanel({
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 12 }}
         transition={{ duration: 0.35 }}
-        className="h-fit rounded-3xl border border-bark/10 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-8 lg:p-10"
+        className="h-fit rounded-3xl border border-bark/10 bg-white/85 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-8 lg:p-10"
       >
         <div className="flex items-start gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-leaf-soft text-leaf-deep ring-2 ring-gold/70 sm:h-24 sm:w-24">
@@ -112,7 +112,7 @@ export function PersonPanel({
                     <img
                       src={view.headstonePhotoUrl}
                       alt={`Headstone for ${displayName(person)}`}
-                      className="h-28 w-36 shrink-0 rounded-xl object-cover ring-1 ring-bark/15"
+                      className="h-28 w-full shrink-0 rounded-xl object-cover ring-1 ring-bark/15 sm:w-36"
                     />
                   ) : null}
                 </dd>

@@ -17,7 +17,7 @@ export default async function HomePage({
 
   return (
     <>
-      <main className="flex min-h-full flex-1 flex-col overflow-x-hidden bg-[#f7e0c4]">
+      <main className="flex min-h-full min-w-0 flex-1 flex-col bg-[#f7e0c4]">
         <FamilyLanding
           snapshot={snapshot}
           people={people}

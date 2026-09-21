@@ -156,9 +156,9 @@ export function SuggestionForm({
   }, [personId]);
 
   return (
-    <section id="suggest" className="scroll-mt-6 pt-16">
+    <section id="suggest" className="scroll-mt-6 px-3 pb-16 pt-16 sm:px-6">
       <div className="mx-auto max-w-2xl">
-        <h2 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+        <h2 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
           Suggest an update
         </h2>
         <p className="mt-2 text-center text-bark/75">
@@ -216,7 +216,7 @@ export function SuggestionForm({
         {requestType === "change_info" ? (
           <form
             action={submitChangeRequestAction}
-            className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-6 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)]"
+            className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-6"
           >
             <input type="hidden" name="requestType" value="change_info" />
             <p className="text-sm text-bark/65">
@@ -449,7 +449,7 @@ export function SuggestionForm({
         {requestType === "add_person" ? (
           <form
             action={submitChangeRequestAction}
-            className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-6 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)]"
+            className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-6"
           >
             <input type="hidden" name="requestType" value="add_person" />
             <p className="text-sm text-bark/65">

@@ -108,7 +108,7 @@ export function FamilyTree({
           ref={treeRef}
           id="family-tree"
           tabIndex={-1}
-          className="w-full scroll-mt-0 outline-none"
+          className="w-full min-w-0 scroll-mt-0 outline-none"
         >
         <HeritageTree
           isTopLevel={treeIsTopLevel}
@@ -177,12 +177,12 @@ export function FamilyTree({
           </ul>
         ) : null}
 
-        <nav className="mx-auto mt-4 flex max-w-3xl flex-wrap justify-center gap-2 text-sm text-script">
+        <nav className="mx-auto mt-4 flex max-w-3xl min-w-0 flex-wrap justify-center gap-x-1.5 gap-y-1 text-sm text-script">
           {trail.map((person, index) => (
-            <span key={person.id} className="flex items-center gap-2">
+            <span key={person.id} className="flex min-w-0 max-w-full items-center gap-1.5">
               {index ? <span aria-hidden>›</span> : null}
               <button
-                className="inline-flex min-h-11 items-center hover:underline"
+                className="inline-flex min-h-11 min-w-0 items-center break-words hover:underline"
                 onClick={() => selectPerson(person.id)}
               >
                 {displayName(person)}
@@ -195,8 +195,9 @@ export function FamilyTree({
           <p className="text-center font-[family-name:var(--font-script)] text-2xl text-ember sm:text-3xl">
           </p>
           <StoryTitle size="lg" className="mt-2" />
-          <p className="mx-auto mt-4 max-w-2xl text-center text-bark/80">
-          Tap a name on the Family Tree to see their children branch off of them.
+          <p className="mx-auto mt-4 max-w-2xl px-1 text-center text-bark/80">
+            Tap a name on the Family Tree to see their children branch off of
+            them.
           </p>
           <p className="mt-3 text-center">
             <a

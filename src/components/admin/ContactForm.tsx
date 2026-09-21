@@ -17,7 +17,7 @@ export function ContactForm({
   );
 
   return (
-    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-6 shadow">
+    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-4 shadow sm:p-6">
       <input type="hidden" name="personId" value={personId} />
       <h2 className="font-[family-name:var(--font-display)] text-2xl text-script">
         Contact details

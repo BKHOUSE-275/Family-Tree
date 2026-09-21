@@ -30,8 +30,8 @@ export default async function CommitteePage() {
   const peopleOptions = snapshot.people.map(toPersonPickerOption);
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-10">
+      <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         Admins
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
@@ -40,7 +40,7 @@ export default async function CommitteePage() {
         profile.
       </p>
 
-      <section className="mt-10 rounded-3xl bg-white p-6 shadow">
+      <section className="mt-10 rounded-3xl bg-white p-4 shadow sm:p-6">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Invite by email</h2>
         <p className="mt-1 text-sm text-black/60">
           They become an admin the next time they enter this address on committee sign-in.
@@ -64,7 +64,7 @@ export default async function CommitteePage() {
                 key={invite.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-page px-4 py-3 text-black/70"
               >
-                <span>{invite.email} · waiting to sign in</span>
+                <span className="min-w-0 break-all">{invite.email} · waiting to sign in</span>
                 <form action={cancelAdminInviteAction}>
                   <input type="hidden" name="inviteId" value={invite.id} />
                   <button type="submit" className="text-sm text-ember hover:underline">
@@ -77,7 +77,7 @@ export default async function CommitteePage() {
         ) : null}
       </section>
 
-      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
+      <section className="mt-8 rounded-3xl bg-white p-4 shadow sm:p-6">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Committee</h2>
         <ul className="mt-4 space-y-3">
           {committee.map((profile) => {
@@ -89,7 +89,7 @@ export default async function CommitteePage() {
               <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold">{profile.email ?? profile.userId}</p>
+                    <p className="min-w-0 break-all font-semibold">{profile.email ?? profile.userId}</p>
                     <p className="text-sm text-black/55">{roleLabel(profile.role)}</p>
                   </div>
                   <CommitteeMemberActions
@@ -111,7 +111,7 @@ export default async function CommitteePage() {
         </ul>
       </section>
 
-      <section className="mt-8 rounded-3xl bg-white p-6 shadow">
+      <section className="mt-8 rounded-3xl bg-white p-4 shadow sm:p-6">
         <h2 className="font-[family-name:var(--font-display)] text-3xl">Link a login to a person</h2>
         <p className="mt-1 text-sm text-black/60">
           After a relative signs in once, they appear here. Choose who they are
@@ -121,7 +121,7 @@ export default async function CommitteePage() {
           <ul className="mt-4 space-y-3">
             {snapshot.profiles.map((profile) => (
               <li key={profile.userId} className="rounded-2xl bg-page px-4 py-3">
-                <p className="mb-3 text-sm">
+                <p className="mb-3 min-w-0 break-all text-sm">
                   {profile.email ?? profile.userId}
                   <span className="ml-2 text-xs text-black/45">
                     {profile.role.replace("_", " ")}

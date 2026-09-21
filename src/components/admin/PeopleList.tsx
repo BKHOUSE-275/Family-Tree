@@ -224,15 +224,15 @@ function PersonRow({
   canDelete: boolean;
 }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3">
-      <div>
-        <Link href={`/admin/people/${person.id}`} className="font-semibold hover:text-leaf-deep">
+    <li className="flex items-start justify-between gap-3 px-4 py-3">
+      <div className="min-w-0">
+        <Link href={`/admin/people/${person.id}`} className="break-words font-semibold hover:text-leaf-deep">
           {person.name}
         </Link>
         {person.years ? <p className="text-sm text-black/55">{person.years}</p> : null}
       </div>
       {canDelete ? (
-        <form action={deletePersonAction}>
+        <form action={deletePersonAction} className="shrink-0">
           <input type="hidden" name="id" value={person.id} />
           <button className="min-h-11 text-sm text-black/45 hover:text-leaf-deep">Remove</button>
         </form>

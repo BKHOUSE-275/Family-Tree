@@ -55,107 +55,114 @@ export function HeritageTree({
       : [];
 
   return (
-    <div ref={frameRef} className="relative w-full">
+    <div className="w-full min-w-0">
       <p className="sr-only">
         Family tree. Select a portrait to open that person and see their
         children branching from them. Use Reset to return to the first
         generation.
       </p>
 
-      <div className="relative mx-auto w-full">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={TREE_ART}
-          alt=""
-          width={ART.w}
-          height={ART.h}
-          className="pointer-events-none block aspect-[1536/1024] h-auto w-full select-none"
-          draggable={false}
-        />
+      <div className="min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain md:overflow-visible">
+        <div ref={frameRef} className="relative w-full min-w-[46rem] md:min-w-0">
+          <div className="relative mx-auto w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={TREE_ART}
+              alt=""
+              width={ART.w}
+              height={ART.h}
+              className="pointer-events-none block aspect-[1536/1024] h-auto w-full select-none"
+              draggable={false}
+            />
+          </div>
+
+          {placeMode
+            ? null
+            : canopyLayout.map((slot, index) => {
+                const person = canopyPeople[index];
+                if (!person) return null;
+                return (
+                  <NodeAnchor key={person.id} slot={slot} z={10}>
+                    <HeritagePersonNode
+                      person={person}
+                      active={person.id === focusId}
+                      onSelect={onSelect}
+                    />
+                  </NodeAnchor>
+                );
+              })}
+
+          {placeMode ? (
+            <SlotPlacer
+              frameRef={frameRef}
+              slots={draftSlots}
+              onSlotsChange={setDraftSlots}
+              formatSlots={formatCanopySlots}
+              help="Drag a circle, or select one and click the tree. Arrow keys nudge. [ and ] change size. First 8 are pairs; last 3 are odd-count centers."
+              labelFor={() => ""}
+            />
+          ) : null}
+
+          {!showCanopy && subject ? (
+            <NodeAnchor slot={HERITAGE_SUBJECT} z={30}>
+              <HeritagePersonNode
+                person={subject}
+                active
+                onSelect={onSelect}
+              />
+            </NodeAnchor>
+          ) : null}
+
+          <AnimatePresence>
+            {showCanopy
+              ? canopyOverflow.map((person, index) => {
+                  const slot = overflowSlots[index];
+                  if (!slot) return null;
+                  return (
+                    <NodeAnchor key={person.id} slot={slot} z={20}>
+                      <motion.div
+                        initial={{ opacity: 0, y: -14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ delay: index * 0.04, duration: 0.35 }}
+                      >
+                        <HeritagePersonNode
+                          person={person}
+                          active={person.id === focusId}
+                          compact
+                          onSelect={onSelect}
+                        />
+                      </motion.div>
+                    </NodeAnchor>
+                  );
+                })
+              : hangingChildren.map((person, index) => {
+                  const slot = childSlots[index];
+                  if (!slot) return null;
+                  return (
+                    <NodeAnchor key={person.id} slot={slot} z={20}>
+                      <motion.div
+                        initial={{ opacity: 0, y: -14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ delay: index * 0.04, duration: 0.35 }}
+                      >
+                        <HeritagePersonNode
+                          person={person}
+                          active={person.id === focusId}
+                          compact
+                          onSelect={onSelect}
+                        />
+                      </motion.div>
+                    </NodeAnchor>
+                  );
+                })}
+          </AnimatePresence>
+        </div>
       </div>
-
-      {placeMode
-        ? null
-        : canopyLayout.map((slot, index) => {
-            const person = canopyPeople[index];
-            if (!person) return null;
-            return (
-              <NodeAnchor key={person.id} slot={slot} z={10}>
-                <HeritagePersonNode
-                  person={person}
-                  active={person.id === focusId}
-                  onSelect={onSelect}
-                />
-              </NodeAnchor>
-            );
-          })}
-
-      {placeMode ? (
-        <SlotPlacer
-          frameRef={frameRef}
-          slots={draftSlots}
-          onSlotsChange={setDraftSlots}
-          formatSlots={formatCanopySlots}
-          help="Drag a circle, or select one and click the tree. Arrow keys nudge. [ and ] change size. First 8 are pairs; last 3 are odd-count centers."
-          labelFor={() => ""}
-        />
-      ) : null}
-
-      {!showCanopy && subject ? (
-        <NodeAnchor slot={HERITAGE_SUBJECT} z={30}>
-          <HeritagePersonNode
-            person={subject}
-            active
-            onSelect={onSelect}
-          />
-        </NodeAnchor>
-      ) : null}
-
-      <AnimatePresence>
-        {showCanopy
-          ? canopyOverflow.map((person, index) => {
-              const slot = overflowSlots[index];
-              if (!slot) return null;
-              return (
-                <NodeAnchor key={person.id} slot={slot} z={20}>
-                  <motion.div
-                    initial={{ opacity: 0, y: -14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ delay: index * 0.04, duration: 0.35 }}
-                  >
-                    <HeritagePersonNode
-                      person={person}
-                      active={person.id === focusId}
-                      compact
-                      onSelect={onSelect}
-                    />
-                  </motion.div>
-                </NodeAnchor>
-              );
-            })
-          : hangingChildren.map((person, index) => {
-              const slot = childSlots[index];
-              if (!slot) return null;
-              return (
-                <NodeAnchor key={person.id} slot={slot} z={20}>
-                  <motion.div
-                    initial={{ opacity: 0, y: -14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ delay: index * 0.04, duration: 0.35 }}
-                  >
-                    <HeritagePersonNode
-                      person={person}
-                      active={person.id === focusId}
-                      compact
-                      onSelect={onSelect}
-                    />
-                  </motion.div>
-                </NodeAnchor>
-              );
-            })}
-      </AnimatePresence>
+      <p className="mt-3 px-3 text-center text-sm text-bark/70 md:hidden">
+        Swipe to see the whole tree.
+      </p>
     </div>
   );
 }
@@ -171,7 +178,7 @@ function NodeAnchor({
 }) {
   return (
     <div
-      className="absolute"
+      className="@container absolute"
       style={{
         left: `${slot.cx}%`,
         top: `${slot.cy}%`,

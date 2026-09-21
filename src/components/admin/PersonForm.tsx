@@ -44,7 +44,7 @@ export function PersonForm({
     .map(toPersonPickerOption);
 
   return (
-    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-6 shadow">
+    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-4 shadow sm:p-6">
       {person ? <input type="hidden" name="id" value={person.id} /> : null}
       {partnership ? (
         <input type="hidden" name="partnershipId" value={partnership.id} />

@@ -20,8 +20,8 @@ export default async function ChangeRequestsPage() {
   const reviewed = snapshot.changeRequests.filter((row) => row.status !== "pending");
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">
+      <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         Change requests
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
@@ -55,9 +55,9 @@ export default async function ChangeRequestsPage() {
           <h2 className="text-center font-[family-name:var(--font-display)] text-3xl">Reviewed</h2>
           <ul className="mt-4 space-y-3">
             {reviewed.map((request) => (
-              <li key={request.id} className="rounded-3xl bg-white p-5 text-sm shadow">
+              <li key={request.id} className="rounded-3xl bg-white p-4 text-sm shadow sm:p-5">
                 <p className="font-semibold capitalize">{request.status}</p>
-                <p className="text-black/60">
+                <p className="min-w-0 break-all text-black/60">
                   {request.submitterEmail ?? request.submitterUserId}
                   {request.personId && byId.get(request.personId)
                     ? ` · ${displayName(byId.get(request.personId)!)}`
@@ -95,8 +95,8 @@ function RequestCard({
   canCancel: boolean;
 }) {
   return (
-    <li className="rounded-3xl bg-white p-6 shadow">
-      <p className="text-sm text-black/55">
+    <li className="rounded-3xl bg-white p-4 shadow sm:p-6">
+      <p className="min-w-0 break-all text-sm text-black/55">
         {new Date(request.createdAt).toLocaleString()} ·{" "}
         {request.submitterEmail ?? request.submitterUserId}
       </p>

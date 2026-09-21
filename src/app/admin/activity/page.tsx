@@ -38,8 +38,8 @@ export default async function ActivityPage({
   const groups = groupActivityByDay(items);
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-      <h1 className="text-center font-[family-name:var(--font-script)] text-4xl text-script sm:text-5xl">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">
+      <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         Activity
       </h1>
       <p className="mx-auto mt-2 max-w-xl text-center text-black/65">
@@ -73,7 +73,7 @@ export default async function ActivityPage({
               </h2>
               <ul className="mt-3 divide-y divide-black/8 rounded-3xl bg-white shadow">
                 {group.items.map((item) => (
-                  <li key={item.id} className="px-5 py-4">
+                  <li key={item.id} className="px-4 py-4 sm:px-5">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-[family-name:var(--font-display)] text-xl">{item.title}</p>
                       <span

@@ -42,12 +42,12 @@ export function BranchPlacePage() {
   }
 
   return (
-    <main className="relative flex min-h-full flex-1 flex-col overflow-x-hidden bg-[#f7e0c4]">
+    <main className="relative flex min-h-full flex-1 flex-col bg-[#f7e0c4]">
       <div className="relative z-10 mx-auto w-full max-w-[96rem] flex-1 px-3 pb-28 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-6">
         <p className="text-center font-[family-name:var(--font-script)] text-2xl text-script/80 sm:text-3xl">
           Next generation
         </p>
-        <h1 className="mt-1 text-center font-[family-name:var(--font-display)] text-3xl text-bark sm:text-4xl">
+        <h1 className="mt-1 px-1 text-center font-[family-name:var(--font-display)] text-2xl break-words text-bark sm:text-4xl">
           Place the parent and children
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-center text-bark/80">
@@ -64,8 +64,8 @@ export function BranchPlacePage() {
           </Link>
         </p>
 
-        <div className="relative left-1/2 mt-6 w-screen -translate-x-1/2">
-          <div ref={frameRef} className="relative w-full">
+        <div className="mt-6 w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain md:overflow-visible">
+          <div ref={frameRef} className="relative w-full min-w-[46rem] md:min-w-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={TREE_ART}
