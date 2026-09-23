@@ -50,7 +50,7 @@ export const BRANCH_EVEN: PctSlot[] = [
  * Runtime placement classifies these by position (pair vs center).
  */
 export const BRANCH_CENTERS: PctSlot[] = [
-  { cx: 50.9, cy: 54.6, size: 8.6 },
+  { cx: 51.5, cy: 55.1, size: 8.6 },
   { cx: 35.9, cy: 49.3, size: 8.6 },
   { cx: 50.9, cy: 10.1, size: 8.6 },
   { cx: 67.3, cy: 49.3, size: 8.6 },
