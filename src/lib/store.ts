@@ -394,9 +394,6 @@ export async function savePerson(input: Person) {
 }
 
 export async function deletePerson(id: string) {
-  if (isRootPerson(id)) {
-    throw new Error("Felix and Adaline cannot be removed from the tree.");
-  }
   if (isDatabaseConfigured()) {
     const db = getDb();
     await db.delete(people).where(eq(people.id, id));

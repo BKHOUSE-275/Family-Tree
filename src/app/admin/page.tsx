@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { DeskLink } from "@/components/admin/DeskLink";
+import { GuestBadge } from "@/components/admin/GuestBadge";
 import { PeopleList } from "@/components/admin/PeopleList";
-import { buildActivityFeed } from "@/lib/activity";
+import { buildActivityFeed, reviewerActionLabel } from "@/lib/activity";
 import { committeeHomePath, getAppUser, userHasPermission } from "@/lib/auth";
+import { formatEasternDateTime } from "@/lib/datetime";
 import { getSnapshot, isPlaced } from "@/lib/store";
 import { displayName, isCommittee, yearRange } from "@/lib/types";
 
@@ -27,7 +30,7 @@ export default async function AdminPage() {
     hasFamilySearch: Boolean(person.familysearchId),
   }));
   const pendingCount = snapshot.changeRequests.filter((row) => row.status === "pending").length;
-  const recent = buildActivityFeed(snapshot).slice(0, 8);
+  const recent = buildActivityFeed(snapshot).slice(0, 5);
   const canEdit = userHasPermission(user, "people.edit");
   const canCreate = userHasPermission(user, "people.create");
   const canDelete = userHasPermission(user, "people.delete");
@@ -50,7 +53,7 @@ export default async function AdminPage() {
           {canSeeRequests && pendingCount ? (
             <Link
               href="/admin/requests"
-              className="inline-flex min-h-11 items-center rounded-full bg-gold px-5 py-2 text-bark"
+              className="inline-flex min-h-11 items-center rounded-full bg-gold px-5 py-2 text-bark transition hover:bg-ember hover:text-white"
             >
               {pendingCount} pending request{pendingCount === 1 ? "" : "s"}
             </Link>
@@ -58,7 +61,7 @@ export default async function AdminPage() {
           {canCreate ? (
             <Link
               href="/admin/people/new"
-              className="inline-flex min-h-11 items-center rounded-full bg-script px-5 py-2 text-white"
+              className="inline-flex min-h-11 items-center rounded-full bg-script px-5 py-2 text-white transition hover:bg-gold hover:text-bark"
             >
               Add a person
             </Link>
@@ -70,29 +73,32 @@ export default async function AdminPage() {
         <section className="mt-10 rounded-3xl bg-white p-4 shadow sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-[family-name:var(--font-display)] text-3xl">Recent activity</h2>
-            <Link href="/admin/activity" className="text-sm text-ember underline-offset-4 hover:underline">
-              View all activity
-            </Link>
+            <DeskLink href="/admin/activity">View all activity</DeskLink>
           </div>
           {recent.length ? (
             <ul className="mt-4 divide-y divide-black/8">
-              {recent.map((item) => (
-                <li key={item.id} className="py-3 text-sm">
-                  <p className="font-semibold">{item.title}</p>
-                  <p className="text-black/65">{item.summary}</p>
-                  <p className="mt-1 text-xs text-black/50">
-                    {item.actor} · {new Date(item.createdAt).toLocaleString()}
-                    {item.href ? (
-                      <>
-                        {" · "}
-                        <Link href={item.href} className="text-ember underline">
+              {recent.map((item) => {
+                const reviewer = reviewerActionLabel(item);
+                return (
+                  <li key={item.id} className="py-3 text-sm">
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="text-black/65">{item.summary}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-black/50">
+                      <span>{item.actor}</span>
+                      {item.actorIsGuest ? <GuestBadge /> : null}
+                      <span>· {formatEasternDateTime(item.createdAt)}</span>
+                      {item.href ? (
+                        <DeskLink href={item.href} compact>
                           Open
-                        </Link>
-                      </>
+                        </DeskLink>
+                      ) : null}
+                    </p>
+                    {reviewer ? (
+                      <p className="mt-0.5 text-xs text-black/50">{reviewer}</p>
                     ) : null}
-                  </p>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-3 text-sm text-black/55">No activity recorded yet.</p>

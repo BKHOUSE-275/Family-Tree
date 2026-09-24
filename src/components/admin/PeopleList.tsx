@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { deletePersonAction } from "@/app/actions/family";
+import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
+import { DeskLink, deskButtonClass, deskButtonCompactClass } from "@/components/admin/DeskLink";
 import { isSlotDemoId } from "@/lib/types";
 
 export type AdminPersonRow = {
@@ -155,7 +157,7 @@ export function PeopleList({
                       key={id}
                       type="button"
                       onClick={() => setFilters((current) => current.filter((item) => item !== id))}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep transition hover:bg-gold hover:text-bark"
                       aria-label={`Remove filter: ${filter.label}`}
                     >
                       {filter.label}
@@ -166,7 +168,7 @@ export function PeopleList({
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="inline-flex min-h-11 items-center text-sm text-ember underline-offset-4 hover:underline"
+                  className={deskButtonClass}
                 >
                   Clear
                 </button>
@@ -198,7 +200,7 @@ export function PeopleList({
                 <li key={person.id}>
                   <Link
                     href={`/admin/people/${person.id}`}
-                    className="inline-flex min-h-11 items-center rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep"
+                    className="inline-flex min-h-11 items-center rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep transition hover:bg-gold hover:text-bark"
                   >
                     {person.name}
                   </Link>
@@ -224,19 +226,32 @@ function PersonRow({
   canDelete: boolean;
 }) {
   return (
-    <li className="flex items-start justify-between gap-3 px-4 py-3">
-      <div className="min-w-0">
-        <Link href={`/admin/people/${person.id}`} className="break-words font-semibold hover:text-leaf-deep">
-          {person.name}
-        </Link>
+    <li className="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-gold/20">
+      <Link
+        href={`/admin/people/${person.id}`}
+        className="min-w-0 flex-1 cursor-pointer rounded-lg outline-none transition-colors hover:text-leaf-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
+      >
+        <p className="break-words font-semibold underline-offset-4 hover:underline">{person.name}</p>
         {person.years ? <p className="text-sm text-black/55">{person.years}</p> : null}
+      </Link>
+      <div className="relative z-10 flex shrink-0 flex-wrap justify-end gap-2">
+        <DeskLink href={`/admin/people/${person.id}`} compact>
+          Edit
+        </DeskLink>
+        {canDelete ? (
+          <form action={deletePersonAction}>
+            <input type="hidden" name="id" value={person.id} />
+            <ConfirmSubmitButton
+              title="Remove this person"
+              message={`Remove ${person.name} from the family tree? This cannot be undone.`}
+              confirmLabel="Remove"
+              className={deskButtonCompactClass}
+            >
+              Remove
+            </ConfirmSubmitButton>
+          </form>
+        ) : null}
       </div>
-      {canDelete ? (
-        <form action={deletePersonAction} className="shrink-0">
-          <input type="hidden" name="id" value={person.id} />
-          <button className="min-h-11 text-sm text-black/45 hover:text-leaf-deep">Remove</button>
-        </form>
-      ) : null}
     </li>
   );
 }

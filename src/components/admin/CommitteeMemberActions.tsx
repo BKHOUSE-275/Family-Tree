@@ -6,6 +6,8 @@ import {
   promoteToSuperAdminAction,
   type CommitteeActionState,
 } from "@/app/actions/committee";
+import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
+import { deskButtonClass } from "@/components/admin/DeskLink";
 
 export function CommitteeMemberActions({
   userId,
@@ -32,7 +34,7 @@ export function CommitteeMemberActions({
         {canPromote && !open ? (
           <button
             type="button"
-            className="text-sm text-ember hover:underline"
+            className={deskButtonClass}
             onClick={() => setOpen(true)}
           >
             Make super admin
@@ -41,7 +43,14 @@ export function CommitteeMemberActions({
         {canRemove ? (
           <form action={demoteAdminAction}>
             <input type="hidden" name="userId" value={userId} />
-            <button className="text-sm text-ember hover:underline">Remove admin</button>
+            <ConfirmSubmitButton
+              title="Remove admin"
+              message={`Remove admin access for ${label}?`}
+              confirmLabel="Remove admin"
+              className={deskButtonClass}
+            >
+              Remove admin
+            </ConfirmSubmitButton>
           </form>
         ) : null}
       </div>
@@ -52,7 +61,8 @@ export function CommitteeMemberActions({
         >
           <input type="hidden" name="userId" value={userId} />
           <p className="text-sm text-black/65">
-            Enter the family passcode to make {label} a super admin.
+            Enter the family passcode to make {label} a super admin. This gives
+            them full committee control.
           </p>
           <label className="block text-sm font-semibold text-script">
             Passcode
@@ -69,14 +79,14 @@ export function CommitteeMemberActions({
             <button
               type="submit"
               disabled={pending}
-              className="min-h-11 rounded-full bg-ember px-5 py-2 text-white disabled:opacity-60"
+              className="min-h-11 rounded-full bg-ember px-5 py-2 text-white transition hover:bg-gold hover:text-bark disabled:opacity-60"
             >
               {pending ? "Confirming…" : "Confirm"}
             </button>
             <button
               type="button"
               disabled={pending}
-              className="min-h-11 rounded-full px-4 py-2 text-sm text-script hover:underline disabled:opacity-60"
+              className={`${deskButtonClass} disabled:opacity-60`}
               onClick={() => setOpen(false)}
             >
               Cancel

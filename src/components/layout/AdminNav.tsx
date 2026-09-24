@@ -5,7 +5,8 @@ import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
 import type { AdminPermissions } from "@/lib/types";
 
-const navLink = "inline-flex min-h-11 items-center hover:text-gold";
+const navLink =
+  "inline-flex min-h-11 items-center rounded-full px-3 transition hover:bg-white/10 hover:text-gold";
 
 export function AdminNav({
   isSuperAdmin,
@@ -25,7 +26,7 @@ export function AdminNav({
           </p>
           <button
             type="button"
-            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm sm:hidden"
+            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm transition hover:bg-white/10 hover:text-gold sm:hidden"
             aria-expanded={open}
             aria-controls="admin-nav-links"
             onClick={() => setOpen((current) => !current)}

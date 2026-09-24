@@ -10,6 +10,7 @@ import {
   ROOT_MOTHER_ID,
   displayName,
   isRootPerson,
+  isSlotDemoId,
   personVisibility,
   redactPersonForPublic,
   sortByBirth,
@@ -60,14 +61,19 @@ export function FamilyTree({
     treeRef.current?.scrollIntoView({ block: "start" });
   }, []);
 
-  const focus = byId.get(focusId) ?? byId.get(ROOT_FATHER_ID)!;
-  const isTopLevel = isRootPerson(focusId);
-  const children = childPeople(snapshot, focusId);
-  const parents = parentPeople(snapshot, focusId);
-  const siblings = siblingPeople(snapshot, focusId, byId);
-  const partners = partnerPeople(snapshot, focusId, byId);
-  const residences = snapshot.residences.filter((row) => row.personId === focusId);
-  const contactRow = snapshot.contacts.find((row) => row.personId === focusId);
+  const focus =
+    byId.get(focusId) ??
+    byId.get(ROOT_FATHER_ID) ??
+    byId.get(ROOT_MOTHER_ID) ??
+    snapshot.people.find((person) => !isSlotDemoId(person.id));
+  const activeId = focus?.id ?? focusId;
+  const isTopLevel = focus ? isRootPerson(activeId) : true;
+  const children = childPeople(snapshot, activeId);
+  const parents = parentPeople(snapshot, activeId);
+  const siblings = siblingPeople(snapshot, activeId, byId);
+  const partners = partnerPeople(snapshot, activeId, byId);
+  const residences = snapshot.residences.filter((row) => row.personId === activeId);
+  const contactRow = snapshot.contacts.find((row) => row.personId === activeId);
   const contact = visibleContact(contactRow);
 
   const firstGeneration = sortByBirth(
@@ -94,10 +100,15 @@ export function FamilyTree({
     ? matches.slice(CANOPY_EVEN.length)
     : [];
 
-  const trail = ancestryTrail(snapshot, focusId, byId);
+  const trail = ancestryTrail(snapshot, activeId, byId);
 
   function resetView() {
-    setFocusId(ROOT_FATHER_ID);
+    const nextId = byId.has(ROOT_FATHER_ID)
+      ? ROOT_FATHER_ID
+      : byId.has(ROOT_MOTHER_ID)
+        ? ROOT_MOTHER_ID
+        : snapshot.people.find((person) => !isSlotDemoId(person.id))?.id;
+    if (nextId) setFocusId(nextId);
     setQuery("");
     treeRef.current?.scrollIntoView({ block: "start" });
   }
@@ -114,13 +125,13 @@ export function FamilyTree({
           isTopLevel={treeIsTopLevel}
           canopyPeople={canopyPeople.map(redactPersonForPublic)}
           canopyOverflow={canopyOverflow.map(redactPersonForPublic)}
-          subject={treeIsTopLevel ? null : redactPersonForPublic(focus)}
+          subject={treeIsTopLevel || !focus ? null : redactPersonForPublic(focus)}
           hangingChildren={searchActive ? [] : hangingChildren.map(redactPersonForPublic)}
-          focusId={focusId}
+          focusId={activeId}
           onSelect={selectPerson}
           placeMode={placeMode}
         />
-        {showEmptyBranch && !searchActive ? (
+        {showEmptyBranch && focus && !searchActive ? (
           <p className="mx-auto mt-4 max-w-3xl px-4 text-center text-black/60">
             No children are recorded for {displayName(focus)} yet. Suggest an
             update below if you know more of this branch.
@@ -209,19 +220,21 @@ export function FamilyTree({
           </p>
         </div>
 
-        <div ref={panelRef} className="mx-auto w-full max-w-4xl scroll-mt-6">
-          <PersonPanel
-            person={focus}
-            parents={parents}
-            partners={partners}
-            childPeople={children}
-            siblings={siblings}
-            residences={residences}
-            contact={contact}
-            onSelect={selectPerson}
-            onSuggest={onSuggest}
-          />
-        </div>
+        {focus ? (
+          <div ref={panelRef} className="mx-auto w-full max-w-4xl scroll-mt-6">
+            <PersonPanel
+              person={focus}
+              parents={parents}
+              partners={partners}
+              childPeople={children}
+              siblings={siblings}
+              residences={residences}
+              contact={contact}
+              onSelect={selectPerson}
+              onSuggest={onSuggest}
+            />
+          </div>
+        ) : null}
       </div>
     </>
   );

@@ -1,3 +1,5 @@
+import { easternDayLabel } from "@/lib/datetime";
+import { requestKindLabel, requestSubmitter, requestSubjectName } from "@/lib/request-message";
 import type { AuditEvent, ChangeRequest, FamilySnapshot } from "@/lib/types";
 import { displayName } from "@/lib/types";
 
@@ -10,6 +12,8 @@ export type ActivityItem = {
   title: string;
   summary: string;
   actor: string;
+  actorIsGuest: boolean;
+  reviewer: string | null;
   href?: string;
   kind: "request" | "audit";
 };
@@ -26,31 +30,46 @@ function requestStatus(status: ChangeRequest["status"]): ActivityStatus {
   return "confirmed";
 }
 
-function requestSummary(request: ChangeRequest) {
-  const firstLine =
-    request.message
-      .split("\n")
-      .map((line) => line.trim())
-      .find(Boolean) ?? "Family suggestion";
-  if (request.status === "pending") return firstLine;
+function requestSummary(request: ChangeRequest, personName: string | null) {
+  if (request.status === "pending") return requestKindLabel(request.message, personName);
   if (request.status === "rejected") {
     return request.adminNote ? `Declined · ${request.adminNote}` : "Declined by the committee";
   }
   return request.adminNote ? `Confirmed · ${request.adminNote}` : "Confirmed by the committee";
 }
 
+export function reviewerDisplayName(
+  snapshot: FamilySnapshot,
+  userId: string | null,
+): string | null {
+  if (!userId) return null;
+  const profile = snapshot.profiles.find((row) => row.userId === userId);
+  if (profile?.personId) {
+    const person = snapshot.people.find((row) => row.id === profile.personId);
+    if (person) return displayName(person);
+  }
+  return profile?.email ?? userId;
+}
+
 function itemFromRequest(
   request: ChangeRequest,
   personName: string | null,
+  reviewer: string | null,
 ): ActivityItem {
+  const status = requestStatus(request.status);
+  const submitter = requestSubmitter(request);
   return {
     id: request.id,
     createdAt: request.reviewedAt ?? request.createdAt,
-    status: requestStatus(request.status),
-    title: personName ?? "Family suggestion",
-    summary: requestSummary(request),
-    actor: request.submitterEmail ?? request.submitterUserId,
-    href: "/admin/requests",
+    status,
+    title:
+      requestSubjectName(request.message, personName) ??
+      requestKindLabel(request.message, personName),
+    summary: requestSummary(request, personName),
+    actor: submitter.name,
+    actorIsGuest: submitter.isGuest,
+    reviewer: status === "pending" ? null : reviewer,
+    href: `/admin/requests/${request.id}`,
     kind: "request",
   };
 }
@@ -72,6 +91,8 @@ function itemFromAudit(event: AuditEvent): ActivityItem {
     title: event.entityLabel,
     summary: event.summary,
     actor: event.actorEmail ?? event.actorUserId,
+    actorIsGuest: false,
+    reviewer: null,
     href: personHref,
     kind: "audit",
   };
@@ -81,7 +102,11 @@ export function buildActivityFeed(snapshot: FamilySnapshot): ActivityItem[] {
   const byId = new Map(snapshot.people.map((person) => [person.id, person]));
   const fromRequests = snapshot.changeRequests.map((request) => {
     const person = request.personId ? byId.get(request.personId) : undefined;
-    return itemFromRequest(request, person ? displayName(person) : null);
+    return itemFromRequest(
+      request,
+      person ? displayName(person) : null,
+      reviewerDisplayName(snapshot, request.reviewedBy),
+    );
   });
   const fromAudit = snapshot.auditEvents
     .filter((event) => !REQUEST_AUDIT_ACTIONS.has(event.action))
@@ -91,22 +116,15 @@ export function buildActivityFeed(snapshot: FamilySnapshot): ActivityItem[] {
   );
 }
 
+export function reviewerActionLabel(item: ActivityItem) {
+  if (!item.reviewer) return null;
+  if (item.status === "declined") return `Declined by ${item.reviewer}`;
+  if (item.status === "confirmed") return `Approved by ${item.reviewer}`;
+  return null;
+}
+
 export function dayLabel(iso: string) {
-  const date = new Date(iso);
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startOfThatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfToday.getTime() - startOfThatDay.getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  return startOfThatDay.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: startOfThatDay.getFullYear() === today.getFullYear() ? undefined : "numeric",
-  });
+  return easternDayLabel(iso);
 }
 
 export function groupActivityByDay(items: ActivityItem[]) {

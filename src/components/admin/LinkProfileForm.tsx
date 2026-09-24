@@ -35,7 +35,7 @@ export function LinkProfileForm({
       ) : null}
       <button
         disabled={pending}
-        className="min-h-11 rounded-full bg-script px-5 py-2 text-white disabled:opacity-60 sm:col-span-2"
+        className="min-h-11 rounded-full bg-script px-5 py-2 text-white transition hover:bg-gold hover:text-bark disabled:opacity-60 sm:col-span-2"
       >
         {pending ? "Saving…" : "Save link"}
       </button>

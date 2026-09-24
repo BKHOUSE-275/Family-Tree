@@ -5,6 +5,8 @@ import {
 } from "@/app/actions/committee";
 import { AdminPermissionsForm } from "@/components/admin/AdminPermissionsForm";
 import { CommitteeMemberActions } from "@/components/admin/CommitteeMemberActions";
+import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
+import { deskButtonClass } from "@/components/admin/DeskLink";
 import { LinkProfileForm } from "@/components/admin/LinkProfileForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
@@ -55,7 +57,7 @@ export default async function CommitteePage() {
               className="mt-1 min-h-11 w-full rounded-xl border border-bark/20 bg-leaf-soft px-3 py-2 text-base"
             />
           </label>
-          <button className="min-h-11 rounded-full bg-ember px-6 py-2 text-white">Send admin invite</button>
+          <button className="min-h-11 rounded-full bg-ember px-6 py-2 text-white transition hover:bg-gold hover:text-bark">Send admin invite</button>
         </form>
         {pendingInvites.length ? (
           <ul className="mt-4 space-y-2 text-sm">
@@ -67,9 +69,14 @@ export default async function CommitteePage() {
                 <span className="min-w-0 break-all">{invite.email} · waiting to sign in</span>
                 <form action={cancelAdminInviteAction}>
                   <input type="hidden" name="inviteId" value={invite.id} />
-                  <button type="submit" className="text-sm text-ember hover:underline">
+                  <ConfirmSubmitButton
+                    title="Cancel invite"
+                    message={`Cancel the invite for ${invite.email}?`}
+                    confirmLabel="Cancel invite"
+                    className={deskButtonClass}
+                  >
                     Cancel invite
-                  </button>
+                  </ConfirmSubmitButton>
                 </form>
               </li>
             ))}

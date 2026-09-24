@@ -7,6 +7,7 @@ import {
   personVisibility,
   redactPersonForPublic,
   yearRange,
+  type ChangeRequestStatus,
   type Person,
 } from "@/lib/types";
 
@@ -20,6 +21,7 @@ export function PersonPanel({
   contact,
   onSelect,
   onSuggest,
+  previewStatus,
 }: {
   person: Person;
   parents: Person[];
@@ -32,9 +34,11 @@ export function PersonPanel({
     phone: string | null;
     email: string | null;
   } | null;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
   onSuggest?: (personId: string) => void;
+  previewStatus?: ChangeRequestStatus;
 }) {
+  const preview = Boolean(previewStatus);
   const vis = personVisibility(person);
   const view = redactPersonForPublic(person);
   const years = yearRange(view);
@@ -59,7 +63,15 @@ export function PersonPanel({
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 12 }}
         transition={{ duration: 0.35 }}
-        className="h-fit rounded-3xl border border-bark/10 bg-white/85 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-8 lg:p-10"
+        className={`h-fit rounded-3xl border bg-white/85 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-8 lg:p-10 ${
+          previewStatus === "pending"
+            ? "border-dashed border-gold ring-2 ring-gold/40"
+            : previewStatus === "approved"
+              ? "border-leaf ring-2 ring-leaf/30"
+              : previewStatus === "rejected"
+                ? "border-black/20"
+                : "border-bark/10"
+        }`}
       >
         <div className="flex items-start gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-leaf-soft text-leaf-deep ring-2 ring-gold/70 sm:h-24 sm:w-24">
@@ -75,7 +87,15 @@ export function PersonPanel({
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.2em] text-script">Intro</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-script">
+              {previewStatus === "pending"
+                ? "Suggested change · not saved"
+                : previewStatus === "approved"
+                  ? "Approved by the committee"
+                  : previewStatus === "rejected"
+                    ? "Declined by the committee"
+                    : "Intro"}
+            </p>
             <h2 className="font-[family-name:var(--font-display)] text-2xl leading-tight break-words sm:text-3xl">
               {displayName(person)}
             </h2>
@@ -139,19 +159,28 @@ export function PersonPanel({
           </section>
         ) : null}
 
-        <RelationList title="Parents" people={parents} activeId={person.id} onSelect={onSelect} />
+        <RelationList
+          title="Parents"
+          people={parents}
+          activeId={person.id}
+          onSelect={preview ? undefined : onSelect}
+        />
         {shownPartners.length ? (
           <section className="mt-6">
             <h3 className="text-xs uppercase tracking-[0.2em] text-script">Spouse / partnership</h3>
             <ul className="mt-2 space-y-2 text-sm">
               {shownPartners.map((row) => (
                 <li key={row.person.id}>
-                  <button
-                    className="inline-flex min-h-11 items-center text-left text-ember hover:underline"
-                    onClick={() => onSelect(row.person.id)}
-                  >
-                    {displayName(row.person)}
-                  </button>
+                  {preview || !onSelect ? (
+                    <p className="inline-flex min-h-11 items-center">{displayName(row.person)}</p>
+                  ) : (
+                    <button
+                      className="inline-flex min-h-11 items-center text-left text-ember hover:underline"
+                      onClick={() => onSelect(row.person.id)}
+                    >
+                      {displayName(row.person)}
+                    </button>
+                  )}
                   {row.date || row.place || row.notes ? (
                     <p className="text-black/60">
                       {row.date ? (
@@ -169,8 +198,8 @@ export function PersonPanel({
             </ul>
           </section>
         ) : null}
-        <RelationList title="Siblings" people={siblings} activeId={person.id} onSelect={onSelect} />
-        <RelationList title="Children" people={childPeople} activeId={person.id} onSelect={onSelect} />
+        <RelationList title="Siblings" people={siblings} activeId={person.id} onSelect={preview ? undefined : onSelect} />
+        <RelationList title="Children" people={childPeople} activeId={person.id} onSelect={preview ? undefined : onSelect} />
 
         {onSuggest ? (
           <button
@@ -216,7 +245,7 @@ function RelationList({
   title: string;
   people: Person[];
   activeId: string;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
 }) {
   if (!people.length) return null;
   return (
@@ -225,6 +254,15 @@ function RelationList({
       <ul className="mt-2 flex flex-wrap gap-2">
         {people.map((person) => {
           const active = person.id === activeId;
+          if (!onSelect) {
+            return (
+              <li key={person.id}>
+                <span className="inline-flex min-h-11 items-center rounded-full bg-leaf-soft px-3 text-sm text-leaf-deep">
+                  {displayName(person)}
+                </span>
+              </li>
+            );
+          }
           return (
             <li key={person.id}>
               <button

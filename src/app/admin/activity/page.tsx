@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { buildActivityFeed, groupActivityByDay, type ActivityStatus } from "@/lib/activity";
+import { DeskLink } from "@/components/admin/DeskLink";
+import { GuestBadge } from "@/components/admin/GuestBadge";
+import {
+  buildActivityFeed,
+  groupActivityByDay,
+  reviewerActionLabel,
+  type ActivityStatus,
+} from "@/lib/activity";
 import { getAppUser, userHasPermission } from "@/lib/auth";
+import { formatEasternDateTime } from "@/lib/datetime";
 import { getSnapshot } from "@/lib/store";
 import { isCommittee } from "@/lib/types";
 
@@ -54,8 +62,8 @@ export default async function ActivityPage({
             <Link
               key={item.id}
               href={href}
-              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${
-                active ? "bg-script text-white" : "bg-white text-bark shadow"
+              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm transition ${
+                active ? "bg-script text-white hover:bg-gold hover:text-bark" : "bg-white text-bark shadow hover:border-gold hover:bg-gold/40"
               }`}
             >
               {item.label}
@@ -72,36 +80,41 @@ export default async function ActivityPage({
                 {group.label}
               </h2>
               <ul className="mt-3 divide-y divide-black/8 rounded-3xl bg-white shadow">
-                {group.items.map((item) => (
-                  <li key={item.id} className="px-4 py-4 sm:px-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-[family-name:var(--font-display)] text-xl">{item.title}</p>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          item.status === "pending"
-                            ? "bg-gold/80 text-bark"
-                            : item.status === "declined"
-                              ? "bg-black/8 text-black/60"
-                              : "bg-leaf-soft text-leaf-deep"
-                        }`}
-                      >
-                        {statusLabel(item.status)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-black/70">{item.summary}</p>
-                    <p className="mt-1 text-xs text-black/50">
-                      {item.actor} · {new Date(item.createdAt).toLocaleString()}
-                      {item.href ? (
-                        <>
-                          {" · "}
-                          <Link href={item.href} className="text-ember underline">
+                {group.items.map((item) => {
+                  const reviewer = reviewerActionLabel(item);
+                  return (
+                    <li key={item.id} className="px-4 py-4 sm:px-5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-[family-name:var(--font-display)] text-xl">{item.title}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs ${
+                            item.status === "pending"
+                              ? "bg-gold/80 text-bark"
+                              : item.status === "declined"
+                                ? "bg-black/8 text-black/60"
+                                : "bg-leaf-soft text-leaf-deep"
+                          }`}
+                        >
+                          {statusLabel(item.status)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-black/70">{item.summary}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-black/50">
+                        <span>{item.actor}</span>
+                        {item.actorIsGuest ? <GuestBadge /> : null}
+                        <span>· {formatEasternDateTime(item.createdAt)}</span>
+                        {item.href ? (
+                          <DeskLink href={item.href} compact>
                             Open
-                          </Link>
-                        </>
+                          </DeskLink>
+                        ) : null}
+                      </p>
+                      {reviewer ? (
+                        <p className="mt-0.5 text-xs text-black/50">{reviewer}</p>
                       ) : null}
-                    </p>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ))}

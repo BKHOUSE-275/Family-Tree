@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Windows machines with a touchscreen report no hover support, so Tailwind's
+   default hover variant never runs. Apply hover styles on pointer hover. */
+@custom-variant hover (&:hover);
+
 :root {
   --page: #f3e6d0;
   --ink: #2a1810;
@@ -153,6 +157,7 @@ body {
   opacity: 0.55;
 }
 
-.photo-crop-dialog::backdrop {
+.photo-crop-dialog::backdrop,
+.confirm-dialog::backdrop {
   background: rgba(42, 24, 16, 0.55);
 }

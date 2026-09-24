@@ -34,7 +34,7 @@ export function HeritagePersonNode({
           <img
             src={person.photoUrl}
             alt=""
-            className="h-full w-full object-cover grayscale"
+            className="h-full w-full object-cover"
           />
         ) : (
           initials(person)

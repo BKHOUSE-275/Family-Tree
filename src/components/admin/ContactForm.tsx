@@ -86,7 +86,7 @@ export function ContactForm({
       {state?.ok ? <p className="text-sm text-leaf-deep">Saved.</p> : null}
       <button
         disabled={pending}
-        className="min-h-11 rounded-full bg-script px-6 py-2 text-white disabled:opacity-60"
+        className="min-h-11 rounded-full bg-script px-6 py-2 text-white transition hover:bg-gold hover:text-bark disabled:opacity-60"
       >
         {pending ? "Saving…" : "Save contact"}
       </button>

@@ -1,12 +1,17 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   cancelChangeRequestAction,
   reviewChangeRequestAction,
 } from "@/app/actions/requests";
+import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
+import { DeskLink } from "@/components/admin/DeskLink";
+import { GuestBadge } from "@/components/admin/GuestBadge";
+import { reviewerDisplayName } from "@/lib/activity";
 import { getAppUser, userHasPermission } from "@/lib/auth";
+import { formatEasternDateTime } from "@/lib/datetime";
+import { requestKindLabel, requestSubmitter, requestSubjectName, splitRequestMessage, type RequestMessageRow } from "@/lib/request-message";
 import { getSnapshot } from "@/lib/store";
-import { displayName, isCommittee } from "@/lib/types";
+import { displayName, isCommittee, type ChangeRequest } from "@/lib/types";
 
 export default async function ChangeRequestsPage() {
   const user = await getAppUser();
@@ -54,25 +59,100 @@ export default async function ChangeRequestsPage() {
         <section className="mt-12">
           <h2 className="text-center font-[family-name:var(--font-display)] text-3xl">Reviewed</h2>
           <ul className="mt-4 space-y-3">
-            {reviewed.map((request) => (
-              <li key={request.id} className="rounded-3xl bg-white p-4 text-sm shadow sm:p-5">
-                <p className="font-semibold capitalize">{request.status}</p>
-                <p className="min-w-0 break-all text-black/60">
-                  {request.submitterEmail ?? request.submitterUserId}
-                  {request.personId && byId.get(request.personId)
-                    ? ` · ${displayName(byId.get(request.personId)!)}`
-                    : ""}
-                </p>
-                <p className="mt-2 whitespace-pre-wrap">{request.message}</p>
-                {request.adminNote ? (
-                  <p className="mt-2 text-black/55">Note: {request.adminNote}</p>
-                ) : null}
-              </li>
-            ))}
+            {reviewed.map((request) => {
+              const person = request.personId ? byId.get(request.personId) : undefined;
+              const reviewer = reviewerDisplayName(snapshot, request.reviewedBy);
+              const reviewVerb = request.status === "approved" ? "Approved by" : "Declined by";
+              const submitter = requestSubmitter(request);
+              return (
+                <li key={request.id} className="rounded-3xl bg-white p-4 text-sm shadow sm:p-5">
+                  <p className="font-semibold capitalize">{request.status}</p>
+                  <RequestHeading
+                    message={request.message}
+                    personName={person ? displayName(person) : null}
+                  />
+                  <p className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-black/60">
+                    <span>{submitter.name}</span>
+                    {submitter.isGuest ? <GuestBadge /> : null}
+                  </p>
+                  <MessageFields message={request.message} />
+                  {request.adminNote ? (
+                    <p className="mt-3 text-black/55">Note: {request.adminNote}</p>
+                  ) : null}
+                  {reviewer ? (
+                    <p className="mt-3 text-xs text-black/50">
+                      {reviewVerb} {reviewer}
+                      {request.reviewedAt ? ` · ${formatEasternDateTime(request.reviewedAt)}` : ""}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <DeskLink href={`/admin/requests/${request.id}`}>View this change</DeskLink>
+                    {request.personId ? (
+                      <DeskLink href={`/admin/people/${request.personId}`}>Open saved person</DeskLink>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
     </main>
+  );
+}
+
+function FieldList({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: RequestMessageRow[];
+}) {
+  if (!rows.length) return null;
+  return (
+    <section className="mt-4">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-script">{title}</h3>
+      <dl className="mt-2 overflow-hidden rounded-2xl border border-black/8 bg-black/[0.02] text-sm">
+        {rows.map((row, index) => (
+          <div
+            key={`${row.label ?? "note"}-${index}`}
+            className="grid gap-0.5 border-b border-black/8 px-3 py-2.5 last:border-b-0 sm:grid-cols-[10.5rem_minmax(0,1fr)] sm:items-baseline sm:gap-4"
+          >
+            <dt className="text-black/50">{row.label ?? "Note"}</dt>
+            <dd className="min-w-0 break-words text-bark">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+function MessageFields({ message }: { message: string }) {
+  const { submitter, person } = splitRequestMessage(message);
+  if (!submitter.length && !person.length) return null;
+  return (
+    <div>
+      <FieldList title="Submitted by" rows={submitter} />
+      <FieldList title="Person" rows={person} />
+    </div>
+  );
+}
+
+function RequestHeading({
+  message,
+  personName,
+}: {
+  message: string;
+  personName: string | null;
+}) {
+  const kind = requestKindLabel(message, personName);
+  const subject = requestSubjectName(message, personName);
+  const showSubject = Boolean(subject) && kind !== `Updating ${subject}`;
+  return (
+    <div className="mt-1">
+      <p className="font-[family-name:var(--font-display)] text-2xl">{kind}</p>
+      {showSubject ? <p className="text-lg text-bark">{subject}</p> : null}
+    </div>
   );
 }
 
@@ -81,29 +161,21 @@ function RequestCard({
   personName,
   canCancel,
 }: {
-  request: {
-    id: string;
-    submitterEmail: string | null;
-    submitterUserId: string;
-    personId: string | null;
-    message: string;
-    photoUrl: string | null;
-    headstonePhotoUrl: string | null;
-    createdAt: string;
-  };
+  request: ChangeRequest;
   personName: string | null;
   canCancel: boolean;
 }) {
+  const submitter = requestSubmitter(request);
   return (
     <li className="rounded-3xl bg-white p-4 shadow sm:p-6">
-      <p className="min-w-0 break-all text-sm text-black/55">
-        {new Date(request.createdAt).toLocaleString()} ·{" "}
-        {request.submitterEmail ?? request.submitterUserId}
+      <p className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-black/55">
+        <span>{formatEasternDateTime(request.createdAt)}</span>
+        <span>·</span>
+        <span className="text-bark">{submitter.name}</span>
+        {submitter.isGuest ? <GuestBadge /> : null}
       </p>
-      <p className="mt-1 font-[family-name:var(--font-display)] text-2xl">
-        {personName ?? "General family note"}
-      </p>
-      <p className="mt-3 whitespace-pre-wrap text-sm">{request.message}</p>
+      <RequestHeading message={request.message} personName={personName} />
+      <MessageFields message={request.message} />
       <div className="mt-4 flex flex-wrap gap-3">
         {request.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -136,25 +208,33 @@ function RequestCard({
           />
         </label>
         <div className="flex flex-wrap gap-3">
-          <button name="decision" value="approved" className="min-h-11 rounded-full bg-script px-5 py-2 text-white">
+          <button name="decision" value="approved" className="min-h-11 rounded-full bg-script px-5 py-2 text-white transition hover:bg-gold hover:text-bark">
             Approve
           </button>
-          <button name="decision" value="rejected" className="min-h-11 rounded-full border border-bark/20 px-5 py-2">
+          <ConfirmSubmitButton
+            name="decision"
+            value="rejected"
+            title="Reject this request"
+            message="Decline this suggestion? It will not be added to the family tree."
+            confirmLabel="Reject"
+            className="min-h-11 rounded-full border border-bark/20 px-5 py-2 transition hover:border-gold hover:bg-gold/40"
+          >
             Reject
-          </button>
+          </ConfirmSubmitButton>
+          <DeskLink href={`/admin/requests/${request.id}`}>View this change</DeskLink>
           {request.personId ? (
-            <Link href={`/admin/people/${request.personId}`} className="self-center text-sm text-ember underline">
-              Open person editor
-            </Link>
+            <DeskLink href={`/admin/people/${request.personId}`}>Open saved person</DeskLink>
           ) : null}
           {canCancel ? (
-            <button
-              type="submit"
+            <ConfirmSubmitButton
               formAction={cancelChangeRequestAction}
-              className="min-h-11 rounded-full border border-ember/40 px-5 py-2 text-ember"
+              title="Cancel this request"
+              message="Close this pending request? The committee will not review it."
+              confirmLabel="Cancel request"
+              className="min-h-11 rounded-full border border-ember/40 px-5 py-2 text-ember transition hover:bg-ember hover:text-white"
             >
               Cancel request
-            </button>
+            </ConfirmSubmitButton>
           ) : null}
         </div>
       </form>

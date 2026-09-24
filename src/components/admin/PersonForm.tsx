@@ -171,7 +171,7 @@ export function PersonForm({
       {state?.error ? <p className="text-sm text-ember">{state.error}</p> : null}
       <button
         disabled={pending}
-        className="min-h-11 rounded-full bg-script px-6 py-2 text-white disabled:opacity-60"
+        className="min-h-11 rounded-full bg-script px-6 py-2 text-white transition hover:bg-gold hover:text-bark disabled:opacity-60"
       >
         {pending ? "Saving…" : "Save person"}
       </button>

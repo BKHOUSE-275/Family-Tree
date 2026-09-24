@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { ContactForm } from "@/components/admin/ContactForm";
+import { DeskLink } from "@/components/admin/DeskLink";
 import { PersonForm } from "@/components/admin/PersonForm";
 import { getAppUser, userHasPermission } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
@@ -26,6 +27,9 @@ export default async function EditPersonPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-10">
+      <div className="mb-6">
+        <DeskLink href="/admin">Back to people</DeskLink>
+      </div>
       <h1 className="px-1 text-center font-[family-name:var(--font-script)] text-3xl break-words text-script sm:text-4xl md:text-5xl">
         {displayName(person)}
       </h1>
