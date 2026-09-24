@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { DeskLink } from "@/components/admin/DeskLink";
 import { GuestBadge } from "@/components/admin/GuestBadge";
+import { OpenSavedPersonButton } from "@/components/admin/OpenSavedPersonButton";
 import { PersonPanel } from "@/components/person/PersonPanel";
 import { reviewerDisplayName } from "@/lib/activity";
 import { getAppUser, userHasPermission } from "@/lib/auth";
 import { formatEasternDateTime } from "@/lib/datetime";
-import { requestKindLabel, requestSubmitter } from "@/lib/request-message";
+import { isAddPersonRequest, requestKindLabel, requestSubjectName, requestSubmitter, savedSubjectPersonId } from "@/lib/request-message";
 import { buildRequestPersonPreview } from "@/lib/request-preview";
 import { getSnapshot } from "@/lib/store";
 import { displayName, isCommittee } from "@/lib/types";
@@ -38,8 +39,11 @@ export default async function RequestPreviewPage({
   const submitter = requestSubmitter(request);
   const preview = buildRequestPersonPreview(request, snapshot);
   const reviewer = reviewerDisplayName(snapshot, request.reviewedBy);
-  const canEditRelated =
-    Boolean(related) && userHasPermission(user, "people.edit");
+  const savedSubjectId = savedSubjectPersonId(
+    request.message,
+    request.personId,
+    new Map(snapshot.people.map((person) => [person.id, person])),
+  );
 
   const banner =
     request.status === "approved"
@@ -119,8 +123,13 @@ export default async function RequestPreviewPage({
             {request.status === "pending" ? "Review the request" : "See all requests"}
           </DeskLink>
         ) : null}
-        {canEditRelated && related ? (
-          <DeskLink href={`/admin/people/${related.id}`}>Open the saved person editor</DeskLink>
+        {userHasPermission(user, "people.edit") &&
+        (request.personId || isAddPersonRequest(request.message)) ? (
+          <OpenSavedPersonButton
+            href={savedSubjectId ? `/admin/people/${savedSubjectId}` : null}
+            personName={requestSubjectName(request.message, relatedName)}
+            label="Open the saved person editor"
+          />
         ) : null}
       </div>
     </main>

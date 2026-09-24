@@ -6,10 +6,11 @@ import {
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { DeskLink } from "@/components/admin/DeskLink";
 import { GuestBadge } from "@/components/admin/GuestBadge";
+import { OpenSavedPersonButton } from "@/components/admin/OpenSavedPersonButton";
 import { reviewerDisplayName } from "@/lib/activity";
 import { getAppUser, userHasPermission } from "@/lib/auth";
 import { formatEasternDateTime } from "@/lib/datetime";
-import { requestKindLabel, requestSubmitter, requestSubjectName, splitRequestMessage, type RequestMessageRow } from "@/lib/request-message";
+import { isAddPersonRequest, requestKindLabel, requestSubmitter, requestSubjectName, savedSubjectPersonId, splitRequestMessage, type RequestMessageRow } from "@/lib/request-message";
 import { getSnapshot } from "@/lib/store";
 import { displayName, isCommittee, type ChangeRequest } from "@/lib/types";
 
@@ -45,6 +46,7 @@ export default async function ChangeRequestsPage() {
                   key={request.id}
                   request={request}
                   personName={person ? displayName(person) : null}
+                  people={byId}
                   canCancel={user.role === "super_admin"}
                 />
               );
@@ -87,9 +89,7 @@ export default async function ChangeRequestsPage() {
                   ) : null}
                   <div className="mt-4 flex flex-wrap gap-3">
                     <DeskLink href={`/admin/requests/${request.id}`}>View this change</DeskLink>
-                    {request.personId ? (
-                      <DeskLink href={`/admin/people/${request.personId}`}>Open saved person</DeskLink>
-                    ) : null}
+                    <SavedPersonLink request={request} people={byId} personName={person ? displayName(person) : null} />
                   </div>
                 </li>
               );
@@ -156,13 +156,39 @@ function RequestHeading({
   );
 }
 
+function SavedPersonLink({
+  request,
+  people,
+  personName,
+  label,
+}: {
+  request: ChangeRequest;
+  people: { has(id: string): boolean };
+  personName: string | null;
+  label?: string;
+}) {
+  const offer =
+    Boolean(request.personId) || isAddPersonRequest(request.message);
+  if (!offer) return null;
+  const savedId = savedSubjectPersonId(request.message, request.personId, people);
+  return (
+    <OpenSavedPersonButton
+      href={savedId ? `/admin/people/${savedId}` : null}
+      personName={requestSubjectName(request.message, personName)}
+      label={label}
+    />
+  );
+}
+
 function RequestCard({
   request,
   personName,
+  people,
   canCancel,
 }: {
   request: ChangeRequest;
   personName: string | null;
+  people: { has(id: string): boolean };
   canCancel: boolean;
 }) {
   const submitter = requestSubmitter(request);
@@ -222,9 +248,7 @@ function RequestCard({
             Reject
           </ConfirmSubmitButton>
           <DeskLink href={`/admin/requests/${request.id}`}>View this change</DeskLink>
-          {request.personId ? (
-            <DeskLink href={`/admin/people/${request.personId}`}>Open saved person</DeskLink>
-          ) : null}
+          <SavedPersonLink request={request} people={people} personName={personName} />
           {canCancel ? (
             <ConfirmSubmitButton
               formAction={cancelChangeRequestAction}

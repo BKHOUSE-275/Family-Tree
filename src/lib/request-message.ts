@@ -97,6 +97,20 @@ export function submitterNameFromMessage(message: string) {
   return from?.value ?? null;
 }
 
+export function isAddPersonRequest(message: string) {
+  return rowValue(message, "type")?.toLowerCase() === "add_person";
+}
+
+export function savedSubjectPersonId(
+  message: string,
+  personId: string | null,
+  people: { has(id: string): boolean },
+) {
+  if (isAddPersonRequest(message)) return null;
+  if (personId && people.has(personId)) return personId;
+  return null;
+}
+
 export function requestSubmitter(request: {
   message: string;
   submitterEmail: string | null;
