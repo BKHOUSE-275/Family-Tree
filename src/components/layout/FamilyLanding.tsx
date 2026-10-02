@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SuggestionForm } from "@/components/suggest/SuggestionForm";
+import { SuggestionForm, type RequestType } from "@/components/suggest/SuggestionForm";
 import { FamilyTree } from "@/components/tree/FamilyTree";
 import type { FamilySnapshot, PersonPickerOption } from "@/lib/types";
 
@@ -21,6 +21,7 @@ export function FamilyLanding({
   placeMode?: boolean;
 }) {
   const [personId, setPersonId] = useState("");
+  const [requestType, setRequestType] = useState<RequestType | null>(null);
 
   useEffect(() => {
     if (window.location.hash !== "#suggest") return;
@@ -32,6 +33,7 @@ export function FamilyLanding({
 
   function suggestAbout(id: string) {
     setPersonId(id);
+    setRequestType("change_info");
     document.getElementById("suggest")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -50,6 +52,8 @@ export function FamilyLanding({
         people={people}
         personId={personId}
         onPersonChange={setPersonId}
+        requestType={requestType}
+        onRequestTypeChange={setRequestType}
         sent={sent}
         defaultEmail={defaultEmail}
         defaultName={defaultName}

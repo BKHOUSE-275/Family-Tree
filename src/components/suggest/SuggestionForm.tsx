@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
 import { submitChangeRequestAction } from "@/app/actions/requests";
 import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
@@ -14,7 +14,7 @@ import {
   type PersonPickerOption,
 } from "@/lib/types";
 
-type RequestType = "change_info" | "add_person";
+export type RequestType = "change_info" | "add_person";
 
 const fieldClass =
   "mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base";
@@ -24,6 +24,45 @@ function RequiredMark() {
     <span className="text-ember" aria-hidden="true">
       *
     </span>
+  );
+}
+
+function PersonPhoneField({
+  required,
+  defaultValue,
+  placeholder,
+}: {
+  required: boolean;
+  defaultValue?: string;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block text-sm font-semibold text-script">
+      Phone number{" "}
+      {required ? (
+        <RequiredMark />
+      ) : (
+        <span className="font-normal text-bark/60">(optional for someone who has passed)</span>
+      )}
+      <input
+        name="personPhone"
+        type="tel"
+        inputMode="tel"
+        required={required}
+        defaultValue={defaultValue}
+        className={fieldClass}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function FormError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="rounded-2xl bg-ember/10 px-4 py-3 text-sm text-ember">
+      {message}
+    </p>
   );
 }
 
@@ -130,6 +169,8 @@ export function SuggestionForm({
   people,
   personId,
   onPersonChange,
+  requestType,
+  onRequestTypeChange,
   sent,
   defaultEmail = "",
   defaultName = "",
@@ -138,22 +179,35 @@ export function SuggestionForm({
   people: PersonPickerOption[];
   personId: string;
   onPersonChange: (id: string) => void;
+  requestType: RequestType | null;
+  onRequestTypeChange: (type: RequestType) => void;
   sent: boolean;
   defaultEmail?: string;
   defaultName?: string;
 }) {
-  const [requestType, setRequestType] = useState<RequestType | null>(null);
   const selected = personId ? lookupChangeContext(snapshot, personId) : null;
+  const [state, formAction, pending] = useActionState(submitChangeRequestAction, null);
+  // Ticking "deceased" makes the phone optional. For an existing person it
+  // follows their saved value until the visitor changes the box.
+  const [deceasedEdit, setDeceasedEdit] = useState<{ personId: string; value: boolean } | null>(null);
+  const [addDeceased, setAddDeceased] = useState(false);
+  const changeDeceased =
+    deceasedEdit && deceasedEdit.personId === personId
+      ? deceasedEdit.value
+      : Boolean(selected?.person?.isDeceased);
+
+  // Submitting through a transition (instead of <form action>) keeps what the
+  // visitor typed when the server sends back an error.
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => formAction(formData));
+  }
 
   useEffect(() => {
     if (!sent) return;
     document.getElementById("suggest")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [sent]);
-
-  useEffect(() => {
-    if (!personId) return;
-    setRequestType("change_info");
-  }, [personId]);
 
   return (
     <section id="suggest" className="scroll-mt-6 px-3 pb-16 pt-16 sm:px-6">
@@ -177,7 +231,7 @@ export function SuggestionForm({
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => setRequestType("change_info")}
+              onClick={() => onRequestTypeChange("change_info")}
               aria-pressed={requestType === "change_info"}
               className={`min-h-28 rounded-2xl border px-4 py-5 text-left transition ${
                 requestType === "change_info"
@@ -195,7 +249,7 @@ export function SuggestionForm({
             </button>
             <button
               type="button"
-              onClick={() => setRequestType("add_person")}
+              onClick={() => onRequestTypeChange("add_person")}
               aria-pressed={requestType === "add_person"}
               className={`min-h-28 rounded-2xl border px-4 py-5 text-left transition ${
                 requestType === "add_person"
@@ -215,10 +269,11 @@ export function SuggestionForm({
 
         {requestType === "change_info" ? (
           <form
-            action={submitChangeRequestAction}
+            onSubmit={submit}
             className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-6"
           >
             <input type="hidden" name="requestType" value="change_info" />
+            <FormError message={state?.error} />
             <p className="text-sm text-bark/65">
               Fields marked <RequiredMark /> are required. Choose a person to
               load their current details, then edit what should change.
@@ -291,17 +346,10 @@ export function SuggestionForm({
                   </label>
                 </div>
 
-                <label className="block text-sm font-semibold text-script">
-                  Phone number <RequiredMark />
-                  <input
-                    name="personPhone"
-                    type="tel"
-                    inputMode="tel"
-                    required
-                    defaultValue={selected.contact?.phone ?? ""}
-                    className={fieldClass}
-                  />
-                </label>
+                <PersonPhoneField
+                  required={!changeDeceased}
+                  defaultValue={selected.contact?.phone ?? ""}
+                />
                 <label className="block text-sm font-semibold text-script">
                   Email
                   <input
@@ -346,7 +394,10 @@ export function SuggestionForm({
                     type="checkbox"
                     name="isDeceased"
                     value="true"
-                    defaultChecked={selected.person.isDeceased}
+                    checked={changeDeceased}
+                    onChange={(event) =>
+                      setDeceasedEdit({ personId, value: event.target.checked })
+                    }
                     className="size-4"
                   />
                   This person is deceased
@@ -438,20 +489,21 @@ export function SuggestionForm({
             )}
 
             <button
-              className="min-h-11 w-full rounded-full bg-ember px-6 py-2 text-white sm:w-auto"
-              disabled={!selected?.person}
+              className="min-h-11 w-full rounded-full bg-ember px-6 py-2 text-white disabled:opacity-60 sm:w-auto"
+              disabled={!selected?.person || pending}
             >
-              Send to the committee
+              {pending ? "Sending…" : "Send to the committee"}
             </button>
           </form>
         ) : null}
 
         {requestType === "add_person" ? (
           <form
-            action={submitChangeRequestAction}
+            onSubmit={submit}
             className="mt-6 space-y-4 rounded-3xl border border-bark/10 bg-white/90 p-4 shadow-[0_20px_50px_-30px_rgba(42,24,16,0.45)] sm:p-6"
           >
             <input type="hidden" name="requestType" value="add_person" />
+            <FormError message={state?.error} />
             <p className="text-sm text-bark/65">
               Fields marked <RequiredMark /> are required.
             </p>
@@ -493,17 +545,10 @@ export function SuggestionForm({
               </label>
             </div>
 
-            <label className="block text-sm font-semibold text-script">
-              Phone number <RequiredMark />
-              <input
-                name="personPhone"
-                type="tel"
-                inputMode="tel"
-                required
-                className={fieldClass}
-                placeholder="Contact phone for this person"
-              />
-            </label>
+            <PersonPhoneField
+              required={!addDeceased}
+              placeholder="Contact phone for this person"
+            />
             <label className="block text-sm font-semibold text-script">
               Email
               <input
@@ -530,7 +575,14 @@ export function SuggestionForm({
             </div>
 
             <label className="flex items-center gap-2 text-sm font-semibold text-script">
-              <input type="checkbox" name="isDeceased" value="true" className="size-4" />
+              <input
+                type="checkbox"
+                name="isDeceased"
+                value="true"
+                checked={addDeceased}
+                onChange={(event) => setAddDeceased(event.target.checked)}
+                className="size-4"
+              />
               This person is deceased
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -600,8 +652,11 @@ export function SuggestionForm({
               label="Headstone photo (optional)"
               preview="rect"
             />
-            <button className="min-h-11 w-full rounded-full bg-ember px-6 py-2 text-white sm:w-auto">
-              Send to the committee
+            <button
+              className="min-h-11 w-full rounded-full bg-ember px-6 py-2 text-white disabled:opacity-60 sm:w-auto"
+              disabled={pending}
+            >
+              {pending ? "Sending…" : "Send to the committee"}
             </button>
           </form>
         ) : null}

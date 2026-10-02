@@ -1,5 +1,7 @@
 import {
   boolean,
+  index,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -141,6 +143,10 @@ export const auditEvents = pgTable("audit_events", {
       | "request.reject"
       | "profile.link"
       | "role.change"
+      | "album.create"
+      | "album.update"
+      | "album.delete"
+      | "gallery.remove"
     >()
     .notNull(),
   entityId: text("entity_id"),
@@ -155,4 +161,46 @@ export const committeeInvites = pgTable("committee_invites", {
   invitedByEmail: text("invited_by_email"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   usedAt: timestamp("used_at", { withTimezone: true }),
+});
+
+export const albums = pgTable("albums", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  eventDate: text("event_date"),
+  coverItemId: text("cover_item_id"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdByUserId: text("created_by_user_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const galleryItems = pgTable(
+  "gallery_items",
+  {
+    id: text("id").primaryKey(),
+    albumId: text("album_id")
+      .notNull()
+      .references(() => albums.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"photo" | "video">().notNull(),
+    url: text("url").notNull(),
+    displayUrl: text("display_url").notNull(),
+    thumbUrl: text("thumb_url"),
+    contentType: text("content_type").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    durationSeconds: integer("duration_seconds"),
+    caption: text("caption"),
+    takenDate: text("taken_date"),
+    uploaderUserId: text("uploader_user_id"),
+    uploaderName: text("uploader_name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("gallery_items_album_idx").on(table.albumId, table.createdAt)],
+);
+
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull().defaultNow(),
 });

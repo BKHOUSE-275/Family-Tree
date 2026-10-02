@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin, requirePermission } from "@/lib/auth";
+import { requirePermission, requireUser, userHasPermission } from "@/lib/auth";
 import { personFieldDiff, recordAudit } from "@/lib/audit";
 import {
-  deletePartnershipsForPerson,
+  deletePartnership,
   deletePerson,
-  getPerson,
   getProfile,
   getSnapshot,
   saveContact,
@@ -17,7 +16,16 @@ import {
   setParents,
   upsertProfile,
 } from "@/lib/store";
-import { defaultAdminPermissions, displayName, type Contact, type Partnership, type Person, type Residence } from "@/lib/types";
+import {
+  defaultAdminPermissions,
+  displayName,
+  isCommittee,
+  type Contact,
+  type FamilySnapshot,
+  type Partnership,
+  type Person,
+  type Residence,
+} from "@/lib/types";
 
 function slugId(name: string) {
   const base = name
@@ -47,6 +55,30 @@ function actionError(error: unknown) {
     throw error;
   }
   return error instanceof Error ? error.message : "Could not save. Try again.";
+}
+
+/** Every person below `id` in the tree (children, grandchildren, ...). */
+function descendantIds(snapshot: FamilySnapshot, id: string) {
+  const found = new Set<string>();
+  const queue = [id];
+  while (queue.length) {
+    const parentId = queue.pop()!;
+    for (const link of snapshot.parentChildren) {
+      if (link.parentId === parentId && !found.has(link.childId)) {
+        found.add(link.childId);
+        queue.push(link.childId);
+      }
+    }
+  }
+  return found;
+}
+
+// /gallery is prerendered, and its Family Tree album is built from portraits.
+function revalidateTreePages() {
+  revalidatePath("/");
+  revalidatePath("/tree");
+  revalidatePath("/gallery");
+  revalidatePath("/gallery/family-tree");
 }
 
 export type SavePersonState = { error?: string; ok?: boolean; id?: string } | null;
@@ -120,14 +152,34 @@ export async function savePersonAction(
       showResidences: bool(formData, "showResidences"),
       showMarriage: bool(formData, "showMarriage"),
     };
-    await savePerson(person);
-
+    // Check every link before writing anything, so a bad pick can't leave a half-saved person.
     const parentIds = [str(formData, "parentId1"), str(formData, "parentId2")].filter(
       (id): id is string => Boolean(id),
     );
+    const partnerId = str(formData, "partnerId");
+    const known = new Set(snapshot.people.map((row) => row.id));
+    const descendants = existingId ? descendantIds(snapshot, existingId) : new Set<string>();
+    for (const parentId of parentIds) {
+      if (parentId === person.id) return { error: "A person cannot be their own parent." };
+      if (!known.has(parentId)) return { error: "One of the chosen parents is no longer on the tree." };
+      if (descendants.has(parentId)) {
+        const name = snapshot.people.find((row) => row.id === parentId);
+        return {
+          error: `${name ? displayName(name) : "That person"} is a descendant of ${displayName(person)}, so they cannot be a parent.`,
+        };
+      }
+    }
+    if (new Set(parentIds).size !== parentIds.length) {
+      return { error: "Choose two different parents." };
+    }
+    if (partnerId === person.id) return { error: "A person cannot be their own spouse." };
+    if (partnerId && !known.has(partnerId)) {
+      return { error: "The chosen spouse is no longer on the tree." };
+    }
+
+    await savePerson(person);
     await setParents(person.id, parentIds);
 
-    const partnerId = str(formData, "partnerId");
     if (partnerId) {
       const union: Partnership = {
         id: str(formData, "partnershipId") ?? `union-${person.id}-${partnerId}`,
@@ -138,8 +190,9 @@ export async function savePersonAction(
         notes: str(formData, "marriageNotes"),
       };
       await savePartnership(union);
-    } else {
-      await deletePartnershipsForPerson(person.id);
+    } else if (beforePartner) {
+      // Only the marriage shown in the form; earlier marriages stay on record.
+      await deletePartnership(str(formData, "partnershipId") ?? beforePartner.id);
     }
 
     const years = formData.getAll("residenceYear").map(String);
@@ -168,8 +221,7 @@ export async function savePersonAction(
       person.id,
     );
 
-    revalidatePath("/");
-    revalidatePath("/tree");
+    revalidateTreePages();
     revalidatePath("/admin");
     revalidatePath("/admin/activity");
     revalidatePath(`/admin/people/${person.id}`);
@@ -180,22 +232,32 @@ export async function savePersonAction(
   redirect(`/admin/people/${savedId}?saved=1`);
 }
 
-export async function deletePersonAction(formData: FormData) {
-  const user = await requirePermission("people.delete");
-  const id = String(formData.get("id") ?? "");
-  const person = await getPerson(id);
-  await deletePerson(id);
-  await recordAudit(
-    user,
-    "person.delete",
-    person ? displayName(person) : id,
-    "Removed from the tree",
-    id,
-  );
-  revalidatePath("/");
-  revalidatePath("/tree");
-  revalidatePath("/admin");
-  revalidatePath("/admin/activity");
+export async function deletePersonAction(
+  _prev: FormActionState,
+  formData: FormData,
+): Promise<FormActionState> {
+  try {
+    const user = await requirePermission("people.delete");
+    const id = String(formData.get("id") ?? "");
+    const snapshot = await getSnapshot();
+    const person = snapshot.people.find((row) => row.id === id) ?? null;
+    if (!person) return { error: "That person is no longer on the tree." };
+    const children = snapshot.parentChildren.filter((link) => link.parentId === id).length;
+    if (children) {
+      // Deleting would silently drop the whole branch below them off the tree.
+      return {
+        error: `${displayName(person)} has ${children === 1 ? "a child" : `${children} children`} on the tree. Move or remove them first.`,
+      };
+    }
+    await deletePerson(id);
+    await recordAudit(user, "person.delete", displayName(person), "Removed from the tree", id);
+    revalidateTreePages();
+    revalidatePath("/admin");
+    revalidatePath("/admin/activity");
+    return { ok: true };
+  } catch (error) {
+    return { error: actionError(error) };
+  }
 }
 
 export async function saveContactAction(
@@ -203,11 +265,17 @@ export async function saveContactAction(
   formData: FormData,
 ): Promise<FormActionState> {
   try {
-    const user = await requireAdmin();
+    const user = await requireUser();
     const personId = String(formData.get("personId") ?? "");
     if (!personId) return { error: "A person is required." };
+    // Editors can update anyone; everyone else only the person their login is linked to.
+    const canEditAnyone = isCommittee(user.role) && userHasPermission(user, "people.edit");
+    if (!canEditAnyone && user.personId !== personId) {
+      return { error: "You can only update your own contact details." };
+    }
     const snapshot = await getSnapshot();
     const person = snapshot.people.find((row) => row.id === personId) ?? null;
+    if (!person) return { error: "That person is no longer on the tree." };
     const before = snapshot.contacts.find((row) => row.personId === personId);
     const contact: Contact = {
       personId,
@@ -228,8 +296,7 @@ export async function saveContactAction(
       changed.length ? changed.join(", ") : "Updated contact",
       personId,
     );
-    revalidatePath("/");
-    revalidatePath("/tree");
+    revalidateTreePages();
     revalidatePath("/profile");
     revalidatePath("/admin");
     revalidatePath("/admin/activity");

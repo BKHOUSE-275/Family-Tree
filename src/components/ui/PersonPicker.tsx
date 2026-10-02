@@ -36,14 +36,22 @@ export function PersonPicker({
   emptyLabel?: string;
   allowNone?: boolean;
 }) {
-  const listId = useId();
+  const baseId = useId();
+  const listId = `${baseId}-list`;
+  const labelId = `${baseId}-label`;
+  const triggerId = `${baseId}-trigger`;
+  const errorId = `${baseId}-error`;
+  const optionId = (index: number) => `${baseId}-option-${index}`;
   const rootRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [internal, setInternal] = useState(defaultValue);
   const [active, setActive] = useState(0);
+  const [invalid, setInvalid] = useState(false);
   const selectedId = value ?? internal;
+  const showError = invalid && required && !selectedId;
 
   const filtered = useMemo(
     () => people.filter((person) => pickerMatchesQuery(person, query)),
@@ -58,10 +66,6 @@ export function PersonPicker({
   const selected = people.find((person) => person.id === selectedId);
 
   useEffect(() => {
-    setActive(0);
-  }, [query, open]);
-
-  useEffect(() => {
     if (!open) return;
     searchRef.current?.focus();
     function onPointer(event: MouseEvent) {
@@ -74,17 +78,31 @@ export function PersonPicker({
     return () => document.removeEventListener("mousedown", onPointer);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    document
+      .getElementById(`${baseId}-option-${active}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [active, baseId, open]);
+
+  function close() {
+    setOpen(false);
+    setQuery("");
+    // The search box unmounts on close; hand focus back to the trigger.
+    triggerRef.current?.focus();
+  }
+
   function choose(id: string) {
     if (value === undefined) setInternal(id);
     onChange?.(id);
-    setOpen(false);
-    setQuery("");
+    if (id) setInvalid(false);
+    close();
   }
 
   function onSearchKey(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
-      setOpen(false);
-      setQuery("");
+      event.preventDefault();
+      close();
       return;
     }
     if (event.key === "ArrowDown") {
@@ -106,59 +124,108 @@ export function PersonPicker({
 
   return (
     <div ref={rootRef} className="relative block text-sm font-semibold text-script">
-      {label ? <span className="mb-1 block">{label}</span> : null}
-      <input type="hidden" name={name} value={selectedId} required={required} />
+      {label ? (
+        <span id={labelId} className="mb-1 block">
+          {label}
+        </span>
+      ) : null}
+      {/*
+        Visually hidden but still validatable (type="hidden" skips constraint
+        validation), so `required` actually blocks an empty submit.
+      */}
+      <input
+        tabIndex={-1}
+        aria-hidden
+        className="sr-only"
+        name={name}
+        value={selectedId}
+        required={required}
+        onChange={() => {}}
+        onInvalid={(event) => {
+          event.preventDefault();
+          setInvalid(true);
+          const input = event.currentTarget;
+          if (input.form?.querySelector(":invalid") === input) {
+            triggerRef.current?.focus();
+          }
+        }}
+      />
       <button
+        ref={triggerRef}
+        id={triggerId}
         type="button"
         className="ui-select mt-1 w-full text-left font-normal"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={listId}
-        onClick={() => setOpen((current) => !current)}
+        aria-controls={open ? listId : undefined}
+        aria-labelledby={label ? `${labelId} ${triggerId}` : undefined}
+        aria-describedby={showError ? errorId : undefined}
+        onClick={() => {
+          setActive(0);
+          setOpen((current) => !current);
+        }}
       >
         {selected?.label ?? emptyLabel}
       </button>
+      {showError ? (
+        <p id={errorId} role="alert" className="mt-1 text-xs font-normal text-ember">
+          Choose someone from the list.
+        </p>
+      ) : null}
       {open ? (
         <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-2xl border border-bark/20 bg-white shadow-lg">
           <div className="border-b border-bark/10 p-2">
             <input
               ref={searchRef}
+              role="combobox"
+              aria-label="Search the family"
+              aria-expanded
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={choices[active] ? optionId(active) : undefined}
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setActive(0);
+              }}
               onKeyDown={onSearchKey}
               placeholder="Search the family"
               className="min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base font-normal"
             />
           </div>
-          <ul id={listId} role="listbox" className="max-h-[min(16rem,50dvh)] overflow-y-auto py-1">
-            {choices.length ? (
-              choices.map((person, index) => (
-                <li key={person.id || "none"}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={person.id === selectedId}
-                    className={`flex min-h-11 w-full items-center px-3 text-left font-normal hover:bg-leaf-soft ${
-                      index === active ? "bg-leaf-soft text-script" : ""
-                    }`}
-                    onMouseEnter={() => setActive(index)}
-                    onClick={() => choose(person.id)}
-                  >
-                    <span>
-                      {person.label}
-                      {person.id && person.maidenName ? (
-                        <span className="block text-xs font-normal text-black/45">
-                          née {person.maidenName}
-                        </span>
-                      ) : null}
+          <ul
+            id={listId}
+            role="listbox"
+            aria-labelledby={label ? labelId : undefined}
+            aria-label={label ? undefined : "People"}
+            className="max-h-[min(16rem,50dvh)] overflow-y-auto py-1"
+          >
+            {choices.map((person, index) => (
+              <li
+                key={person.id || "none"}
+                id={optionId(index)}
+                role="option"
+                aria-selected={person.id === selectedId}
+                className={`flex min-h-11 w-full cursor-pointer items-center px-3 text-left font-normal hover:bg-leaf-soft ${
+                  index === active ? "bg-leaf-soft text-script" : ""
+                }`}
+                onMouseEnter={() => setActive(index)}
+                onClick={() => choose(person.id)}
+              >
+                <span>
+                  {person.label}
+                  {person.id && person.maidenName ? (
+                    <span className="block text-xs font-normal text-black/45">
+                      née {person.maidenName}
                     </span>
-                  </button>
-                </li>
-              ))
-            ) : (
-              <li className="px-3 py-3 font-normal text-black/55">No one matches that name.</li>
-            )}
+                  ) : null}
+                </span>
+              </li>
+            ))}
           </ul>
+          {choices.length ? null : (
+            <p className="px-3 py-3 font-normal text-black/55">No one matches that name.</p>
+          )}
         </div>
       ) : null}
     </div>

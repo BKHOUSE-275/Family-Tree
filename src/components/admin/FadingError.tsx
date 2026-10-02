@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 const VISIBLE_MS = 3400;
+
+// Portals need `document`: false on the server and during hydration, true after.
+const noopSubscribe = () => () => {};
+const isClient = () => true;
+const isServer = () => false;
 
 export function FadingError({
   title,
@@ -14,16 +19,11 @@ export function FadingError({
   message: string;
   onDone: () => void;
 }) {
-  const [mounted, setMounted] = useState(false);
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
+  const mounted = useSyncExternalStore(noopSubscribe, isClient, isServer);
+  const finish = useEffectEvent(() => onDone());
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => onDoneRef.current(), VISIBLE_MS);
+    const timer = window.setTimeout(() => finish(), VISIBLE_MS);
     return () => window.clearTimeout(timer);
   }, []);
 

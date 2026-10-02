@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ContactForm } from "@/components/admin/ContactForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { displayName, isCommittee } from "@/lib/types";
+import { displayName } from "@/lib/types";
 
 export default async function ProfilePage() {
   const user = await getAppUser();
@@ -47,9 +47,7 @@ export default async function ProfilePage() {
             </Link>
           </div>
 
-          {isCommittee(user.role) ? (
-            <ContactForm personId={person.id} contact={contact ?? null} />
-          ) : null}
+          <ContactForm personId={person.id} contact={contact ?? null} />
         </div>
       ) : (
         <div className="mt-8 rounded-3xl bg-white p-4 shadow sm:p-6">

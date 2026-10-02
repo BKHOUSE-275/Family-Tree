@@ -214,13 +214,19 @@ function RequestCard({
       </div>
       <form action={reviewChangeRequestAction} className="mt-4 space-y-3">
         <input type="hidden" name="id" value={request.id} />
-        {request.personId && request.photoUrl ? (
+        {isAddPersonRequest(request.message) && (request.photoUrl || request.headstonePhotoUrl) ? (
+          <p className="text-sm text-black/60">
+            Photos sent with a new person are not attached on approval. Add them
+            when you create the person.
+          </p>
+        ) : null}
+        {request.personId && request.photoUrl && !isAddPersonRequest(request.message) ? (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="attachPhoto" defaultChecked />
             Attach profile photo to this person
           </label>
         ) : null}
-        {request.personId && request.headstonePhotoUrl ? (
+        {request.personId && request.headstonePhotoUrl && !isAddPersonRequest(request.message) ? (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="attachHeadstone" defaultChecked />
             Attach headstone photo to this person

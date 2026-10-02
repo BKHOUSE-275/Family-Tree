@@ -7,6 +7,7 @@ export const ADMIN_PERMISSION_KEYS = [
   "requests.review",
   "activity.view",
   "profiles.link",
+  "gallery.manage",
 ] as const;
 
 export type AdminPermission = (typeof ADMIN_PERMISSION_KEYS)[number];
@@ -19,6 +20,7 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermission, string> = {
   "requests.review": "Review change requests",
   "activity.view": "View activity",
   "profiles.link": "Link a login to a person",
+  "gallery.manage": "Manage gallery albums and remove uploads",
 };
 
 export function defaultAdminPermissions(): AdminPermissions {
@@ -29,6 +31,7 @@ export function defaultAdminPermissions(): AdminPermissions {
     "requests.review": true,
     "activity.view": true,
     "profiles.link": true,
+    "gallery.manage": true,
   };
 }
 
@@ -70,7 +73,11 @@ export type AuditAction =
   | "request.approve"
   | "request.reject"
   | "profile.link"
-  | "role.change";
+  | "role.change"
+  | "album.create"
+  | "album.update"
+  | "album.delete"
+  | "gallery.remove";
 
 export type Person = {
   id: string;
@@ -239,6 +246,44 @@ export type CommitteeInvite = {
   usedAt: string | null;
 };
 
+export type GalleryItemKind = "photo" | "video";
+
+export type Album = {
+  id: string;
+  title: string;
+  description: string | null;
+  eventDate: string | null;
+  coverItemId: string | null;
+  sortOrder: number;
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GalleryItem = {
+  id: string;
+  albumId: string;
+  kind: GalleryItemKind;
+  /** Original upload, kept for download. */
+  url: string;
+  /** Resized photo (~1600px) for the lightbox; for videos, same as url. */
+  displayUrl: string;
+  /** Small image for the grid; for videos, a poster frame when one was captured. */
+  thumbUrl: string | null;
+  contentType: string;
+  width: number | null;
+  height: number | null;
+  durationSeconds: number | null;
+  caption: string | null;
+  takenDate: string | null;
+  uploaderUserId: string | null;
+  uploaderName: string;
+  createdAt: string;
+};
+
+/** The built-in album made from portraits and headstone photos on the tree. */
+export const TREE_ALBUM_ID = "family-tree";
+
 export type FamilySnapshot = {
   people: Person[];
   contacts: Contact[];
@@ -271,7 +316,16 @@ export type PersonPickerOption = {
   maidenName?: string | null;
 };
 
+/** Picker row for public pages: hides the maiden name when it is marked hidden. */
 export function toPersonPickerOption(person: Person): PersonPickerOption {
+  return {
+    ...toAdminPersonPickerOption(person),
+    maidenName: personVisibility(person).showMaidenName ? person.maidenName : null,
+  };
+}
+
+/** Picker row for committee screens, which may see hidden fields. */
+export function toAdminPersonPickerOption(person: Person): PersonPickerOption {
   return {
     id: person.id,
     label: displayName(person),

@@ -1,4 +1,5 @@
 import { CommitteeFooter } from "@/components/layout/CommitteeFooter";
+import { GalleryInvite } from "@/components/gallery/GalleryInvite";
 import { FamilyLanding } from "@/components/layout/FamilyLanding";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
@@ -26,6 +27,7 @@ export default async function HomePage({
           defaultEmail={user?.email ?? ""}
           defaultName={user?.name ?? ""}
         />
+        <GalleryInvite />
       </main>
       {committee ? <CommitteeFooter /> : null}
     </>

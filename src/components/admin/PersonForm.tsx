@@ -7,7 +7,7 @@ import { PersonPicker } from "@/components/ui/PersonPicker";
 import {
   PERSON_VISIBILITY_FIELDS,
   personVisibility,
-  toPersonPickerOption,
+  toAdminPersonPickerOption,
   type FamilySnapshot,
   type Person,
 } from "@/lib/types";
@@ -41,7 +41,7 @@ export function PersonForm({
     : [];
   const options = snapshot.people
     .filter((row) => row.id !== person?.id)
-    .map(toPersonPickerOption);
+    .map(toAdminPersonPickerOption);
 
   return (
     <form action={formAction} className="space-y-4 rounded-3xl bg-white p-4 shadow sm:p-6">

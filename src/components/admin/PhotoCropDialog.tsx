@@ -1,10 +1,26 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createPortal } from "react-dom";
 import Cropper, { type Area } from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
 import { cropImageToJpeg } from "@/lib/crop-image";
+
+/** Focused controls that handle Enter themselves; the slider is left to confirm. */
+const ENTER_OWNERS =
+  'button, a[href], select, textarea, [contenteditable]:not([contenteditable="false"]), input:not([type="range"])';
+
+// Portals need `document`: false on the server and during hydration, true after.
+const noopSubscribe = () => () => {};
+const isClient = () => true;
+const isServer = () => false;
 
 export function PhotoCropDialog({
   imageSrc,
@@ -23,29 +39,27 @@ export function PhotoCropDialog({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const pixelsRef = useRef<Area | null>(null);
-  const busyRef = useRef(busy);
-  const onCancelRef = useRef(onCancel);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [ready, setReady] = useState(false);
+  const [area, setArea] = useState<Area | null>(null);
   const [cropError, setCropError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [cropFor, setCropFor] = useState(imageSrc);
+  const mounted = useSyncExternalStore(noopSubscribe, isClient, isServer);
   const round = preview === "portrait";
-  busyRef.current = busy;
-  onCancelRef.current = onCancel;
+  const ready = area !== null;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
+  // New image → start the crop over (state reset during render, not in an effect).
+  if (cropFor !== imageSrc) {
+    setCropFor(imageSrc);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
-    setReady(false);
+    setArea(null);
     setCropError(null);
-    pixelsRef.current = null;
-  }, [imageSrc]);
+  }
+
+  const cancelFromDialog = useEffectEvent(() => {
+    if (!busy) onCancel();
+  });
 
   useEffect(() => {
     const node = dialogRef.current;
@@ -53,7 +67,7 @@ export function PhotoCropDialog({
     if (!node.open) node.showModal();
     function onDialogCancel(event: Event) {
       event.preventDefault();
-      if (!busyRef.current) onCancelRef.current();
+      cancelFromDialog();
     }
     node.addEventListener("cancel", onDialogCancel);
     return () => {
@@ -63,7 +77,6 @@ export function PhotoCropDialog({
   }, [mounted]);
 
   async function confirmCrop() {
-    const area = pixelsRef.current;
     if (!area) return;
     setCropError(null);
     try {
@@ -85,6 +98,10 @@ export function PhotoCropDialog({
       onKeyDown={(event) => {
         event.stopPropagation();
         if (event.key !== "Enter") return;
+        // Let Enter activate a focused control (e.g. Cancel) natively.
+        if (event.target instanceof Element && event.target.closest(ENTER_OWNERS)) {
+          return;
+        }
         event.preventDefault();
         if (!busy && ready) void confirmCrop();
       }}
@@ -106,10 +123,7 @@ export function PhotoCropDialog({
             maxZoom={4}
             onCropChange={setCrop}
             onZoomChange={setZoom}
-            onCropComplete={(_, pixels) => {
-              pixelsRef.current = pixels;
-              setReady(true);
-            }}
+            onCropComplete={(_, pixels) => setArea(pixels)}
             classes={{
               containerClassName: "h-full",
               cropAreaClassName: "border-2 border-gold",

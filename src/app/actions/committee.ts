@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
+import { checkGatePasscode } from "@/lib/passcode";
 import {
   deleteCommitteeInvite,
   deletePendingInvitesForEmail,
@@ -29,17 +30,6 @@ export type CommitteeActionState = { error?: string; ok?: boolean } | null;
 
 function actionError(error: unknown) {
   return error instanceof Error ? error.message : "Could not save. Try again.";
-}
-
-function gatePasswordError(password: string) {
-  const expected = (process.env.FAMILY_GATE_PASSWORD ?? "").trim();
-  if (!expected) {
-    return "FAMILY_GATE_PASSWORD is not loaded. Save .env and restart npm run dev.";
-  }
-  if (password !== expected) {
-    return "That passcode is not right.";
-  }
-  return null;
 }
 
 export async function demoteAdminAction(formData: FormData) {
@@ -83,7 +73,7 @@ export async function promoteToSuperAdminAction(
     const actor = await requireSuperAdmin();
     const userId = str(formData, "userId");
     const password = String(formData.get("password") ?? "").trim();
-    const passwordError = gatePasswordError(password);
+    const passwordError = await checkGatePasscode(password, actor.email ?? actor.id);
     if (passwordError) return { error: passwordError };
 
     const profile = await getProfile(userId);

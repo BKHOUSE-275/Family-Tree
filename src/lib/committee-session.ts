@@ -7,11 +7,13 @@ export type CommitteeSession = {
 };
 
 function sessionSecret() {
-  return (
-    process.env.NEON_AUTH_COOKIE_SECRET ||
-    process.env.FAMILY_GATE_PASSWORD ||
-    "dev-committee-session"
-  );
+  const secret = process.env.NEON_AUTH_COOKIE_SECRET;
+  if (secret) return secret;
+  // A short or guessable key would let anyone forge a committee session.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Set NEON_AUTH_COOKIE_SECRET (32+ characters) to sign committee sessions.");
+  }
+  return "dev-committee-session";
 }
 
 function bytesToBase64Url(bytes: Uint8Array) {
@@ -77,9 +79,9 @@ export async function readCommitteeSessionToken(
   if (!token) return null;
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
-  const expected = await sign(payload);
-  if (!sameValue(expected, signature)) return null;
   try {
+    const expected = await sign(payload);
+    if (!sameValue(expected, signature)) return null;
     const data = JSON.parse(base64UrlToText(payload)) as CommitteeSession & {
       exp?: number;
     };

@@ -82,8 +82,9 @@ export async function storePreparedPhoto(photo: {
   }
 
   const safeName = path.basename(photo.pathname);
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), photo.body);
+  // turbopackIgnore: the file name is only known at run time (local dev only).
+  const dir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads");
+  await mkdir(/*turbopackIgnore: true*/ dir, { recursive: true });
+  await writeFile(/*turbopackIgnore: true*/ path.join(dir, safeName), photo.body);
   return { url: `/uploads/${safeName}` };
 }

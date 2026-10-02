@@ -10,7 +10,7 @@ import { deskButtonClass } from "@/components/admin/DeskLink";
 import { LinkProfileForm } from "@/components/admin/LinkProfileForm";
 import { getAppUser } from "@/lib/auth";
 import { getSnapshot } from "@/lib/store";
-import { defaultAdminPermissions, toPersonPickerOption } from "@/lib/types";
+import { defaultAdminPermissions, toAdminPersonPickerOption } from "@/lib/types";
 
 function roleLabel(role: string) {
   if (role === "super_admin") return "Super admin";
@@ -29,7 +29,7 @@ export default async function CommitteePage() {
   );
   const superAdminCount = committee.filter((profile) => profile.role === "super_admin").length;
   const pendingInvites = snapshot.committeeInvites.filter((invite) => !invite.usedAt);
-  const peopleOptions = snapshot.people.map(toPersonPickerOption);
+  const peopleOptions = snapshot.people.map(toAdminPersonPickerOption);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:py-10">

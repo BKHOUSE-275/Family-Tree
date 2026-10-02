@@ -4,7 +4,6 @@ import {
   getProfile,
 } from "@/lib/store";
 import {
-  defaultAdminPermissions,
   hasPermission,
   isCommittee,
   parseAdminPermissions,
@@ -44,6 +43,7 @@ export function committeeHomePath(user: AppUser) {
   if (userHasPermission(user, "people.create")) return "/admin/people/new";
   if (userHasPermission(user, "requests.review")) return "/admin/requests";
   if (userHasPermission(user, "activity.view")) return "/admin/activity";
+  if (userHasPermission(user, "gallery.manage")) return "/admin/gallery";
   if (user.role === "super_admin") return "/admin/committee";
   return "/";
 }
@@ -80,7 +80,8 @@ export async function getAppUser(): Promise<AppUser | null> {
     return userFromProfile({
       id: profile?.userId ?? committee.userId,
       email: committee.email,
-      role: profile?.role ?? "admin",
+      // A signed token whose login was removed gets no committee access.
+      role: profile?.role ?? "member",
       personId: profile?.personId ?? null,
       permissions: profile?.permissions,
       isLocal: false,

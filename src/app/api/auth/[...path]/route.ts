@@ -21,5 +21,10 @@ export async function POST(
   context: { params: Promise<{ path: string[] }> },
 ) {
   if (!isNeonAuthConfigured()) return notConfigured();
+  // New accounts must go through signUpWithEmail, which checks the family invite code.
+  const { path } = await context.params;
+  if (path[0] === "sign-up") {
+    return Response.json({ error: "Sign up on the /sign-up page." }, { status: 403 });
+  }
   return getNeonAuth().handler().POST(request, context);
 }

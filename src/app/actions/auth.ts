@@ -7,6 +7,7 @@ import {
   LOCAL_AUTH_COOKIE,
   LOCAL_USER_ID,
   isNeonAuthConfigured,
+  isSafeLocalPath,
 } from "@/lib/auth-constants";
 import { getNeonAuth } from "@/lib/neon-auth";
 import { committeeHomePath, getAppUser } from "@/lib/auth";
@@ -17,6 +18,8 @@ import {
   expiredCommitteeSessionCookieOptions,
 } from "@/lib/committee-session";
 import { recordAudit } from "@/lib/audit";
+import { checkGatePasscode, secretsMatch } from "@/lib/passcode";
+import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 import {
   findPendingInvite,
   findProfileByEmail,
@@ -27,7 +30,7 @@ import { defaultAdminPermissions, isCommittee, type Profile } from "@/lib/types"
 
 function safeRedirect(value: FormDataEntryValue | null) {
   const next = String(value ?? "/admin");
-  return next.startsWith("/") ? next : "/admin";
+  return isSafeLocalPath(next) ? next : "/admin";
 }
 
 function normalizeEmail(value: FormDataEntryValue | null) {
@@ -157,7 +160,6 @@ export async function signInSuperAdminPasscode(formData: FormData) {
   const email = normalizeEmail(formData.get("email"));
   const password = String(formData.get("password") ?? "").trim();
   const redirectUrl = safeRedirect(formData.get("redirect_url"));
-  const expected = (process.env.FAMILY_GATE_PASSWORD ?? "").trim();
   const passcodeUrl = (error: string) =>
     signInUrl({ redirectUrl, email, step: "passcode", error });
 
@@ -173,13 +175,9 @@ export async function signInSuperAdminPasscode(formData: FormData) {
   if (!email || !allowed) {
     redirect(passcodeUrl("That email is not a super admin."));
   }
-  if (!expected) {
-    redirect(
-      passcodeUrl("FAMILY_GATE_PASSWORD is not loaded. Save .env and restart npm run dev."),
-    );
-  }
-  if (password !== expected) {
-    redirect(passcodeUrl("That passcode is not right."));
+  const passcodeError = await checkGatePasscode(password, email);
+  if (passcodeError) {
+    redirect(passcodeUrl(passcodeError));
   }
 
   const profile: Profile = {
@@ -221,11 +219,15 @@ export async function signUpWithEmail(
   const invite = process.env.FAMILY_INVITE_CODE ?? "";
   const provided = String(formData.get("inviteCode") ?? "").trim();
   if (invite) {
-    if (provided !== invite) {
+    if (!secretsMatch(provided, invite)) {
       return { error: "That family invite code is not right." };
     }
   } else if (process.env.NODE_ENV === "production") {
     return { error: "Set FAMILY_INVITE_CODE before inviting family." };
+  }
+
+  if (!(await hitRateLimit(`sign-up:${await clientIp()}`, 10, 60 * 60))) {
+    return { error: "Too many sign-up attempts. Try again in an hour." };
   }
 
   const email = String(formData.get("email") ?? "").trim();
@@ -260,7 +262,7 @@ export async function signInLocal(formData: FormData) {
       "Set FAMILY_GATE_PASSWORD or connect Neon Auth before inviting family.",
     );
   }
-  if (expected && password !== expected) {
+  if (expected && !secretsMatch(password, expected)) {
     throw new Error("That family password is not right.");
   }
 

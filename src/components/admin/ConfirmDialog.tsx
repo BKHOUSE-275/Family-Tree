@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { deskButtonClass } from "@/components/admin/DeskLink";
+
+// Portals need `document`: false on the server and during hydration, true after.
+const noopSubscribe = () => () => {};
+const isClient = () => true;
+const isServer = () => false;
 
 export function ConfirmDialog({
   title,
@@ -21,13 +26,8 @@ export function ConfirmDialog({
 }) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const onCancelRef = useRef(onCancel);
-  const [mounted, setMounted] = useState(false);
-  onCancelRef.current = onCancel;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(noopSubscribe, isClient, isServer);
+  const cancelFromDialog = useEffectEvent(() => onCancel());
 
   useEffect(() => {
     const node = dialogRef.current;
@@ -35,7 +35,7 @@ export function ConfirmDialog({
     if (!node.open) node.showModal();
     function onDialogCancel(event: Event) {
       event.preventDefault();
-      onCancelRef.current();
+      cancelFromDialog();
     }
     node.addEventListener("cancel", onDialogCancel);
     return () => {

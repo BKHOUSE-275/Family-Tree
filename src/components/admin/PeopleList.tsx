@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { deletePersonAction } from "@/app/actions/family";
+import { useActionState, useState } from "react";
+import { deletePersonAction, type FormActionState } from "@/app/actions/family";
 import { ConfirmSubmitButton } from "@/components/admin/ConfirmSubmitButton";
 import { DeskLink, deskButtonClass, deskButtonCompactClass } from "@/components/admin/DeskLink";
 import { isSlotDemoId } from "@/lib/types";
@@ -64,25 +64,21 @@ export function PeopleList({
     (filter) => !filters.some((id) => FILTER_BY_ID.get(id)?.group === filter.group),
   );
 
-  const filtered = useMemo(
-    () =>
-      sortPeople(
-        people.filter((person) => matchesPerson(person, query, filters)),
-        filters,
-      ),
-    [people, query, filters],
+  // Plain derivations: the lists are small, and the old useMemo wrappers
+  // could not be preserved by the React Compiler lint.
+  const filtered = sortPeople(
+    people.filter((person) => matchesPerson(person, query, filters)),
+    filters,
   );
-  const unplaced = useMemo(() => {
-    const withoutPlacement = filters.filter(
-      (id) => FILTER_BY_ID.get(id)?.group !== "placement",
-    );
-    return sortPeople(
-      people.filter(
-        (person) => !person.placed && matchesPerson(person, query, withoutPlacement),
-      ),
-      filters,
-    );
-  }, [people, query, filters]);
+  const withoutPlacement = filters.filter(
+    (id) => FILTER_BY_ID.get(id)?.group !== "placement",
+  );
+  const unplaced = sortPeople(
+    people.filter(
+      (person) => !person.placed && matchesPerson(person, query, withoutPlacement),
+    ),
+    filters,
+  );
 
   const active = Boolean(query.trim() || filters.length);
   const showUnplaced = !filters.some((id) => id === "placed");
@@ -225,8 +221,13 @@ function PersonRow({
   person: AdminPersonRow;
   canDelete: boolean;
 }) {
+  const [deleteState, deleteAction] = useActionState(
+    deletePersonAction,
+    null as FormActionState,
+  );
+
   return (
-    <li className="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-gold/20">
+    <li className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-gold/20">
       <Link
         href={`/admin/people/${person.id}`}
         className="min-w-0 flex-1 cursor-pointer rounded-lg outline-none transition-colors hover:text-leaf-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70"
@@ -239,7 +240,7 @@ function PersonRow({
           Edit
         </DeskLink>
         {canDelete ? (
-          <form action={deletePersonAction}>
+          <form action={deleteAction}>
             <input type="hidden" name="id" value={person.id} />
             <ConfirmSubmitButton
               title="Remove this person"
@@ -252,6 +253,11 @@ function PersonRow({
           </form>
         ) : null}
       </div>
+      {deleteState?.error ? (
+        <p role="alert" className="basis-full text-sm text-ember">
+          {deleteState.error}
+        </p>
+      ) : null}
     </li>
   );
 }

@@ -1,5 +1,6 @@
 import { SignInForm } from "@/components/auth/EmailAuthForms";
 import Link from "next/link";
+import { isSafeLocalPath } from "@/lib/auth-constants";
 
 export default async function SignInPage({
   searchParams,
@@ -12,10 +13,7 @@ export default async function SignInPage({
   }>;
 }) {
   const params = await searchParams;
-  const redirectUrl =
-    typeof params.redirect_url === "string" && params.redirect_url.startsWith("/")
-      ? params.redirect_url
-      : "/admin";
+  const redirectUrl = isSafeLocalPath(params.redirect_url) ? params.redirect_url : "/admin";
   const initialEmail = typeof params.email === "string" ? params.email.trim().toLowerCase() : "";
   const initialStep = params.step === "passcode" ? "passcode" : "email";
   const error = typeof params.error === "string" ? params.error : undefined;

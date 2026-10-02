@@ -1,4 +1,4 @@
-import { messageField } from "@/lib/request-message";
+import { messageField, personMessageField } from "@/lib/request-message";
 import {
   defaultPersonVisibility,
   displayName,
@@ -91,8 +91,8 @@ export function buildRequestPersonPreview(
     headstonePhotoUrl: request.headstonePhotoUrl,
   };
 
-  const phone = messageField(message, "proposed phone");
-  const email = messageField(message, "proposed email");
+  const phone = personMessageField(message, "contact number", "proposed phone");
+  const email = personMessageField(message, "email", "proposed email");
   const address = messageField(message, "address");
   const contact: Contact | null =
     phone || email || address

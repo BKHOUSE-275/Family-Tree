@@ -83,7 +83,9 @@ function itemFromAudit(event: AuditEvent): ActivityItem {
         ? "/admin/requests"
         : event.action === "role.change" || event.action === "profile.link"
           ? "/admin"
-          : undefined;
+          : event.action.startsWith("album") || event.action === "gallery.remove"
+            ? "/admin/gallery"
+            : undefined;
   return {
     id: event.id,
     createdAt: event.createdAt,

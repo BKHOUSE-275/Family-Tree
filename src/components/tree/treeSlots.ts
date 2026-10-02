@@ -42,7 +42,7 @@ export const BRANCH_EVEN: PctSlot[] = [
   { cx: 64.1, cy: 65.2, size: 8.6 },
   { cx: 76.3, cy: 61.3, size: 8.6 },
   { cx: 41.1, cy: 35.4, size: 8.6 },
-  { cx: 61.0, cy: 35.4, size: 8.6 },
+  { cx: 61.8, cy: 35.4, size: 8.6 },
 ];
 
 /**

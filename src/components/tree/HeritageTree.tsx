@@ -8,8 +8,10 @@ import {
   ART,
   HERITAGE_SUBJECT,
   TREE_ART,
+  canopyOverflowSlots,
   canopySlotsForCount,
   heritageChildCluster,
+  slotsBottomPct,
   type PctSlot,
 } from "@/components/tree/treeGeometry";
 import {
@@ -51,8 +53,16 @@ export function HeritageTree({
       : [];
   const overflowSlots =
     showCanopy && canopyOverflow.length
-      ? heritageChildCluster(HERITAGE_SUBJECT, canopyOverflow.length)
+      ? canopyOverflowSlots(canopyOverflow.length)
       : [];
+  // Big families can run below the painting; grow the frame to keep them
+  // visible. Place mode keeps the frame art-sized for SlotPlacer's math.
+  const overhangPct = placeMode
+    ? 0
+    : Math.max(
+        0,
+        slotsBottomPct([...canopyLayout, ...childSlots, ...overflowSlots]) + 2 - 100,
+      );
 
   return (
     <div className="w-full min-w-0">
@@ -75,23 +85,6 @@ export function HeritageTree({
               draggable={false}
             />
           </div>
-
-          {placeMode
-            ? null
-            : canopyLayout.map((slot, index) => {
-                const person = canopyPeople[index];
-                if (!person) return null;
-                return (
-                  <NodeAnchor key={person.id} slot={slot} z={10}>
-                    <HeritagePersonNode
-                      person={person}
-                      active={person.id === focusId}
-                      onSelect={onSelect}
-                    />
-                  </NodeAnchor>
-                );
-              })}
-
           {placeMode ? (
             <SlotPlacer
               frameRef={frameRef}
@@ -103,61 +96,85 @@ export function HeritageTree({
             />
           ) : null}
 
-          {!showCanopy && subject ? (
-            <NodeAnchor slot={HERITAGE_SUBJECT} z={30}>
-              <HeritagePersonNode
-                person={subject}
-                active
-                onSelect={onSelect}
-              />
-            </NodeAnchor>
+          {overhangPct > 0 ? (
+            // Padding % is relative to width, so convert from art-height %.
+            <div aria-hidden style={{ paddingBottom: `${(overhangPct * ART.h) / ART.w}%` }} />
           ) : null}
 
-          <AnimatePresence>
-            {showCanopy
-              ? canopyOverflow.map((person, index) => {
-                  const slot = overflowSlots[index];
-                  if (!slot) return null;
+          {/* Seats are % of the art, so anchor them to an art-sized layer. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[1536/1024]">
+            {placeMode
+              ? null
+              : canopyLayout.map((slot, index) => {
+                  const person = canopyPeople[index];
+                  if (!person) return null;
                   return (
-                    <NodeAnchor key={person.id} slot={slot} z={20}>
-                      <motion.div
-                        initial={{ opacity: 0, y: -14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ delay: index * 0.04, duration: 0.35 }}
-                      >
-                        <HeritagePersonNode
-                          person={person}
-                          active={person.id === focusId}
-                          compact
-                          onSelect={onSelect}
-                        />
-                      </motion.div>
-                    </NodeAnchor>
-                  );
-                })
-              : hangingChildren.map((person, index) => {
-                  const slot = childSlots[index];
-                  if (!slot) return null;
-                  return (
-                    <NodeAnchor key={person.id} slot={slot} z={20}>
-                      <motion.div
-                        initial={{ opacity: 0, y: -14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ delay: index * 0.04, duration: 0.35 }}
-                      >
-                        <HeritagePersonNode
-                          person={person}
-                          active={person.id === focusId}
-                          compact
-                          onSelect={onSelect}
-                        />
-                      </motion.div>
+                    <NodeAnchor key={person.id} slot={slot} z={10}>
+                      <HeritagePersonNode
+                        person={person}
+                        active={person.id === focusId}
+                        onSelect={onSelect}
+                      />
                     </NodeAnchor>
                   );
                 })}
-          </AnimatePresence>
+
+            {!showCanopy && subject ? (
+              <NodeAnchor slot={HERITAGE_SUBJECT} z={30}>
+                <HeritagePersonNode
+                  person={subject}
+                  active
+                  onSelect={onSelect}
+                />
+              </NodeAnchor>
+            ) : null}
+
+            <AnimatePresence>
+              {showCanopy
+                ? canopyOverflow.map((person, index) => {
+                    const slot = overflowSlots[index];
+                    if (!slot) return null;
+                    return (
+                      <NodeAnchor key={person.id} slot={slot} z={20}>
+                        <motion.div
+                          initial={{ opacity: 0, y: -14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ delay: index * 0.04, duration: 0.35 }}
+                        >
+                          <HeritagePersonNode
+                            person={person}
+                            active={person.id === focusId}
+                            compact
+                            onSelect={onSelect}
+                          />
+                        </motion.div>
+                      </NodeAnchor>
+                    );
+                  })
+                : hangingChildren.map((person, index) => {
+                    const slot = childSlots[index];
+                    if (!slot) return null;
+                    return (
+                      <NodeAnchor key={person.id} slot={slot} z={20}>
+                        <motion.div
+                          initial={{ opacity: 0, y: -14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ delay: index * 0.04, duration: 0.35 }}
+                        >
+                          <HeritagePersonNode
+                            person={person}
+                            active={person.id === focusId}
+                            compact
+                            onSelect={onSelect}
+                          />
+                        </motion.div>
+                      </NodeAnchor>
+                    );
+                  })}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
       <p className="mt-3 px-3 text-center text-sm text-bark/70 md:hidden">
@@ -178,7 +195,7 @@ function NodeAnchor({
 }) {
   return (
     <div
-      className="@container absolute"
+      className="@container pointer-events-auto absolute"
       style={{
         left: `${slot.cx}%`,
         top: `${slot.cy}%`,

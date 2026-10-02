@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PersonPanel } from "@/components/person/PersonPanel";
 import { StoryTitle } from "@/components/layout/StoryTitle";
 import { HeritageTree } from "@/components/tree/HeritageTree";
-import { CANOPY_EVEN } from "@/components/tree/treeSlots";
+import { canopySeatCount } from "@/components/tree/treeGeometry";
 import {
   ROOT_FATHER_ID,
   ROOT_MOTHER_ID,
@@ -93,12 +94,12 @@ export function FamilyTree({
   );
   const searchActive = Boolean(query.trim()) && matches.length > 0;
   const treeIsTopLevel = searchActive || isTopLevel;
-  const canopyPeople = searchActive
-    ? matches.slice(0, CANOPY_EVEN.length)
-    : firstGeneration;
-  const canopyOverflow = searchActive
-    ? matches.slice(CANOPY_EVEN.length)
-    : [];
+  // Painted seats first; anyone past them (search or a big first generation)
+  // goes to overflow rows below the canopy.
+  const canopyPool = searchActive ? matches : firstGeneration;
+  const canopySeats = canopySeatCount(canopyPool.length);
+  const canopyPeople = canopyPool.slice(0, canopySeats);
+  const canopyOverflow = canopyPool.slice(canopySeats);
 
   const trail = ancestryTrail(snapshot, activeId, byId);
 
@@ -210,13 +211,19 @@ export function FamilyTree({
             Tap a name on the Family Tree to see their children branch off of
             them.
           </p>
-          <p className="mt-3 text-center">
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-6">
             <a
               href="#suggest"
               className="inline-flex min-h-11 items-center text-sm text-ember underline-offset-4 hover:underline"
             >
               Suggest an update
             </a>
+            <Link
+              href="/gallery"
+              className="inline-flex min-h-11 items-center text-sm text-script underline-offset-4 hover:underline"
+            >
+              Family photo gallery
+            </Link>
           </p>
         </div>
 

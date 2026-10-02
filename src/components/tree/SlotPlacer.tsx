@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { formatCanopySlots } from "@/components/tree/treeSlots";
 import type { PctSlot } from "@/components/tree/treeGeometry";
 
@@ -29,73 +29,74 @@ export function SlotPlacer({
   const [copied, setCopied] = useState(false);
   const [grid, setGrid] = useState(true);
   const drag = useRef<{ index: number } | null>(null);
-  const slotsRef = useRef(slots);
-  const selectedRef = useRef(selected);
-  const labelForRef = useRef(labelFor);
   const gridId = useId();
   const current = slots[selected];
-  slotsRef.current = slots;
-  selectedRef.current = selected;
-  labelForRef.current = labelFor;
+
+  const onWindowMove = useEffectEvent((event: PointerEvent) => {
+    if (!drag.current) return;
+    onSlotsChange(
+      moveSlot(slots, drag.current.index, pointToPct(event, frameRef.current)),
+    );
+  });
 
   useEffect(() => {
     function onMove(event: PointerEvent) {
-      if (!drag.current) return;
-      onSlotsChange(
-        moveSlot(
-          slotsRef.current,
-          drag.current.index,
-          pointToPct(event, frameRef.current),
-        ),
-      );
+      onWindowMove(event);
     }
+    // pointercancel too, so a touch drag the browser takes over can't stay "dragging".
     function onUp() {
       drag.current = null;
     }
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
-  }, [frameRef, onSlotsChange]);
+  }, []);
+
+  const onWindowKey = useEffectEvent((event: KeyboardEvent) => {
+    if (isTypingTarget(event.target)) return;
+    const step = event.shiftKey ? 0.1 : 0.4;
+    const index = selected;
+    const next = slots;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      onSlotsChange(nudgeSlot(next, index, -step, 0));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      onSlotsChange(nudgeSlot(next, index, step, 0));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      onSlotsChange(nudgeSlot(next, index, 0, -step));
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      onSlotsChange(nudgeSlot(next, index, 0, step));
+    } else if (event.key === "[" || event.key === "-") {
+      event.preventDefault();
+      onSlotsChange(resizeSlot(next, index, -0.2));
+    } else if (event.key === "]" || event.key === "=" || event.key === "+") {
+      event.preventDefault();
+      onSlotsChange(resizeSlot(next, index, 0.2));
+    } else if (event.key === "p" || event.key === "P") {
+      setSelected(0);
+    } else if (/^[1-9]$/.test(event.key)) {
+      const n = Number(event.key);
+      const parentLabeled = labelFor(0) === "P";
+      const index = parentLabeled ? n : n - 1;
+      if (index >= 0 && index < next.length) setSelected(index);
+    }
+  });
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.target instanceof HTMLInputElement) return;
-      const step = event.shiftKey ? 0.1 : 0.4;
-      const index = selectedRef.current;
-      const next = slotsRef.current;
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        onSlotsChange(nudgeSlot(next, index, -step, 0));
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        onSlotsChange(nudgeSlot(next, index, step, 0));
-      } else if (event.key === "ArrowUp") {
-        event.preventDefault();
-        onSlotsChange(nudgeSlot(next, index, 0, -step));
-      } else if (event.key === "ArrowDown") {
-        event.preventDefault();
-        onSlotsChange(nudgeSlot(next, index, 0, step));
-      } else if (event.key === "[" || event.key === "-") {
-        event.preventDefault();
-        onSlotsChange(resizeSlot(next, index, -0.2));
-      } else if (event.key === "]" || event.key === "=" || event.key === "+") {
-        event.preventDefault();
-        onSlotsChange(resizeSlot(next, index, 0.2));
-      } else if (event.key === "p" || event.key === "P") {
-        setSelected(0);
-      } else if (/^[1-9]$/.test(event.key)) {
-        const n = Number(event.key);
-        const parentLabeled = labelForRef.current(0) === "P";
-        const index = parentLabeled ? n : n - 1;
-        if (index >= 0 && index < next.length) setSelected(index);
-      }
+      onWindowKey(event);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onSlotsChange]);
+  }, []);
 
   function startDrag(index: number, event: ReactPointerEvent) {
     event.preventDefault();
@@ -146,6 +147,7 @@ export function SlotPlacer({
             width: `${slot.size}%`,
             transform: "translate(-50%, -50%)",
             cursor: "grab",
+            touchAction: "none",
           }}
         >
           {labelFor(index)}
@@ -524,4 +526,14 @@ function round1(value: number) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+/** Keys typed into form fields or editable text must not nudge circles. */
+function isTypingTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
 }

@@ -86,7 +86,8 @@ export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] 
 
   while (remaining > 0) {
     const rowCount = Math.min(pattern.perRow, remaining);
-    const cy = Math.min(lastCy + row * pattern.rowGap, 88);
+    // No cap: rows past the art extend the frame (see slotsBottomPct).
+    const cy = lastCy + row * pattern.rowGap;
     const start = origin.cx - ((rowCount - 1) * pattern.pitch) / 2;
     for (let col = 0; col < rowCount; col += 1) {
       placed.push({
@@ -104,13 +105,65 @@ export function heritageChildCluster(origin: PctSlot, count: number): PctSlot[] 
 
 /** Hero canopy seats with the same even/odd balance rule. */
 export function canopySlotsForCount(count: number): PctSlot[] {
+  return balancedSlots(CANOPY_EVEN, CANOPY_CENTERS, canopySeatCount(count));
+}
+
+/**
+ * How many of `count` people get a painted canopy seat (8 even / 9 odd max).
+ * The rest go to `canopyOverflowSlots`, so nobody is dropped.
+ */
+export function canopySeatCount(count: number): number {
   const layout = classifySlots(CANOPY_EVEN, CANOPY_CENTERS);
   const authoredEven = layout.pairs.length * 2;
-  const capped =
-    count % 2 === 0
-      ? Math.min(count, authoredEven)
-      : Math.min(count, authoredEven + 1);
-  return balancedSlots(CANOPY_EVEN, CANOPY_CENTERS, capped);
+  return count % 2 === 0
+    ? Math.min(count, authoredEven)
+    : Math.min(count, authoredEven + 1);
+}
+
+/** Canopy overflow rows: centered under the tree, clear of the lowest seats. */
+const CANOPY_OVERFLOW = {
+  firstCy: 81,
+  perRow: 6,
+  pitch: 11,
+  size: 8.6,
+};
+
+/**
+ * Seats for canopy people past the painted holes, in rows below the canopy.
+ * Rows keep going past the art (cy > 100); HeritageTree grows to fit.
+ */
+export function canopyOverflowSlots(count: number): PctSlot[] {
+  const { firstCy, perRow, pitch, size } = CANOPY_OVERFLOW;
+  const rowGap = nodeHeightPct(size) + 2;
+  const placed: PctSlot[] = [];
+  for (let row = 0; placed.length < count; row += 1) {
+    const rowCount = Math.min(perRow, count - placed.length);
+    const start = TREE_AXIS - ((rowCount - 1) * pitch) / 2;
+    for (let col = 0; col < rowCount; col += 1) {
+      placed.push({
+        cx: round1(start + col * pitch),
+        cy: round1(firstCy + row * rowGap),
+        size,
+      });
+    }
+  }
+  return placed;
+}
+
+/**
+ * Lowest portrait edge, as % of the art height. Values over 100 mean the
+ * layout runs below the painting and the frame needs extra room.
+ */
+export function slotsBottomPct(slots: PctSlot[]): number {
+  return slots.reduce(
+    (bottom, slot) => Math.max(bottom, slot.cy + nodeHeightPct(slot.size) / 2),
+    0,
+  );
+}
+
+/** Portraits are square and sized by art width; convert to % of art height. */
+function nodeHeightPct(size: number) {
+  return (size * ART.w) / ART.h;
 }
 
 function classifySlots(evenSlots: PctSlot[], centerSlots: PctSlot[]) {
@@ -277,8 +330,10 @@ function branchRowPattern(placed: PctSlot[]) {
     size,
     firstCy,
     perRow: 2,
-    pitch,
-    rowGap: Math.max(secondCy - firstCy, 12),
+    // Rows above can hold duplicate seats, shrinking the measured pitch.
+    pitch: Math.max(pitch, size + 1.5),
+    // At least one portrait tall, so stacked overflow rows never overlap.
+    rowGap: Math.max(secondCy - firstCy, 12, nodeHeightPct(size) + 1),
   };
 }
 

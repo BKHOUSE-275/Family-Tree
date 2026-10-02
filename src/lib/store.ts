@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
-import { eq, isNull, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { seedSnapshot } from "@/data/seed";
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import {
@@ -243,6 +243,10 @@ async function ensureNeonSeeded() {
   const db = getDb();
   const existing = await db.select({ id: people.id }).from(people).limit(1);
   if (existing.length > 0) return;
+  // Seed a brand-new database only. Any audit history means the family has
+  // been editing, so an empty tree is deliberate and the seed must not return.
+  const history = await db.select({ id: auditEvents.id }).from(auditEvents).limit(1);
+  if (history.length > 0) return;
   await insertSnapshot(seedSnapshot);
 }
 
@@ -502,6 +506,16 @@ export async function savePartnership(input: Partnership) {
   await writeLocal(snapshot);
 }
 
+export async function deletePartnership(id: string) {
+  if (isDatabaseConfigured()) {
+    await getDb().delete(partnerships).where(eq(partnerships.id, id));
+    return;
+  }
+  const snapshot = await readLocal();
+  snapshot.partnerships = snapshot.partnerships.filter((union) => union.id !== id);
+  await writeLocal(snapshot);
+}
+
 export async function deletePartnershipsForPerson(personId: string) {
   if (isDatabaseConfigured()) {
     const db = getDb();
@@ -639,6 +653,28 @@ export async function saveChangeRequest(input: ChangeRequest) {
   if (index >= 0) snapshot.changeRequests[index] = input;
   else snapshot.changeRequests.push(input);
   await writeLocal(snapshot);
+}
+
+/**
+ * Records a decision on a request only if it is still pending, so two
+ * reviewers (or a stale tab) cannot both act on it. Returns false if it was
+ * already decided.
+ */
+export async function decideChangeRequest(input: ChangeRequest) {
+  if (isDatabaseConfigured()) {
+    const updated = await getDb()
+      .update(changeRequests)
+      .set(requestRow(input))
+      .where(and(eq(changeRequests.id, input.id), eq(changeRequests.status, "pending")))
+      .returning({ id: changeRequests.id });
+    return updated.length > 0;
+  }
+  const snapshot = await readLocal();
+  const index = snapshot.changeRequests.findIndex((item) => item.id === input.id);
+  if (index < 0 || snapshot.changeRequests[index].status !== "pending") return false;
+  snapshot.changeRequests[index] = input;
+  await writeLocal(snapshot);
+  return true;
 }
 
 export async function getChangeRequest(id: string) {

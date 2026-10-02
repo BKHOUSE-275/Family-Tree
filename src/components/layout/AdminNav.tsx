@@ -53,6 +53,11 @@ export function AdminNav({
               Activity
             </Link>
           ) : null}
+          {isSuperAdmin || permissions["gallery.manage"] ? (
+            <Link href="/admin/gallery" className={navLink}>
+              Gallery
+            </Link>
+          ) : null}
           {isSuperAdmin ? (
             <Link href="/admin/committee" className={navLink}>
               Admins

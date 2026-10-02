@@ -11,6 +11,11 @@ export type SplitRequestMessage = {
 
 const SUBMITTER_LABELS = new Set(["from", "phone", "email"]);
 
+const PERSON_LABELS: Record<string, string> = {
+  "proposed phone": "Contact number",
+  "proposed email": "Email",
+};
+
 export function parseRequestMessage(message: string): RequestMessageRow[] {
   const rows: RequestMessageRow[] = [];
   for (const raw of message.split("\n")) {
@@ -41,6 +46,7 @@ function rowValue(message: string, label: string) {
 export function splitRequestMessage(message: string): SplitRequestMessage {
   const submitter: RequestMessageRow[] = [];
   const person: RequestMessageRow[] = [];
+  const seenSubmitter = new Set<string>();
   let requestType: string | null = null;
   for (const row of parseRequestMessage(message)) {
     const key = row.label?.toLowerCase() ?? "";
@@ -48,14 +54,37 @@ export function splitRequestMessage(message: string): SplitRequestMessage {
       requestType = row.value;
       continue;
     }
-    if (SUBMITTER_LABELS.has(key)) submitter.push(row);
-    else person.push(row);
+    if (SUBMITTER_LABELS.has(key) && !seenSubmitter.has(key)) {
+      seenSubmitter.add(key);
+      submitter.push(row);
+      continue;
+    }
+    person.push(
+      row.label
+        ? { ...row, label: PERSON_LABELS[key] ?? row.label }
+        : row,
+    );
   }
   return { requestType, submitter, person };
 }
 
+function personRowValue(message: string, labels: string[]) {
+  const wanted = new Set(labels.map((label) => label.toLowerCase()));
+  const row = splitRequestMessage(message).person.find((entry) => {
+    const key = entry.label?.toLowerCase() ?? "";
+    if (!wanted.has(key)) return false;
+    const value = entry.value.trim();
+    return value.length > 0 && value !== "(none)";
+  });
+  return row?.value ?? null;
+}
+
 export function messageField(message: string, label: string) {
   return rowValue(message, label);
+}
+
+export function personMessageField(message: string, ...labels: string[]) {
+  return personRowValue(message, labels);
 }
 
 export function requestKindLabel(message: string, personName?: string | null) {

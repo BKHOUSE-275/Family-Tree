@@ -50,6 +50,58 @@ body {
   color: var(--ink);
 }
 
+/* Scrollbars: a bark-brown thumb on the page's parchment, slim inside panels and
+   lists. Firefox and Chromium use scrollbar-color; Safari uses the ::-webkit rules. */
+:root {
+  --scroll-thumb: rgba(92, 58, 33, 0.45);
+  --scroll-thumb-hover: var(--bark);
+  --scroll-track: transparent;
+}
+
+html {
+  scrollbar-color: var(--scroll-thumb) var(--page);
+}
+
+body * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  body *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--page);
+  }
+
+  body *::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid var(--page);
+    border-radius: 999px;
+    background: var(--scroll-thumb);
+  }
+
+  body *::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scroll-thumb-hover);
+  }
+}
+
 .heritage-paper {
   background-color: #f5e4c4;
   background-image:
