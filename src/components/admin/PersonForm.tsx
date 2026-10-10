@@ -78,7 +78,6 @@ export function PersonForm({
           defaultValue={person?.headstoneLocation}
           placeholder="New Bethel Church, Bellville, Florida"
         />
-        <Field name="familysearchId" label="FamilySearch ID" defaultValue={person?.familysearchId} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <PhotoField defaultUrl={person?.photoUrl} name="photoUrl" label="Profile photo" />
@@ -89,15 +88,6 @@ export function PersonForm({
           preview="rect"
         />
       </div>
-      <label className="block text-sm font-semibold text-script">
-        Notes
-        <textarea
-          name="notes"
-          defaultValue={person?.notes ?? ""}
-          rows={4}
-          className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"
-        />
-      </label>
 
       {parents[1]?.parentId ? (
         <input type="hidden" name="parentId2" value={parents[1].parentId} />
@@ -119,7 +109,6 @@ export function PersonForm({
         />
         <Field name="marriageDate" label="Marriage date" defaultValue={partnership?.startDate} />
         <Field name="marriagePlace" label="Marriage place" defaultValue={partnership?.place} />
-        <Field name="marriageNotes" label="Marriage notes" defaultValue={partnership?.notes} />
       </div>
 
       <fieldset className="space-y-2">
@@ -151,7 +140,7 @@ export function PersonForm({
           will not see them.
         </p>
         <div className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-          {PERSON_VISIBILITY_FIELDS.map((field) => (
+          {PERSON_VISIBILITY_FIELDS.filter((field) => field.key !== "showNotes").map((field) => (
             <label
               key={field.key}
               className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-script"

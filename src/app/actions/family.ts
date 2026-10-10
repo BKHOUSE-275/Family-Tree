@@ -140,15 +140,16 @@ export async function savePersonAction(
       isDeceased: bool(formData, "isDeceased"),
       headstoneLocation: str(formData, "headstoneLocation"),
       headstonePhotoUrl: str(formData, "headstonePhotoUrl"),
-      familysearchId: str(formData, "familysearchId"),
-      notes: str(formData, "notes"),
+      // No longer edited in the form; keep whatever is already on record.
+      familysearchId: before?.familysearchId ?? null,
+      notes: before?.notes ?? null,
       showPhoto: bool(formData, "showPhoto"),
       showMaidenName: bool(formData, "showMaidenName"),
       showBirthDate: bool(formData, "showBirthDate"),
       showBirthPlace: bool(formData, "showBirthPlace"),
       showDeathDate: bool(formData, "showDeathDate"),
       showHeadstone: bool(formData, "showHeadstone"),
-      showNotes: bool(formData, "showNotes"),
+      showNotes: before?.showNotes ?? true,
       showResidences: bool(formData, "showResidences"),
       showMarriage: bool(formData, "showMarriage"),
     };
@@ -181,13 +182,14 @@ export async function savePersonAction(
     await setParents(person.id, parentIds);
 
     if (partnerId) {
+      const unionId = str(formData, "partnershipId") ?? `union-${person.id}-${partnerId}`;
       const union: Partnership = {
-        id: str(formData, "partnershipId") ?? `union-${person.id}-${partnerId}`,
+        id: unionId,
         personAId: person.id,
         personBId: partnerId,
         startDate: str(formData, "marriageDate"),
         place: str(formData, "marriagePlace"),
-        notes: str(formData, "marriageNotes"),
+        notes: beforePartner?.id === unionId ? beforePartner.notes : null,
       };
       await savePartnership(union);
     } else if (beforePartner) {

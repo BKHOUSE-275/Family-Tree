@@ -27,7 +27,6 @@ export default async function AdminPage() {
     isDeceased: person.isDeceased,
     hasPhoto: Boolean(person.photoUrl),
     hasHeadstone: Boolean(person.headstoneLocation || person.headstonePhotoUrl),
-    hasFamilySearch: Boolean(person.familysearchId),
   }));
   const pendingCount = snapshot.changeRequests.filter((row) => row.status === "pending").length;
   const recent = buildActivityFeed(snapshot).slice(0, 5);

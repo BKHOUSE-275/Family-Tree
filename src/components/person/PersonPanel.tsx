@@ -52,8 +52,7 @@ export function PersonPanel({
   const hasDetails =
     Boolean(view.birthPlace || view.birthDate) ||
     showHeadstone ||
-    Boolean(contact?.address || contact?.phone || contact?.email) ||
-    Boolean(view.notes);
+    Boolean(contact?.address || contact?.phone || contact?.email);
 
   return (
     <AnimatePresence mode="wait">
@@ -141,7 +140,6 @@ export function PersonPanel({
             <Field label="2. Address" value={contact?.address} />
             <Field label="3. Telephone" value={contact?.phone} />
             <Field label="4. Email" value={contact?.email} />
-            <Field label="Notes" value={view.notes} />
           </dl>
         ) : null}
 
@@ -181,7 +179,7 @@ export function PersonPanel({
                       {displayName(row.person)}
                     </button>
                   )}
-                  {row.date || row.place || row.notes ? (
+                  {row.date || row.place ? (
                     <p className="text-black/60">
                       {row.date ? (
                         <span className="block">
@@ -190,7 +188,6 @@ export function PersonPanel({
                         </span>
                       ) : null}
                       {row.place ? <span className="block">{row.place}</span> : null}
-                      {row.notes ? <span className="block">{row.notes}</span> : null}
                     </p>
                   ) : null}
                 </li>

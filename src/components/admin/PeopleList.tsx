@@ -16,7 +16,6 @@ export type AdminPersonRow = {
   isDeceased: boolean;
   hasPhoto: boolean;
   hasHeadstone: boolean;
-  hasFamilySearch: boolean;
 };
 
 type FilterId =
@@ -29,9 +28,7 @@ type FilterId =
   | "has-photo"
   | "no-photo"
   | "has-headstone"
-  | "no-headstone"
-  | "has-familysearch"
-  | "no-familysearch";
+  | "no-headstone";
 
 const FILTERS: { id: FilterId; group: string; label: string }[] = [
   { id: "name-az", group: "sort", label: "Name A–Z" },
@@ -43,10 +40,7 @@ const FILTERS: { id: FilterId; group: string; label: string }[] = [
   { id: "has-photo", group: "photo", label: "Has photo" },
   { id: "no-photo", group: "photo", label: "Missing photo" },
   { id: "has-headstone", group: "headstone", label: "Has headstone" },
-  { id: "no-headstone", group: "headstone", label: "Missing headstone" },
-  { id: "has-familysearch", group: "familysearch", label: "Has FamilySearch ID" },
-  { id: "no-familysearch", group: "familysearch", label: "Missing FamilySearch ID" },
-];
+  { id: "no-headstone", group: "headstone", label: "Missing headstone" },];
 
 const FILTER_BY_ID = new Map(FILTERS.map((filter) => [filter.id, filter]));
 
@@ -300,14 +294,7 @@ function matchesPerson(person: AdminPersonRow, query: string, filters: FilterId[
         break;
       case "no-headstone":
         if (person.hasHeadstone) return false;
-        break;
-      case "has-familysearch":
-        if (!person.hasFamilySearch) return false;
-        break;
-      case "no-familysearch":
-        if (person.hasFamilySearch) return false;
-        break;
-    }
+        break;    }
   }
 
   return true;

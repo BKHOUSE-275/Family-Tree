@@ -140,7 +140,9 @@ export function buildRequestPersonPreview(
     }
   }
 
-  const parentLabel = messageField(message, "parent");
+  // Newer requests carry the flyer's "Parent's name (Mitchell)"; older ones "Parent".
+  const parentLabel =
+    messageField(message, "parent's name (mitchell)") ?? messageField(message, "parent");
   if (parentLabel) {
     addUnique(
       parents,

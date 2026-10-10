@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { saveContactAction, type FormActionState } from "@/app/actions/family";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import type { Contact } from "@/lib/types";
 
 export function ContactForm({
@@ -46,10 +47,8 @@ export function ContactForm({
       </label>
       <label className="block text-sm font-semibold text-script">
         Telephone
-        <input
+        <PhoneInput
           name="phone"
-          type="tel"
-          inputMode="tel"
           autoComplete="tel"
           defaultValue={contact?.phone ?? ""}
           className="mt-1 min-h-11 w-full rounded-xl border border-black/10 px-3 py-2 text-base"

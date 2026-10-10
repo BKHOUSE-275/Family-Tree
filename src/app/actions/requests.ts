@@ -6,6 +6,7 @@ import { getAppUser, requirePermission, requireSuperAdmin } from "@/lib/auth";
 import { recordAudit } from "@/lib/audit";
 import { notifyCommitteeOfRequest } from "@/lib/mail";
 import { clientIp, hitRateLimit } from "@/lib/rate-limit";
+import { isLineageId } from "@/lib/lineage";
 import { isAddPersonRequest } from "@/lib/request-message";
 import {
   decideChangeRequest,
@@ -57,12 +58,47 @@ function composePersonName(parts: {
     : withSuffix;
 }
 
-const RELATIONSHIP_LABELS: Record<string, string> = {
-  child: "Child of",
-  parent: "Parent of",
-  spouse: "Spouse of",
-  sibling: "Sibling of",
+type FamilyDetails = {
+  lineageLabel: string | null;
+  parentName: string | null;
+  grandparentName: string | null;
+  childCount: string | null;
+  siblingCount: string | null;
 };
+
+// The "Family Details" box from the reunion flyer.
+async function readFamilyDetails(formData: FormData) {
+  const lineageId = str(formData, "lineage");
+  if (lineageId && !isLineageId(lineageId)) {
+    throw new Error("Please choose James, Autmon, Philip, or Mittie Ann for the lineage.");
+  }
+  const count = (key: string, label: string) => {
+    const value = str(formData, key);
+    if (!value) return null;
+    if (!/^\d{1,2}$/.test(value)) {
+      throw new Error(`${label} should be a whole number, like 3.`);
+    }
+    return String(Number(value));
+  };
+  const details: FamilyDetails = {
+    lineageLabel: await personLabel(lineageId),
+    parentName: str(formData, "parentName"),
+    grandparentName: str(formData, "grandparentName"),
+    childCount: count("childCount", "Number of children"),
+    siblingCount: count("siblingCount", "Number of siblings"),
+  };
+  return { lineageId, details };
+}
+
+function familyDetailRows(details: FamilyDetails) {
+  return [
+    `Lineage: ${details.lineageLabel ?? "(none)"}`,
+    `Parent's name (Mitchell): ${details.parentName ?? "(none)"}`,
+    `Grandparent's name (Mitchell): ${details.grandparentName ?? "(none)"}`,
+    `Number of children: ${details.childCount ?? "(none)"}`,
+    `Number of siblings (Mitchell): ${details.siblingCount ?? "(none)"}`,
+  ];
+}
 
 function buildChangeInfoMessage(input: {
   submitterName: string;
@@ -82,7 +118,7 @@ function buildChangeInfoMessage(input: {
   isDeceased: boolean;
   deathDate: string | null;
   headstoneLocation: string | null;
-  parent1Label: string | null;
+  familyDetails: FamilyDetails;
   spouseLabel: string | null;
   marriageDate: string | null;
   marriagePlace: string | null;
@@ -116,7 +152,7 @@ function buildChangeInfoMessage(input: {
     `Deceased: ${input.isDeceased ? "yes" : "no"}`,
     `Death date: ${input.deathDate ?? "(none)"}`,
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
-    `Parent: ${input.parent1Label ?? "(none)"}`,
+    ...familyDetailRows(input.familyDetails),
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
     `Marriage date: ${input.marriageDate ?? "(none)"}`,
     `Marriage place: ${input.marriagePlace ?? "(none)"}`,
@@ -134,14 +170,13 @@ function buildAddPersonMessage(input: {
   suffix: string | null;
   personPhone: string;
   personEmail: string | null;
+  address: string | null;
   birthDate: string | null;
   birthPlace: string | null;
   isDeceased: boolean;
   deathDate: string | null;
   headstoneLocation: string | null;
-  relationshipType: string;
-  relatedLabel: string;
-  parent1Label: string | null;
+  familyDetails: FamilyDetails;
   spouseLabel: string | null;
   marriageDate: string | null;
   marriagePlace: string | null;
@@ -153,8 +188,6 @@ function buildAddPersonMessage(input: {
     nickname: input.nickname,
     suffix: input.suffix,
   });
-  const relationship =
-    RELATIONSHIP_LABELS[input.relationshipType] ?? input.relationshipType;
 
   return [
     "Type: add_person",
@@ -170,13 +203,13 @@ function buildAddPersonMessage(input: {
     `Full name: ${fullName}`,
     `Contact number: ${input.personPhone}`,
     `Email: ${input.personEmail ?? "(none)"}`,
+    `Address: ${input.address ?? "(none)"}`,
     `Birth date: ${input.birthDate ?? "(none)"}`,
     `Birth place: ${input.birthPlace ?? "(none)"}`,
     `Deceased: ${input.isDeceased ? "yes" : "no"}`,
     `Death date: ${input.deathDate ?? "(none)"}`,
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
-    `Relationship: ${relationship} ${input.relatedLabel}`,
-    `Parent: ${input.parent1Label ?? "(none)"}`,
+    ...familyDetailRows(input.familyDetails),
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
     `Marriage date: ${input.marriageDate ?? "(none)"}`,
     `Marriage place: ${input.marriagePlace ?? "(none)"}`,
@@ -227,7 +260,9 @@ async function submitChangeRequest(formData: FormData) {
     throw new Error("Please include a phone number for this person.");
   }
   const personEmail = str(formData, "personEmail");
-  const personId = str(formData, "personId");
+  const { lineageId, details: familyDetails } = await readFamilyDetails(formData);
+  // An added person isn't on the tree yet, so the request hangs off their lineage.
+  const personId = requestType === "add_person" ? lineageId : str(formData, "personId");
 
   let message: string;
 
@@ -243,8 +278,6 @@ async function submitChangeRequest(formData: FormData) {
     if (!about) {
       throw new Error("That person was not found.");
     }
-    const parentId1 = str(formData, "parentId1");
-    const partnerId = str(formData, "partnerId");
     message = buildChangeInfoMessage({
       submitterName,
       submitterPhone,
@@ -263,8 +296,8 @@ async function submitChangeRequest(formData: FormData) {
       isDeceased: bool(formData, "isDeceased"),
       deathDate: str(formData, "deathDate"),
       headstoneLocation: str(formData, "headstoneLocation"),
-      parent1Label: await personLabel(parentId1),
-      spouseLabel: await personLabel(partnerId),
+      familyDetails,
+      spouseLabel: str(formData, "spouseName"),
       marriageDate: str(formData, "marriageDate"),
       marriagePlace: str(formData, "marriagePlace"),
     });
@@ -273,23 +306,9 @@ async function submitChangeRequest(formData: FormData) {
     if (!givenName) {
       throw new Error("Please include the person's given name.");
     }
-    const relationshipType = str(formData, "relationshipType");
-    if (
-      !relationshipType ||
-      !["child", "parent", "spouse", "sibling"].includes(relationshipType)
-    ) {
-      throw new Error("Please say how this person is related.");
+    if (!lineageId || !familyDetails.lineageLabel) {
+      throw new Error("Please choose which lineage this person comes from.");
     }
-    if (!personId) {
-      throw new Error("Please select who this person is related to.");
-    }
-    const relatedLabel = await personLabel(personId);
-    if (!relatedLabel) {
-      throw new Error("That related person was not found.");
-    }
-
-    const parentId1 = str(formData, "parentId1");
-    const partnerId = str(formData, "partnerId");
 
     message = buildAddPersonMessage({
       submitterName,
@@ -302,15 +321,14 @@ async function submitChangeRequest(formData: FormData) {
       suffix: str(formData, "suffix"),
       personPhone,
       personEmail,
+      address: str(formData, "address"),
       birthDate: str(formData, "birthDate"),
       birthPlace: str(formData, "birthPlace"),
       isDeceased: bool(formData, "isDeceased"),
       deathDate: str(formData, "deathDate"),
       headstoneLocation: str(formData, "headstoneLocation"),
-      relationshipType,
-      relatedLabel,
-      parent1Label: await personLabel(parentId1),
-      spouseLabel: await personLabel(partnerId),
+      familyDetails,
+      spouseLabel: str(formData, "spouseName"),
       marriageDate: str(formData, "marriageDate"),
       marriagePlace: str(formData, "marriagePlace"),
     });

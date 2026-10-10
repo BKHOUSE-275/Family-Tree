@@ -25,7 +25,7 @@ export default async function HomePage({
           sent={params.sent === "1"}
           placeMode={committee && params.place === "1"}
           defaultEmail={user?.email ?? ""}
-          defaultName={user?.name ?? ""}
+          defaultName={user?.name && !user.name.includes("@") ? user.name : ""}
         />
         <GalleryInvite />
       </main>

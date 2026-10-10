@@ -1,9 +1,11 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { submitChangeRequestAction } from "@/app/actions/requests";
 import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { LINEAGES, familyDetailsFor, lineageMemberIds } from "@/lib/lineage";
 import {
   displayName,
   personVisibility,
@@ -38,22 +40,137 @@ function PersonPhoneField({
 }) {
   return (
     <label className="block text-sm font-semibold text-script">
-      Phone number{" "}
+      Their phone number{" "}
       {required ? (
         <RequiredMark />
       ) : (
         <span className="font-normal text-bark/60">(optional for someone who has passed)</span>
       )}
-      <input
+      <PhoneInput
         name="personPhone"
-        type="tel"
-        inputMode="tel"
         required={required}
         defaultValue={defaultValue}
         className={fieldClass}
         placeholder={placeholder}
       />
     </label>
+  );
+}
+
+// Free text so relatives can name a spouse who isn't on the tree yet.
+function SpouseField({ defaultValue }: { defaultValue?: string }) {
+  return (
+    <label className="block text-sm font-semibold text-script">
+      Spouse
+      <input
+        name="spouseName"
+        defaultValue={defaultValue}
+        autoComplete="off"
+        className={fieldClass}
+        placeholder="Type their name, e.g. Mary Johnson"
+      />
+    </label>
+  );
+}
+
+// Matches the "Family Details" box on the printed reunion flyer.
+function FamilyDetailsFields({
+  snapshot,
+  required,
+  defaults,
+}: {
+  snapshot: FamilySnapshot;
+  required: boolean;
+  defaults?: ReturnType<typeof familyDetailsFor>;
+}) {
+  const listId = useId();
+  const [lineageId, setLineageId] = useState<string>(defaults?.lineageId ?? "");
+  // Suggest names from the chosen branch as they type; anyone can still be typed in.
+  const names = useMemo(() => {
+    if (!lineageId) return [];
+    const members = lineageMemberIds(snapshot, lineageId);
+    return snapshot.people.filter((person) => members.has(person.id)).map(displayName);
+  }, [snapshot, lineageId]);
+  const count = (value: number | undefined) => (value ? String(value) : "");
+
+  return (
+    <>
+      <label className="block text-sm font-semibold text-script">
+        Lineage {required ? <RequiredMark /> : null}
+        <span className="block font-normal text-bark/60">
+          Which of Felix &amp; Adaline&apos;s children this person comes from
+        </span>
+        <select
+          name="lineage"
+          required={required}
+          value={lineageId}
+          onChange={(event) => setLineageId(event.target.value)}
+          className="ui-select mt-1"
+        >
+          <option value="">Tap to choose a lineage</option>
+          {LINEAGES.map((row) => (
+            <option key={row.id} value={row.id}>
+              {row.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm font-semibold text-script">
+        Parent&apos;s name <span className="font-normal italic text-bark/70">(Mitchell)</span>
+        <input
+          name="parentName"
+          list={listId}
+          defaultValue={defaults?.parentName}
+          autoComplete="off"
+          className={fieldClass}
+          placeholder="Mom or dad on the Mitchell side"
+        />
+      </label>
+      <label className="block text-sm font-semibold text-script">
+        Grandparent&apos;s name <span className="font-normal italic text-bark/70">(Mitchell)</span>
+        <input
+          name="grandparentName"
+          list={listId}
+          defaultValue={defaults?.grandparentName}
+          autoComplete="off"
+          className={fieldClass}
+          placeholder="Grandparent on the Mitchell side"
+        />
+      </label>
+      <datalist id={listId}>
+        {[...new Set(names)].map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-semibold text-script">
+          Number of children
+          <input
+            name="childCount"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={99}
+            defaultValue={count(defaults?.childCount)}
+            className={fieldClass}
+            placeholder="e.g. 3"
+          />
+        </label>
+        <label className="block text-sm font-semibold text-script">
+          Number of siblings <span className="font-normal italic text-bark/70">(Mitchell)</span>
+          <input
+            name="siblingCount"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={99}
+            defaultValue={count(defaults?.siblingCount)}
+            className={fieldClass}
+            placeholder="e.g. 4"
+          />
+        </label>
+      </div>
+    </>
   );
 }
 
@@ -74,7 +191,17 @@ function RequesterFields({
   defaultEmail: string;
 }) {
   return (
-    <>
+    <div
+      role="group"
+      aria-labelledby="requester-heading"
+      className="space-y-4 rounded-2xl border border-gold/50 bg-gold/10 p-4"
+    >
+      <SectionHeading
+        id="requester-heading"
+        step={1}
+        title="Person Submitting Request"
+        hint="So the committee knows who sent this. Your details are not added to the tree."
+      />
       <label className="block text-sm font-semibold text-script">
         Your name <RequiredMark />
         <input
@@ -82,34 +209,70 @@ function RequesterFields({
           required
           defaultValue={defaultName}
           autoComplete="name"
-          className={fieldClass}
-          placeholder="Who is requesting this change"
+          className={`${fieldClass} bg-white`}
+          placeholder="Your first and last name"
         />
       </label>
       <label className="block text-sm font-semibold text-script">
-        Phone number <RequiredMark />
-        <input
+        Your phone number <RequiredMark />
+        <PhoneInput
           name="submitterPhone"
-          type="tel"
-          inputMode="tel"
           required
           autoComplete="tel"
-          className={fieldClass}
-          placeholder="So the committee can follow up"
+          className={`${fieldClass} bg-white`}
+          placeholder="e.g. 555-123-4567"
         />
       </label>
       <label className="block text-sm font-semibold text-script">
-        Email
+        Your email
         <input
           name="email"
           type="email"
           defaultValue={defaultEmail}
           autoComplete="email"
-          className={fieldClass}
-          placeholder="Optional"
+          className={`${fieldClass} bg-white`}
+          placeholder="Optional, e.g. name@example.com"
         />
       </label>
-    </>
+    </div>
+  );
+}
+
+function SectionHeading({
+  id,
+  step,
+  title,
+  hint,
+}: {
+  id?: string;
+  step: number;
+  title: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-ember font-semibold text-white"
+      >
+        {step}
+      </span>
+      <div className="min-w-0">
+        <h3 id={id} className="font-[family-name:var(--font-display)] text-xl text-script">
+          {title}
+        </h3>
+        {hint ? <p className="text-sm text-bark/70">{hint}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+// Groups follow the printed reunion flyer: Personal Information, then Family Details.
+function SubHeading({ children }: { children: ReactNode }) {
+  return (
+    <p className="border-b border-bark/10 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.12em] text-bark/70">
+      {children}
+    </p>
   );
 }
 
@@ -279,6 +442,13 @@ export function SuggestionForm({
               load their current details, then edit what should change.
             </p>
             <RequesterFields defaultName={defaultName} defaultEmail={defaultEmail} />
+            <div className="border-t border-bark/10 pt-4">
+              <SectionHeading
+                step={2}
+                title="Who needs updating"
+                hint="Choose the family member, then change anything that's wrong or missing."
+              />
+            </div>
             <PersonPicker
               name="personId"
               required
@@ -299,6 +469,7 @@ export function SuggestionForm({
                 <p className="font-[family-name:var(--font-display)] text-xl text-script">
                   Current info for {displayName(selected.person)}
                 </p>
+                <SubHeading>Personal information</SubHeading>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-semibold text-script">
@@ -308,6 +479,7 @@ export function SuggestionForm({
                       required
                       defaultValue={selected.person.givenName}
                       className={fieldClass}
+                      placeholder="e.g. Mary"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
@@ -316,15 +488,7 @@ export function SuggestionForm({
                       name="surname"
                       defaultValue={selected.person.surname}
                       className={fieldClass}
-                    />
-                  </label>
-                  <label className="block text-sm font-semibold text-script">
-                    Maiden name
-                    <input
-                      name="maidenName"
-                      defaultValue={selected.person.maidenName ?? ""}
-                      className={fieldClass}
-                      placeholder="Birth surname, if different"
+                      placeholder="e.g. Mitchell"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
@@ -333,15 +497,43 @@ export function SuggestionForm({
                       name="nickname"
                       defaultValue={selected.person.nickname ?? ""}
                       className={fieldClass}
+                      placeholder="e.g. Sissy"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
-                    Suffix
+                    Maiden name
                     <input
-                      name="suffix"
-                      defaultValue={selected.person.suffix ?? ""}
+                      name="maidenName"
+                      defaultValue={selected.person.maidenName ?? ""}
                       className={fieldClass}
-                      placeholder="Sr, Jr"
+                      placeholder="Birth surname if different, e.g. Johnson"
+                    />
+                  </label>
+                </div>
+                {/* No suffix box; send the saved one so the request doesn't read as "(none)". */}
+                <input type="hidden" name="suffix" value={selected.person.suffix ?? ""} />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SpouseField
+                    defaultValue={people.find((row) => row.id === selected.partnerId)?.label ?? ""}
+                  />
+                  <span className="hidden sm:block" />
+                  <label className="block text-sm font-semibold text-script">
+                    Marriage date
+                    <input
+                      name="marriageDate"
+                      defaultValue={selected.marriageDate}
+                      className={fieldClass}
+                      placeholder="e.g. June 1962"
+                    />
+                  </label>
+                  <label className="block text-sm font-semibold text-script">
+                    Marriage place
+                    <input
+                      name="marriagePlace"
+                      defaultValue={selected.marriagePlace}
+                      className={fieldClass}
+                      placeholder="e.g. Richmond, Virginia"
                     />
                   </label>
                 </div>
@@ -349,26 +541,50 @@ export function SuggestionForm({
                 <PersonPhoneField
                   required={!changeDeceased}
                   defaultValue={selected.contact?.phone ?? ""}
+                  placeholder="e.g. 555-123-4567"
                 />
                 <label className="block text-sm font-semibold text-script">
-                  Email
+                  Their email
                   <input
                     name="personEmail"
                     type="email"
                     defaultValue={selected.contact?.email ?? ""}
                     className={fieldClass}
+                    placeholder="Optional, e.g. name@example.com"
                   />
                 </label>
                 <label className="block text-sm font-semibold text-script">
-                  Address
-                  <textarea
+                  Place of residence
+                  <input
                     name="address"
-                    rows={3}
                     defaultValue={selected.contact?.address ?? ""}
-                    className={`${fieldClass} min-h-[4.5rem]`}
+                    className={fieldClass}
+                    placeholder="City, State, e.g. Richmond, VA"
                   />
                 </label>
 
+                {selected.residences.length ? (
+                  <div>
+                    <p className="text-sm font-semibold text-script">Current residences</p>
+                    <ul className="mt-2 space-y-1 text-sm text-bark/75">
+                      {selected.residences.map((row) => (
+                        <li key={`${row.year}-${row.place}`}>
+                          {row.year ? <strong>{row.year}: </strong> : null}
+                          {row.place}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <SubHeading>Family details</SubHeading>
+                <FamilyDetailsFields
+                  snapshot={snapshot}
+                  required={false}
+                  defaults={familyDetailsFor(snapshot, selected.person.id)}
+                />
+
+                <SubHeading>Other details</SubHeading>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-semibold text-script">
                     Birth date
@@ -376,7 +592,7 @@ export function SuggestionForm({
                       name="birthDate"
                       defaultValue={selected.person.birthDate ?? ""}
                       className={fieldClass}
-                      placeholder="December 1839"
+                      placeholder="e.g. December 1839"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
@@ -385,6 +601,7 @@ export function SuggestionForm({
                       name="birthPlace"
                       defaultValue={selected.person.birthPlace ?? ""}
                       className={fieldClass}
+                      placeholder="e.g. Halifax County, Virginia"
                     />
                   </label>
                 </div>
@@ -404,71 +621,25 @@ export function SuggestionForm({
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-semibold text-script">
-                    Death date
+                     Date of Death (Month/Year)
                     <input
                       name="deathDate"
                       defaultValue={selected.person.deathDate ?? ""}
                       className={fieldClass}
+                      placeholder="e.g. March 1998"
                     />
                   </label>
                   <label className="block text-sm font-semibold text-script">
-                    Headstone location
+                    Headstone location{" "}
+                    <span className="font-normal text-bark/60">(church or general area)</span>
                     <input
                       name="headstoneLocation"
                       defaultValue={selected.person.headstoneLocation ?? ""}
                       className={fieldClass}
+                      placeholder="e.g. New Bethel Church, or Bellville, Florida"
                     />
                   </label>
                 </div>
-
-                <PersonPicker
-                  name="parentId1"
-                  people={people}
-                  defaultValue={selected.parentIds[0] ?? ""}
-                  label="Parent"
-                  emptyLabel="Optional"
-                />
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <PersonPicker
-                    name="partnerId"
-                    people={people}
-                    defaultValue={selected.partnerId}
-                    label="Spouse"
-                    emptyLabel="Optional"
-                  />
-                  <span className="hidden sm:block" />
-                  <label className="block text-sm font-semibold text-script">
-                    Marriage date
-                    <input
-                      name="marriageDate"
-                      defaultValue={selected.marriageDate}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className="block text-sm font-semibold text-script">
-                    Marriage place
-                    <input
-                      name="marriagePlace"
-                      defaultValue={selected.marriagePlace}
-                      className={fieldClass}
-                    />
-                  </label>
-                </div>
-
-                {selected.residences.length ? (
-                  <div>
-                    <p className="text-sm font-semibold text-script">Current residences</p>
-                    <ul className="mt-2 space-y-1 text-sm text-bark/75">
-                      {selected.residences.map((row) => (
-                        <li key={`${row.year}-${row.place}`}>
-                          {row.year ? <strong>{row.year}: </strong> : null}
-                          {row.place}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
 
                 <PhotoField
                   name="photoUrl"
@@ -508,7 +679,15 @@ export function SuggestionForm({
               Fields marked <RequiredMark /> are required.
             </p>
             <RequesterFields defaultName={defaultName} defaultEmail={defaultEmail} />
+            <div className="border-t border-bark/10 pt-4">
+              <SectionHeading
+                step={2}
+                title="The person you're adding"
+                hint="Tell us about the new family member."
+              />
+            </div>
 
+            <SubHeading>Personal information</SubHeading>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-semibold text-script">
                 Given name <RequiredMark />
@@ -516,61 +695,86 @@ export function SuggestionForm({
                   name="givenName"
                   required
                   className={fieldClass}
-                  placeholder="First name"
+                  placeholder="First name, e.g. Mary"
                 />
               </label>
               <label className="block text-sm font-semibold text-script">
                 Surname
-                <input name="surname" className={fieldClass} placeholder="Last name" />
+                <input name="surname" className={fieldClass} placeholder="Last name, e.g. Mitchell" />
+              </label>
+              <label className="block text-sm font-semibold text-script">
+                Nickname
+                <input name="nickname" className={fieldClass} placeholder="e.g. Sissy" />
               </label>
               <label className="block text-sm font-semibold text-script">
                 Maiden name
                 <input
                   name="maidenName"
                   className={fieldClass}
-                  placeholder="Birth surname, if different"
+                  placeholder="Birth surname if different, e.g. Johnson"
                 />
               </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SpouseField />
+              <span className="hidden sm:block" />
               <label className="block text-sm font-semibold text-script">
-                Nickname
-                <input name="nickname" className={fieldClass} />
+                Marriage date
+                <input name="marriageDate" className={fieldClass} placeholder="e.g. June 1962" />
               </label>
               <label className="block text-sm font-semibold text-script">
-                Suffix
+                Marriage place
                 <input
-                  name="suffix"
+                  name="marriagePlace"
                   className={fieldClass}
-                  placeholder="Sr, Jr"
+                  placeholder="e.g. Richmond, Virginia"
                 />
               </label>
             </div>
 
             <PersonPhoneField
               required={!addDeceased}
-              placeholder="Contact phone for this person"
+              placeholder="e.g. 555-123-4567"
             />
             <label className="block text-sm font-semibold text-script">
-              Email
+              Their email
               <input
                 name="personEmail"
                 type="email"
                 className={fieldClass}
-                placeholder="Optional"
+                placeholder="Optional, e.g. name@example.com"
+              />
+            </label>
+            <label className="block text-sm font-semibold text-script">
+              Place of residence
+              <input
+                name="address"
+                className={fieldClass}
+                placeholder="City, State, e.g. Richmond, VA"
               />
             </label>
 
+            <SubHeading>Family details</SubHeading>
+            <FamilyDetailsFields snapshot={snapshot} required />
+
+            <SubHeading>Other details</SubHeading>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-semibold text-script">
-                Birth date
+                Birth date (Month/Year)
                 <input
                   name="birthDate"
                   className={fieldClass}
-                  placeholder="December 1839"
+                  placeholder="e.g. December 1839"
                 />
               </label>
               <label className="block text-sm font-semibold text-script">
                 Place of birth
-                <input name="birthPlace" className={fieldClass} />
+                <input
+                  name="birthPlace"
+                  className={fieldClass}
+                  placeholder="e.g. Halifax County, Virginia"
+                />
               </label>
             </div>
 
@@ -587,62 +791,17 @@ export function SuggestionForm({
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-semibold text-script">
-                Death date
-                <input name="deathDate" className={fieldClass} />
+                Date of Death (Month/Year)
+                <input name="deathDate" className={fieldClass} placeholder="e.g. March 1998" />
               </label>
               <label className="block text-sm font-semibold text-script">
-                Headstone location
-                <input name="headstoneLocation" className={fieldClass} />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PersonPicker
-                name="personId"
-                people={people}
-                required
-                allowNone={false}
-                label={
-                  <>
-                    Related to <RequiredMark />
-                  </>
-                }
-                emptyLabel="Select a person"
-              />
-              <label className="block text-sm font-semibold text-script">
-                How related <RequiredMark />
-                <select name="relationshipType" required className="ui-select mt-1">
-                  <option value="">Select relationship</option>
-                  <option value="child">Child of</option>
-                  <option value="parent">Parent of</option>
-                  <option value="spouse">Spouse of</option>
-                  <option value="sibling">Sibling of</option>
-                </select>
-              </label>
-            </div>
-
-            <PersonPicker
-              name="parentId1"
-              people={people}
-              label="Parent"
-              emptyLabel="Optional"
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <PersonPicker
-                name="partnerId"
-                people={people}
-                label="Spouse"
-                emptyLabel="Optional"
-              />
-              <span className="hidden sm:block" />
-              <label className="block text-sm font-semibold text-script">
-                Marriage date
-                <input name="marriageDate" className={fieldClass} />
-              </label>
-              <label className="block text-sm font-semibold text-script">
-                Marriage place
-                <input name="marriagePlace" className={fieldClass} />
+                Headstone location{" "}
+                <span className="font-normal text-bark/60">(church or general area)</span>
+                <input
+                  name="headstoneLocation"
+                  className={fieldClass}
+                  placeholder="e.g. New Bethel Church, or Bellville, Florida"
+                />
               </label>
             </div>
 
