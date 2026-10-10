@@ -132,8 +132,8 @@ export function buildRequestPersonPreview(
     else if (related.role === "spouse") {
       partners.push({
         person: relatedPerson,
-        date: messageField(message, "marriage date"),
-        place: messageField(message, "marriage place"),
+        date: null,
+        place: null,
         notes: null,
       });
       seen.add(relatedPerson.id);
@@ -155,8 +155,8 @@ export function buildRequestPersonPreview(
     const spouse = personFromLabel(snapshot, spouseLabel, `preview-spouse-${request.id}`);
     partners.push({
       person: spouse,
-      date: messageField(message, "marriage date"),
-      place: messageField(message, "marriage place"),
+      date: null,
+      place: null,
       notes: null,
     });
   }

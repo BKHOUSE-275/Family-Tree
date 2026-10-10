@@ -120,8 +120,6 @@ function buildChangeInfoMessage(input: {
   headstoneLocation: string | null;
   familyDetails: FamilyDetails;
   spouseLabel: string | null;
-  marriageDate: string | null;
-  marriagePlace: string | null;
 }) {
   const fullName = composePersonName({
     givenName: input.givenName,
@@ -154,8 +152,6 @@ function buildChangeInfoMessage(input: {
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
     ...familyDetailRows(input.familyDetails),
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
-    `Marriage date: ${input.marriageDate ?? "(none)"}`,
-    `Marriage place: ${input.marriagePlace ?? "(none)"}`,
   ].join("\n");
 }
 
@@ -178,8 +174,6 @@ function buildAddPersonMessage(input: {
   headstoneLocation: string | null;
   familyDetails: FamilyDetails;
   spouseLabel: string | null;
-  marriageDate: string | null;
-  marriagePlace: string | null;
 }) {
   const fullName = composePersonName({
     givenName: input.givenName,
@@ -211,8 +205,6 @@ function buildAddPersonMessage(input: {
     `Headstone location: ${input.headstoneLocation ?? "(none)"}`,
     ...familyDetailRows(input.familyDetails),
     `Spouse: ${input.spouseLabel ?? "(none)"}`,
-    `Marriage date: ${input.marriageDate ?? "(none)"}`,
-    `Marriage place: ${input.marriagePlace ?? "(none)"}`,
   ].join("\n");
 }
 
@@ -298,8 +290,6 @@ async function submitChangeRequest(formData: FormData) {
       headstoneLocation: str(formData, "headstoneLocation"),
       familyDetails,
       spouseLabel: str(formData, "spouseName"),
-      marriageDate: str(formData, "marriageDate"),
-      marriagePlace: str(formData, "marriagePlace"),
     });
   } else {
     const givenName = str(formData, "givenName");
@@ -329,8 +319,6 @@ async function submitChangeRequest(formData: FormData) {
       headstoneLocation: str(formData, "headstoneLocation"),
       familyDetails,
       spouseLabel: str(formData, "spouseName"),
-      marriageDate: str(formData, "marriageDate"),
-      marriagePlace: str(formData, "marriagePlace"),
     });
   }
 

@@ -151,7 +151,7 @@ export async function savePersonAction(
       showHeadstone: bool(formData, "showHeadstone"),
       showNotes: before?.showNotes ?? true,
       showResidences: bool(formData, "showResidences"),
-      showMarriage: bool(formData, "showMarriage"),
+      showMarriage: before?.showMarriage ?? true,
     };
     // Check every link before writing anything, so a bad pick can't leave a half-saved person.
     const parentIds = [str(formData, "parentId1"), str(formData, "parentId2")].filter(
@@ -187,8 +187,9 @@ export async function savePersonAction(
         id: unionId,
         personAId: person.id,
         personBId: partnerId,
-        startDate: str(formData, "marriageDate"),
-        place: str(formData, "marriagePlace"),
+        // Marriage date/place are no longer collected; keep anything already on record.
+        startDate: beforePartner?.id === unionId ? beforePartner.startDate : null,
+        place: beforePartner?.id === unionId ? beforePartner.place : null,
         notes: beforePartner?.id === unionId ? beforePartner.notes : null,
       };
       await savePartnership(union);

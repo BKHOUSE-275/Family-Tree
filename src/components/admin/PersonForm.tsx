@@ -107,8 +107,6 @@ export function PersonForm({
           defaultValue={partnerId}
           emptyLabel="None"
         />
-        <Field name="marriageDate" label="Marriage date" defaultValue={partnership?.startDate} />
-        <Field name="marriagePlace" label="Marriage place" defaultValue={partnership?.place} />
       </div>
 
       <fieldset className="space-y-2">
@@ -140,7 +138,7 @@ export function PersonForm({
           will not see them.
         </p>
         <div className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-          {PERSON_VISIBILITY_FIELDS.filter((field) => field.key !== "showNotes").map((field) => (
+          {PERSON_VISIBILITY_FIELDS.filter((field) => field.key !== "showNotes" && field.key !== "showMarriage").map((field) => (
             <label
               key={field.key}
               className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-script"

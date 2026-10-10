@@ -43,9 +43,6 @@ export function PersonPanel({
   const view = redactPersonForPublic(person);
   const years = yearRange(view);
   const shownResidences = vis.showResidences ? residences : [];
-  const shownPartners = vis.showMarriage
-    ? partners
-    : partners.map((row) => ({ ...row, date: null, place: null, notes: null }));
   const showHeadstone =
     view.isDeceased &&
     Boolean(view.headstoneLocation || view.deathDate || view.headstonePhotoUrl);
@@ -163,11 +160,11 @@ export function PersonPanel({
           activeId={person.id}
           onSelect={preview ? undefined : onSelect}
         />
-        {shownPartners.length ? (
+        {partners.length ? (
           <section className="mt-6">
             <h3 className="text-xs uppercase tracking-[0.2em] text-script">Spouse / partnership</h3>
             <ul className="mt-2 space-y-2 text-sm">
-              {shownPartners.map((row) => (
+              {partners.map((row) => (
                 <li key={row.person.id}>
                   {preview || !onSelect ? (
                     <p className="inline-flex min-h-11 items-center">{displayName(row.person)}</p>
@@ -179,17 +176,6 @@ export function PersonPanel({
                       {displayName(row.person)}
                     </button>
                   )}
-                  {row.date || row.place ? (
-                    <p className="text-black/60">
-                      {row.date ? (
-                        <span className="block">
-                          <span className="font-bold text-black">Marriage date:</span>{" "}
-                          {formatFamilyDate(row.date) || row.date}
-                        </span>
-                      ) : null}
-                      {row.place ? <span className="block">{row.place}</span> : null}
-                    </p>
-                  ) : null}
                 </li>
               ))}
             </ul>

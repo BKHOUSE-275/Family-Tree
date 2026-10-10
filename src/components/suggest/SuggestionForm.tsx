@@ -284,8 +284,6 @@ function lookupChangeContext(snapshot: FamilySnapshot, personId: string) {
       contact: null as Contact | null,
       parentIds: [] as string[],
       partnerId: "",
-      marriageDate: "",
-      marriagePlace: "",
       residences: [] as { year: string | null; place: string }[],
     };
   }
@@ -321,8 +319,6 @@ function lookupChangeContext(snapshot: FamilySnapshot, personId: string) {
       : null,
     parentIds,
     partnerId,
-    marriageDate: vis.showMarriage ? partnership?.startDate ?? "" : "",
-    marriagePlace: vis.showMarriage ? partnership?.place ?? "" : "",
     residences,
   };
 }
@@ -513,30 +509,9 @@ export function SuggestionForm({
                 {/* No suffix box; send the saved one so the request doesn't read as "(none)". */}
                 <input type="hidden" name="suffix" value={selected.person.suffix ?? ""} />
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <SpouseField
-                    defaultValue={people.find((row) => row.id === selected.partnerId)?.label ?? ""}
-                  />
-                  <span className="hidden sm:block" />
-                  <label className="block text-sm font-semibold text-script">
-                    Marriage date
-                    <input
-                      name="marriageDate"
-                      defaultValue={selected.marriageDate}
-                      className={fieldClass}
-                      placeholder="e.g. June 1962"
-                    />
-                  </label>
-                  <label className="block text-sm font-semibold text-script">
-                    Marriage place
-                    <input
-                      name="marriagePlace"
-                      defaultValue={selected.marriagePlace}
-                      className={fieldClass}
-                      placeholder="e.g. Richmond, Virginia"
-                    />
-                  </label>
-                </div>
+                <SpouseField
+                  defaultValue={people.find((row) => row.id === selected.partnerId)?.label ?? ""}
+                />
 
                 <PersonPhoneField
                   required={!changeDeceased}
@@ -716,22 +691,7 @@ export function SuggestionForm({
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SpouseField />
-              <span className="hidden sm:block" />
-              <label className="block text-sm font-semibold text-script">
-                Marriage date
-                <input name="marriageDate" className={fieldClass} placeholder="e.g. June 1962" />
-              </label>
-              <label className="block text-sm font-semibold text-script">
-                Marriage place
-                <input
-                  name="marriagePlace"
-                  className={fieldClass}
-                  placeholder="e.g. Richmond, Virginia"
-                />
-              </label>
-            </div>
+            <SpouseField />
 
             <PersonPhoneField
               required={!addDeceased}
