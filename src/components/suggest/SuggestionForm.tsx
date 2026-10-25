@@ -6,6 +6,7 @@ import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { LINEAGES, familyDetailsFor, lineageMemberIds } from "@/lib/lineage";
+import { PERSON_NOTES_LIMIT } from "@/lib/request-message";
 import {
   displayName,
   personVisibility,
@@ -69,6 +70,26 @@ function SpouseField({ defaultValue }: { defaultValue?: string }) {
         className={fieldClass}
         placeholder="Type their name, e.g. Mary Johnson"
       />
+    </label>
+  );
+}
+
+function NotesField() {
+  const [length, setLength] = useState(0);
+  return (
+    <label className="block text-sm font-semibold text-script">
+      Notes <span className="font-normal text-bark/60">(optional)</span>
+      <textarea
+        name="notes"
+        rows={3}
+        maxLength={PERSON_NOTES_LIMIT}
+        onChange={(event) => setLength(event.target.value.length)}
+        className={`${fieldClass} resize-y`}
+        placeholder="e.g. I work as a nurse at Richmond General Hospital"
+      />
+      <span className="mt-1 block text-right text-xs font-normal text-bark/60" aria-live="polite">
+        {length}/{PERSON_NOTES_LIMIT} characters
+      </span>
     </label>
   );
 }
@@ -714,6 +735,7 @@ export function SuggestionForm({
                 placeholder="City, State, e.g. Richmond, VA"
               />
             </label>
+            <NotesField />
 
             <SubHeading>Family details</SubHeading>
             <FamilyDetailsFields snapshot={snapshot} required />

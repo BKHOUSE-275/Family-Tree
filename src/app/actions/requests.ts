@@ -7,7 +7,7 @@ import { recordAudit } from "@/lib/audit";
 import { notifyCommitteeOfRequest } from "@/lib/mail";
 import { clientIp, hitRateLimit } from "@/lib/rate-limit";
 import { isLineageId } from "@/lib/lineage";
-import { isAddPersonRequest } from "@/lib/request-message";
+import { PERSON_NOTES_LIMIT, isAddPersonRequest } from "@/lib/request-message";
 import {
   decideChangeRequest,
   getChangeRequest,
@@ -167,6 +167,7 @@ function buildAddPersonMessage(input: {
   personPhone: string;
   personEmail: string | null;
   address: string | null;
+  notes: string | null;
   birthDate: string | null;
   birthPlace: string | null;
   isDeceased: boolean;
@@ -198,6 +199,7 @@ function buildAddPersonMessage(input: {
     `Contact number: ${input.personPhone}`,
     `Email: ${input.personEmail ?? "(none)"}`,
     `Address: ${input.address ?? "(none)"}`,
+    `Notes: ${input.notes ?? "(none)"}`,
     `Birth date: ${input.birthDate ?? "(none)"}`,
     `Birth place: ${input.birthPlace ?? "(none)"}`,
     `Deceased: ${input.isDeceased ? "yes" : "no"}`,
@@ -299,6 +301,11 @@ async function submitChangeRequest(formData: FormData) {
     if (!lineageId || !familyDetails.lineageLabel) {
       throw new Error("Please choose which lineage this person comes from.");
     }
+    // One line in the message, so fold any line breaks into spaces.
+    const notes = str(formData, "notes")?.replace(/\s+/g, " ") ?? null;
+    if (notes && notes.length > PERSON_NOTES_LIMIT) {
+      throw new Error(`Please keep notes to ${PERSON_NOTES_LIMIT} characters or fewer.`);
+    }
 
     message = buildAddPersonMessage({
       submitterName,
@@ -312,6 +319,7 @@ async function submitChangeRequest(formData: FormData) {
       personPhone,
       personEmail,
       address: str(formData, "address"),
+      notes,
       birthDate: str(formData, "birthDate"),
       birthPlace: str(formData, "birthPlace"),
       isDeceased: bool(formData, "isDeceased"),

@@ -9,6 +9,9 @@ export type SplitRequestMessage = {
   person: RequestMessageRow[];
 };
 
+// Notes travel as one "Notes: …" line in the request message, so keep them short.
+export const PERSON_NOTES_LIMIT = 150;
+
 const SUBMITTER_LABELS = new Set(["from", "phone", "email"]);
 
 const PERSON_LABELS: Record<string, string> = {

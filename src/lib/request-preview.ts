@@ -89,6 +89,7 @@ export function buildRequestPersonPreview(
     isDeceased: messageField(message, "deceased")?.toLowerCase() === "yes",
     headstoneLocation: messageField(message, "headstone location"),
     headstonePhotoUrl: request.headstonePhotoUrl,
+    notes: messageField(message, "notes"),
   };
 
   const phone = personMessageField(message, "contact number", "proposed phone");
