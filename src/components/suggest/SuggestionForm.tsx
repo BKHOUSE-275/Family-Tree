@@ -85,7 +85,7 @@ function NotesField() {
         maxLength={PERSON_NOTES_LIMIT}
         onChange={(event) => setLength(event.target.value.length)}
         className={`${fieldClass} resize-y`}
-        placeholder="e.g. I work as a nurse at Richmond General Hospital"
+        placeholder="Tell us something about yourself. e.g. Occupation, interests, hobbies, etc."
       />
       <span className="mt-1 block text-right text-xs font-normal text-bark/60" aria-live="polite">
         {length}/{PERSON_NOTES_LIMIT} characters

@@ -154,6 +154,13 @@ export function PersonPanel({
           </section>
         ) : null}
 
+        {view.notes ? (
+          <section className="mt-6">
+            <h3 className="text-xs uppercase tracking-[0.2em] text-script">Notes</h3>
+            <p className="mt-2 text-sm break-words">{view.notes}</p>
+          </section>
+        ) : null}
+
         <RelationList
           title="Parents"
           people={parents}

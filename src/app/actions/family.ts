@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePermission, requireUser, userHasPermission } from "@/lib/auth";
 import { personFieldDiff, recordAudit } from "@/lib/audit";
+import { PERSON_NOTES_LIMIT } from "@/lib/request-message";
 import {
   deletePartnership,
   deletePerson,
@@ -126,6 +127,12 @@ export async function savePersonAction(
           .join("|")
       : "";
 
+    const notes = str(formData, "notes");
+    // Older booklet notes can run longer; only hold new or edited notes to the limit.
+    if (notes && notes.length > PERSON_NOTES_LIMIT && notes !== before?.notes) {
+      return { error: `Please keep notes to ${PERSON_NOTES_LIMIT} characters or fewer.` };
+    }
+
     const person: Person = {
       id: existingId ?? slugId(`${givenName} ${surname}`),
       givenName,
@@ -142,14 +149,14 @@ export async function savePersonAction(
       headstonePhotoUrl: str(formData, "headstonePhotoUrl"),
       // No longer edited in the form; keep whatever is already on record.
       familysearchId: before?.familysearchId ?? null,
-      notes: before?.notes ?? null,
+      notes,
       showPhoto: bool(formData, "showPhoto"),
       showMaidenName: bool(formData, "showMaidenName"),
       showBirthDate: bool(formData, "showBirthDate"),
       showBirthPlace: bool(formData, "showBirthPlace"),
       showDeathDate: bool(formData, "showDeathDate"),
       showHeadstone: bool(formData, "showHeadstone"),
-      showNotes: before?.showNotes ?? true,
+      showNotes: bool(formData, "showNotes"),
       showResidences: bool(formData, "showResidences"),
       showMarriage: before?.showMarriage ?? true,
     };

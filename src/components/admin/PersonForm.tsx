@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { savePersonAction, type SavePersonState } from "@/app/actions/family";
 import { PhotoField } from "@/components/admin/PhotoField";
 import { PersonPicker } from "@/components/ui/PersonPicker";
+import { PERSON_NOTES_LIMIT } from "@/lib/request-message";
 import {
   PERSON_VISIBILITY_FIELDS,
   personVisibility,
@@ -131,6 +132,21 @@ export function PersonForm({
         )}
       </fieldset>
 
+      <label className="block text-sm font-semibold text-script">
+        Notes
+        <textarea
+          name="notes"
+          rows={3}
+          maxLength={PERSON_NOTES_LIMIT}
+          defaultValue={person?.notes ?? ""}
+          placeholder="e.g. Works as a nurse at Richmond General Hospital"
+          className="mt-1 min-h-11 w-full resize-y rounded-xl border border-black/10 px-3 py-2 text-base"
+        />
+        <span className="mt-1 block text-xs font-normal text-black/60">
+          Up to {PERSON_NOTES_LIMIT} characters.
+        </span>
+      </label>
+
       <section className="rounded-2xl border border-black/10 bg-leaf-soft/50 p-5">
         <h2 className="text-sm font-semibold text-script">Show on the family tree</h2>
         <p className="mt-1 text-sm text-black/60">
@@ -138,7 +154,7 @@ export function PersonForm({
           will not see them.
         </p>
         <div className="mt-4 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-          {PERSON_VISIBILITY_FIELDS.filter((field) => field.key !== "showNotes" && field.key !== "showMarriage").map((field) => (
+          {PERSON_VISIBILITY_FIELDS.filter((field) => field.key !== "showMarriage").map((field) => (
             <label
               key={field.key}
               className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-script"
@@ -146,7 +162,12 @@ export function PersonForm({
               <input
                 type="checkbox"
                 name={field.key}
-                defaultChecked={personVisibility(person)[field.key]}
+                // Notes start hidden for new people; the committee opts in.
+                defaultChecked={
+                  field.key === "showNotes" && !person
+                    ? false
+                    : personVisibility(person)[field.key]
+                }
                 className="ui-checkbox"
               />
               {field.label}
